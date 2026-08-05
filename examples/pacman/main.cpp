@@ -5,7 +5,6 @@
 //  逐行拆解見文件 docs/tutorial/pacman.md。
 // =============================================================================
 #include "GridMaze.h"   // 用 -I../.. 指到專案根；會自動帶進核心 GridPlusPlus.h
-#include "GridUI.h"     // Label / Button 等 UI 元件
 #include <fstream>      // 讀地圖檔
 #include <string>
 
@@ -161,8 +160,8 @@ void buildLevel(GridEngine& game) {
     if (player) { g_player = player; game.spawn(player); }  // 玩家最後生成（畫最上層）
 }
 
-// 分數與各畫面的訊息（UI 覆蓋層，跳脫網格、用像素座標）
-class ScoreUI : public UIElement {
+// 分數與各畫面的訊息（畫面覆蓋層，跳脫網格、用像素座標）
+class ScoreOverlay : public Overlay {
 public:
     void draw() override {
         if (g_state == 1) {                            // 遊戲中：左上角分數
@@ -220,12 +219,12 @@ int main() {
     buildLevel(game);                                  // 先建好一局
     g_state = 0;                                        // 停在開始畫面
 
-    // UI 覆蓋層（ScoreUI 先加，按鈕畫在它之上）
+    // 畫面覆蓋層（ScoreOverlay 先加，按鈕畫在它之上）
     int bw = 120, bh = 40, bx = cols * 32 / 2 - bw / 2, by = rows * 32 / 2;
-    game.addUI(new ScoreUI());
-    game.addUI(new StartButton(bx, by, bw, bh));
-    game.addUI(new RestartButton(bx, by, bw, bh));
-    game.addUI(new PauseButton(cols * 32 - 88, 6, 82, 24));
+    game.addOverlay(new ScoreOverlay());
+    game.addOverlay(new StartButton(bx, by, bw, bh));
+    game.addOverlay(new RestartButton(bx, by, bw, bh));
+    game.addOverlay(new PauseButton(cols * 32 - 88, 6, 82, 24));
 
     game.run();
     return 0;

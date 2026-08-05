@@ -1,11 +1,11 @@
 # Pac-Man 入門版
 
-用 [Grid++](../../docs/index.md) 寫成的 Pac-Man「入門版」，示範選用模組
-[`GridEasy.h`](../../GridEasy.h) 的 `EasyObject`。
+用 [Grid++](../../docs/index.md) 寫成的 Pac-Man「入門版」，示範
+[`GridObject.h`](../../GridObject.h) 的 `CallbackGridObject`。
 
 **刻意寫得像 C**：整支程式沒有自訂 `class`、沒有繼承，只用「全域變數 + 一般函式」。
-角色的行為靠 `EasyObject`——先寫好一個普通函式，初始化時把「函式的名字」傳進去即可。
-概念說明見 [入門版物件 (EasyObject)](../../docs/guide/easy-object.md)；
+角色的行為靠 `CallbackGridObject`——先寫好普通函式，初始化時把函式名字傳進去即可。
+概念說明見 [函式版物件](../../docs/guide/callback-grid-object.md)；
 想看用繼承寫的完整版，見隔壁的 [`examples/pacman/`](../pacman/)。
 
 > 玩法：**方向鍵**移動，吃光所有豆子獲勝，碰到鬼魂失敗。（結束後畫面會定格，重玩就重跑程式）
@@ -20,7 +20,7 @@
 ## 編譯與執行
 
 raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../..` 讓編譯器找到專案根目錄的
-`GridEasy.h` / `GridMaze.h` / `GridPlusPlus.h`。依平台編譯：
+`GridMaze.h` / `GridPlusPlus.h`。依平台編譯：
 
 === "Windows"
 
@@ -57,7 +57,7 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 `main()` 用兩層 for 迴圈逐格擺好牆、豆子、玩家、鬼。迷宮用最簡單的畫法：
 `GridMaze` + `setWallAsset("wall_cross")`，所有牆都用同一張實心方塊。
 
-**角色的行為都是普通函式**，在 `new EasyObject(...)` 時傳進去：
+**角色的行為都是普通函式**，在 `new CallbackGridObject(...)` 時傳進去：
 
 - `playerMove(self)`：方向鍵按一下走一格，用 `isWall()` 檢查前面不是牆才走。
 - `ghostMove(self)`：每 15 幀走一格（比玩家慢），往玩家的方向靠近、會避開牆。
@@ -66,13 +66,13 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 
 **狀態全部放全域變數**：`gState`（遊戲中/贏/輸）、`gPellets`（剩幾顆豆子）、
 `gGhostTimer`（鬼的計時器）、`gPlayer`（讓鬼知道玩家在哪）、`gMaze`（查牆用）。
-因為**只有一個玩家、一隻鬼**，這些狀態放全域就夠——這正是 `EasyObject` 能用的前提。
+因為**只有一個玩家、一隻鬼**，這些狀態放全域就夠——這正是 `CallbackGridObject` 能用的前提。
 
 !!! tip "兩個關鍵小地方"
     - **`self` 參數**：普通函式沒有 `this`，所以引擎把物件本身當 `self` 傳進來，
       要操作它就寫 `self->move(...)`。
     - **豆子不用記「吃了沒」**：直接把被吃的豆子移出畫面，就不需要每顆豆子各自的旗標——
-      剛好繞過 `EasyObject`「沒有每實例狀態」的限制。
+      剛好繞過 `CallbackGridObject`「沒有每實例狀態」的限制。
 
 ## 接下來
 

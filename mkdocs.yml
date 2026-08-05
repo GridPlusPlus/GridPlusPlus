@@ -41,11 +41,11 @@ nav:
   - 開始使用: getting-started.md
   - 指南:
       - 網格與引擎: guide/grid-and-engine.md
-      - 入門版物件 (EasyObject): guide/easy-object.md
+      - 函式版物件: guide/callback-grid-object.md
       - 遊戲物件 (OOP): guide/game-objects.md
       - 素材包: guide/assets.md
       - 迷宮: guide/maze.md
-      - UI 覆蓋層: guide/ui.md
+      - 畫面覆蓋層: guide/ui.md
   - 教學:
       - Pac-Man 拆解: tutorial/pacman.md
   - API 速查: reference/api.md

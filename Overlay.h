@@ -1,17 +1,24 @@
 /**
- * @file GridUI.h
- * @brief Grid++ 基本 UI 元件。
- *
- * 提供以像素座標繪製的 Label 與 Button。
+ * @file Overlay.h
+ * @brief Grid++ 畫面覆蓋層基底類別。
  */
-#ifndef GRIDUI_H
-#define GRIDUI_H
+#ifndef OVERLAY_H
+#define OVERLAY_H
 
-#include "GridPlusPlus.h"
+#include "raylib.h"
+
 #include <string>
 
+// 使用像素座標、繪製在網格世界上方的畫面內容。
+class Overlay {
+public:
+    virtual ~Overlay() {}
+    virtual void onUpdate() {}
+    virtual void draw() {}
+};
+
 // 文字標籤：在 (x, y) 畫一行文字。
-class Label : public UIElement {
+class Label : public Overlay {
 public:
     Label(const std::string& text, int x, int y, int fontSize = 20, Color color = BLACK)
         : text(text), x(x), y(y), fontSize(fontSize), color(color) {}
@@ -28,13 +35,12 @@ protected:
     Color color;
 };
 
-// 可點擊的文字按鈕
-class Button : public UIElement {
+// 可點擊的文字按鈕。
+class Button : public Overlay {
 public:
     Button(const std::string& text, int x, int y, int w, int h)
         : text(text), x(x), y(y), w(w), h(h) {}
 
-    // 點擊時呼叫，子類別可覆寫。
     virtual void onClick() {}
 
     void onUpdate() override {
@@ -56,4 +62,4 @@ protected:
     bool hover = false;
 };
 
-#endif // GRIDUI_H
+#endif // OVERLAY_H

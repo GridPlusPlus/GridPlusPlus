@@ -62,10 +62,12 @@ int main() {
 
 | 路徑 | 說明 |
 |---|---|
-| `GridPlusPlus.h` | 引擎核心（視窗、主循環、物件、碰撞、素材載入）。 |
+| `GridPlusPlus.h` | 主標頭；一次引入下面三個核心型別。 |
+| `GridEngine.h` | 視窗、主循環、碰撞與素材載入。 |
+| `GridObject.h` | `GridObject` 與函式版的 `CallbackGridObject`。 |
+| `Overlay.h` | `Overlay` 與現成的 `Label`、`Button`。 |
 | `GridSQLite.h` | 核心內部使用的唯讀迷你 SQLite 讀取器。 |
 | `GridMaze.h` | 選用的迷宮模組（讀地圖、牆壁自動拼接、碰撞查詢）。 |
-| `GridUI.h` | 選用的 UI 元件（`Label` / `Button`）。 |
 | `template.cpp` | 起手式模板：一個角色在邊界內移動，複製它開始寫自己的遊戲。 |
 | `examples/pacman/` | 完整範例：用三個模組寫成的小 Pac-Man（見其 README）。 |
 | `docs/` | 文件原始碼（[MkDocs](https://www.mkdocs.org/) 格式）。 |

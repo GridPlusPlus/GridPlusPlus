@@ -1,28 +1,27 @@
-# UI 覆蓋層
+# 畫面覆蓋層
 
 遊戲世界是網格，但分數、訊息、按鈕這些東西不該被綁在格子上。Grid++ 提供一個
-**UI 覆蓋層**：跳脫網格、用**像素座標**自由繪製，並且畫在所有網格物件「之上」。
+**畫面覆蓋層**：跳脫網格、用**像素座標**自由繪製，並且畫在所有網格物件「之上」。
 
-- 基底類別 `UIElement` 在核心 `GridPlusPlus.h`。
-- 現成元件 `Label`、`Button` 在選用模組 `GridUI.h`（`#include "GridUI.h"`）。
+- `Overlay`、`Label`、`Button` 都定義在 `Overlay.h`；主標頭 `GridPlusPlus.h` 會自動引入。
 
-## 加入 UI
+## 加入覆蓋層
 
-和 `spawn(GridObject*)` 對稱，用 `addUI(UIElement*)` 把 UI 放進覆蓋層：
+和 `spawn(GridObject*)` 對稱，用 `addOverlay(Overlay*)` 把內容放進覆蓋層：
 
 ```cpp
-game.addUI(new ScoreUI());
-game.addUI(new MyButton(10, 10, 80, 30));
+game.addOverlay(new ScoreOverlay());
+game.addOverlay(new MyButton(10, 10, 80, 30));
 ```
 
-引擎每幀會對每個 UI 呼叫 `onUpdate()`（互動）與 `draw()`（繪製），`draw()` 在網格畫完後才執行，所以一定蓋在最上面。
+引擎每幀會對每個覆蓋層呼叫 `onUpdate()`（互動）與 `draw()`（繪製），`draw()` 在網格畫完後才執行，所以一定蓋在最上面。
 
-## 自訂 UI：繼承 UIElement
+## 自訂覆蓋層：繼承 Overlay
 
-需要完全自訂的畫面（例如會變動的分數），就繼承 `UIElement`、覆寫 `draw()`：
+需要完全自訂的畫面（例如會變動的分數），就繼承 `Overlay`、覆寫 `draw()`：
 
 ```cpp
-class ScoreUI : public UIElement {
+class ScoreOverlay : public Overlay {
 public:
     void draw() override {
         DrawText(TextFormat("Score: %d", g_score), 8, 8, 20, YELLOW);
@@ -37,9 +36,9 @@ public:
 純文字標籤。
 
 ```cpp
-#include "GridUI.h"
+#include "GridPlusPlus.h"
 
-game.addUI(new Label("方向鍵移動", 8, 8, 20, WHITE));
+game.addOverlay(new Label("方向鍵移動", 8, 8, 20, WHITE));
 ```
 
 | 建構子 | 說明 |
@@ -60,7 +59,7 @@ public:
     }
 };
 
-game.addUI(new StartButton(260, 300, 100, 40));
+game.addOverlay(new StartButton(260, 300, 100, 40));
 ```
 
 !!! tip "讓按鈕只在某個畫面出現"
@@ -81,6 +80,6 @@ game.addUI(new StartButton(260, 300, 100, 40));
 `Button` 的 `onUpdate()` 處理好了，你只要管 `onClick()` 裡要做什麼。
 
 !!! tip "Pac-Man 範例怎麼用"
-    範例把分數與「YOU WIN / GAME OVER / PAUSED」訊息放在一個 `ScoreUI : UIElement`，
-    右上角放一個 `PauseButton : Button`（`onClick()` 切換暫停）。這樣 UI 就和遊戲角色
+    範例把分數與「YOU WIN / GAME OVER / PAUSED」訊息放在一個 `ScoreOverlay : Overlay`，
+    右上角放一個 `PauseButton : Button`（`onClick()` 切換暫停）。這樣覆蓋層就和遊戲角色
     完全分開，不再塞在某個角色的繪製裡。

@@ -1,8 +1,8 @@
 // =============================================================================
-//  examples/pacman_easy —— Pac-Man「入門版」（示範 GridEasy.h 的 EasyObject）
+//  examples/pacman_easy —— Pac-Man「入門版」（示範 CallbackGridObject）
 //
 //  刻意寫得像 C：沒有自訂 class、沒有繼承，只用「全域變數 + 一般函式」。
-//  角色的行為靠 EasyObject——先寫好一個函式，初始化時把「函式的名字」傳進去即可。
+//  角色的行為靠 CallbackGridObject——先寫好函式，初始化時把函式名字傳進去即可。
 //  因為只有一個玩家、一隻鬼，它們的狀態放全域變數就夠了。
 //
 //  玩法：方向鍵移動，吃光所有豆子獲勝，碰到鬼魂失敗。（結束後畫面會定格）
@@ -11,7 +11,7 @@
 //    g++ main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
 //  執行前確保本資料夾有 pacman.db（素材，沿用 examples/pacman 的那份）。
 // =============================================================================
-#include "GridEasy.h"   // EasyObject（會自動帶進核心 GridPlusPlus.h）
+#include "GridPlusPlus.h"
 #include "GridMaze.h"    // 迷宮
 #include <cstdio>        // printf
 
@@ -113,14 +113,14 @@ int main() {
             if (t == 1) {
                 gMaze->setWall(x, y, true);
             } else if (t == 0) {
-                game.spawn(new EasyObject("pellet", x, y, NULL, pelletEaten));
+                game.spawn(new CallbackGridObject("pellet", x, y, NULL, pelletEaten));
                 gPellets = gPellets + 1;
             } else if (t == 2) {
-                gPlayer = new EasyObject("pacman", x, y, playerMove, playerHit);
+                gPlayer = new CallbackGridObject("pacman", x, y, playerMove, playerHit);
                 gPlayer->setTag("player");
                 game.spawn(gPlayer);
             } else if (t == 3) {
-                EasyObject* ghost = new EasyObject("ghost", x, y, ghostMove);
+                CallbackGridObject* ghost = new CallbackGridObject("ghost", x, y, ghostMove);
                 ghost->setTag("ghost");
                 ghost->setTint(RED);      // 白色鬼魂素材染成紅色
                 game.spawn(ghost);

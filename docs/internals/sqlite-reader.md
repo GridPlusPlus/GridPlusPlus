@@ -1,7 +1,7 @@
 # 迷你 SQLite 讀取器
 
 Grid++ 的素材包是 SQLite 檔，但學生編譯遊戲時不需要安裝或連結 SQLite。
-`GridPlusPlus.h` 會自動引入 `GridSQLite.h`，再透過內部的 `SQLiteReader`
+`GridEngine.h` 會自動引入 `GridSQLite.h`，再透過內部的 `SQLiteReader`
 找出 `sprites` 資料表並取出素材。
 
 ## 為什麼自己讀檔案格式
@@ -69,5 +69,5 @@ graph TD
 其中 `maxLocal = usable - 35`、`minLocal = ((usable - 12) * 32 / 255) - 23`
 等公式是檔案格式的一部分，不能自行簡化。每張素材是 4096 bytes，通常會走到這條路徑。
 
-完整實作在 `GridSQLite.h`；素材載入端則在 `GridPlusPlus.h` 的
+完整實作在 `GridSQLite.h`；素材載入端則在 `GridAssetManager.h` 的
 `GridAssetManager::load()`。

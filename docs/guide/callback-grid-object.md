@@ -1,7 +1,7 @@
-# 入門版物件 (EasyObject)
+# 函式版物件（CallbackGridObject）
 
-還沒學到「類別、繼承、覆寫」之前，也能做出會動的角色。`EasyObject`（在選用模組
-`GridEasy.h`）讓你用最接近 C 的方式寫遊戲：**先宣告一個普通函式，再把「函式的名字」
+還沒學到「類別、繼承、覆寫」之前，也能做出會動的角色。`CallbackGridObject`（定義於
+`GridObject.h`）讓你用最接近 C 的方式寫遊戲：**先宣告一個普通函式，再把「函式的名字」
 傳進物件的建構子**。
 
 !!! note "這是通往 OOP 的第一階"
@@ -12,7 +12,7 @@
 ## 最小範例
 
 ```cpp
-#include "GridEasy.h"
+#include "GridPlusPlus.h"
 
 // 一個普通函式：self 就是「這個物件自己」，引擎每幀會把它交給你。
 void playerMove(GridObject* self) {
@@ -22,7 +22,7 @@ void playerMove(GridObject* self) {
 
 int main() {
     GridEngine game(10, 10, 40);
-    game.spawn(new EasyObject("hero", 5, 5, playerMove));   // 把函式傳進去
+    game.spawn(new CallbackGridObject("hero", 5, 5, playerMove));
     game.run();
 }
 ```
@@ -32,8 +32,8 @@ int main() {
 ## 建構子
 
 ```cpp
-EasyObject(std::string asset, int x, int y,
-           UpdateFn update, CollideFn collide = nullptr);
+CallbackGridObject(std::string asset, int x, int y,
+                   UpdateFn update, CollideFn collide = nullptr);
 ```
 
 | 參數 | 說明 |
@@ -42,7 +42,7 @@ EasyObject(std::string asset, int x, int y,
 | `update` | 每幀要跑的函式，型別 `void(*)(GridObject* self)`。 |
 | `collide` | 選填，同格碰撞時跑的函式 `void(*)(GridObject* self, GridObject* other)`；不填就不處理碰撞。 |
 
-`EasyObject` 其餘功能都跟 `GridObject` 一樣（`getX` / `move` / `setTag` / `setTint`…），
+`CallbackGridObject` 其餘功能都跟 `GridObject` 一樣（`getX` / `move` / `setTag` / `setTint`…），
 差別只在「行為用傳進來的函式決定」，而不是覆寫虛擬函式。
 
 ## 兩個要記得的點
@@ -56,13 +56,13 @@ EasyObject(std::string asset, int x, int y,
 
 ## 天花板：函式沒有「每個物件自己的狀態」
 
-這是 `EasyObject` 最重要的限制。普通函式無法替「每一個物件」各自記住資料
+這是 `CallbackGridObject` 最重要的限制。普通函式無法替「每一個物件」各自記住資料
 （例如計時器、目前方向）：
 
 - 放函式裡的 `static` → **所有物件共用同一份**，會互相干擾。
 - 放全域變數 → **同一種角色只有一個**時可行；有多個就會打架。
 
-所以 `EasyObject` 適合這兩種情況：
+所以 `CallbackGridObject` 適合這兩種情況：
 
 - **同種角色只有一個**（一個玩家、一隻鬼）——它的狀態放全域變數就好。
 - **根本不需要記狀態**的角色（像上面「按鍵才走」的玩家）。

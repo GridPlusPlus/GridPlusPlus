@@ -5,14 +5,14 @@
 
 ## GridEngine
 
-主引擎。定義於 `GridPlusPlus.h`。
+主引擎。定義於 `GridEngine.h`（主標頭 `GridPlusPlus.h` 也會引入）。
 
 ```cpp
 GridEngine(int cols, int rows, int gridSize = 32);
 void loadAssets(const std::string& dbPath);
 void spawn(GridObject* obj);
 void run();
-void addUI(UIElement* e);
+void addOverlay(Overlay* overlay);
 void clearObjects();
 void  setBackgroundColor(Color c);   // 背景色，預設 RAYWHITE
 Color getBackgroundColor() const;
@@ -29,8 +29,8 @@ void drawCell(const std::string& asset, int gx, int gy, int direction = 0, Color
 | `GridEngine(cols, rows, gridSize)` | 建立引擎並開視窗。 |
 | `loadAssets(path)` | 載入 `assets.db`。需在建立引擎後呼叫。 |
 | `spawn(obj)` | 放入物件並呼叫其 `onStart()`。 |
-| `addUI(e)` | 把 UI 元件加入覆蓋層（畫在網格之上）。 |
-| `clearObjects()` | 刪除並清空所有遊戲物件（用於重新開始；不影響 UI）。 |
+| `addOverlay(overlay)` | 加入畫面覆蓋層（畫在網格之上）。 |
+| `clearObjects()` | 刪除並清空所有遊戲物件（用於重新開始；不影響覆蓋層）。 |
 | `run()` | 進入主循環直到視窗關閉。 |
 | `setBackgroundColor/getBackgroundColor` | 背景顏色（每幀清畫面用），預設 `RAYWHITE`。 |
 | `setShowGrid/getShowGrid` | 網格線開關，預設關閉，需要時傳 `true` 打開。 |
@@ -39,7 +39,7 @@ void drawCell(const std::string& asset, int gx, int gy, int direction = 0, Color
 
 ## GridObject
 
-所有遊戲物件的基底類別。定義於 `GridPlusPlus.h`。
+所有遊戲物件的基底類別。定義於 `GridObject.h`（主標頭 `GridPlusPlus.h` 也會引入）。
 
 ```cpp
 GridObject();
@@ -79,22 +79,22 @@ GridEngine* getEngine() const;       // 取得所屬引擎（spawn 後才有效�
 | `getTint/setTint` | 調色，把素材染成不同顏色（diffuse color）。 |
 | `getEngine()` | 取得所屬引擎（`spawn` 後才有效），例如查地圖大小做邊界檢查。 |
 
-## EasyObject
+## CallbackGridObject
 
-入門版物件。定義於選用模組 `GridEasy.h`（繼承 `GridObject`）。用「傳進來的函式」決定行為，
-不必先學繼承與覆寫。概念與限制見 [入門版物件 (EasyObject)](../guide/easy-object.md)。
+函式版物件。定義於 `GridObject.h`（繼承 `GridObject`）。用「傳進來的函式」決定行為，
+不必先學繼承與覆寫。概念與限制見 [函式版物件](../guide/callback-grid-object.md)。
 
 ```cpp
 using UpdateFn  = void(*)(GridObject* self);                 // 每幀要跑的函式
 using CollideFn = void(*)(GridObject* self, GridObject* other); // 同格碰撞時要跑的函式
 
-EasyObject(std::string asset, int x, int y,
-           UpdateFn update, CollideFn collide = nullptr);
+CallbackGridObject(std::string asset, int x, int y,
+                   UpdateFn update, CollideFn collide = nullptr);
 ```
 
 | 成員 | 說明 |
 |---|---|
-| `EasyObject(asset, x, y, update, collide)` | 建立物件；`update` 每幀呼叫，`collide` 選填（同格碰撞時呼叫）。 |
+| `CallbackGridObject(asset, x, y, update, collide)` | 建立物件；`update` 每幀呼叫，`collide` 選填（同格碰撞時呼叫）。 |
 | 其餘 | 與 `GridObject` 相同（`getX/move/setTag/setTint/getEngine`…）。 |
 
 !!! note "限制"
@@ -128,20 +128,20 @@ int  getHeight() const;
 | `isWall(x, y)` | 那格是否為牆（界外當牆）。 |
 | `getWidth/getHeight` | 迷宮欄數 / 列數。 |
 
-## UIElement
+## Overlay
 
-UI 覆蓋層的基底類別。定義於 `GridPlusPlus.h`。
+畫面覆蓋層的基底類別。定義於 `Overlay.h`（主標頭 `GridPlusPlus.h` 也會引入）。
 
 ```cpp
 virtual void onUpdate();   // 每幀呼叫（互動用）
 virtual void draw();       // 每幀呼叫，用像素座標繪製，畫在網格之上
 ```
 
-繼承它、覆寫 `draw()`（與選擇性的 `onUpdate()`），再用 `engine.addUI(...)` 加入。
+繼承它、覆寫 `draw()`（與選擇性的 `onUpdate()`），再用 `engine.addOverlay(...)` 加入。
 
 ## Label / Button
 
-現成 UI 元件，定義於 `GridUI.h`（皆繼承 `UIElement`）。
+現成的畫面元件，定義於 `Overlay.h`（皆繼承 `Overlay`）。
 
 ```cpp
 // 文字標籤

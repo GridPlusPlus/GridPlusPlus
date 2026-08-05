@@ -1,7 +1,7 @@
 # Pac-Man 範例
 
 用 Grid++ 寫成的最小 Pac-Man 小遊戲，示範引擎的迷宮模組（`GridMaze`）、
-遊戲物件（`GridObject`）與 UI 覆蓋層（`GridUI`）如何組在一起。
+遊戲物件（`GridObject`）與畫面覆蓋層（`Overlay`）如何組在一起。
 這一頁逐步拆解專案附的 `examples/pacman/main.cpp`。
 
 > 玩法：**方向鍵**移動——角色會持續朝目前方向走，按方向鍵且該方向不是牆時才轉向；
@@ -22,7 +22,7 @@
 ## 編譯與執行
 
 raylib 的安裝方式見 [開始使用](../getting-started.md)。`-I../..` 用來讓編譯器找到
-專案根目錄的 `GridMaze.h` / `GridPlusPlus.h` / `GridUI.h`。依平台編譯：
+專案根目錄的 `GridMaze.h` / `GridPlusPlus.h`。依平台編譯：
 
 === "Windows"
 
@@ -186,7 +186,7 @@ void onCollide(GridObject* other) override {
 | `3` | 失敗 | 壓暗 +「GAME OVER」+ **Restart** 按鈕 |
 
 角色只在 `g_state == 1` 時移動，所以開始畫面與結束畫面都會自動「凍結」。
-各按鈕也只在對的階段顯示與作用（見 [UI 覆蓋層](../guide/ui.md)）。
+各按鈕也只在對的階段顯示與作用（見 [畫面覆蓋層](../guide/ui.md)）。
 
 **重新開始**靠兩件事：引擎的 `clearObjects()`（刪掉上一局的所有物件）＋
 把佈置流程抽成一個 `buildLevel(game)` 函式，開始與重來都呼叫它。
@@ -206,7 +206,7 @@ void buildLevel(GridEngine& game) {
 1. 讀 `map.txt` 的維度，開引擎、載素材，用 `setBackgroundColor(BLACK)` 設成經典黑底
    （網格線預設已關閉）。
 2. `buildLevel(game)` 佈置第一局，把 `g_state` 設成 `0`（停在開始畫面）。
-3. `addUI` 加上分數、Start、Restart、Pause。
+3. `addOverlay` 加上分數、Start、Restart、Pause。
 4. `game.run()`。
 
 其中 `buildLevel` 內部：建立 `GridMaze(cols, rows)`、用 `setWallTiles` 給 6 種基本牆形狀
@@ -224,5 +224,5 @@ void buildLevel(GridEngine& game) {
     - **生成順序＝繪製順序**：迷宮先 `spawn`（最底層），玩家最後 `spawn`（最上層）。
     - **重複利用素材**：小精靈靠 `setDirection` 旋轉一張圖朝向四個方向；四隻鬼靠 `setTint`
       把同一張白色素材染成不同顏色；牆壁也靠旋轉，用 6 種基本形狀拼出全部 16 種連通。
-    - **UI 與遊戲分開**：分數與訊息放在 `ScoreUI : UIElement`、按鈕是 `Button` 的子類，
-      各自只在「對的階段」顯示與作用，透過 `addUI` 加入、畫在網格之上。詳見 [UI 覆蓋層](../guide/ui.md)。
+    - **覆蓋層與遊戲分開**：分數與訊息放在 `ScoreOverlay : Overlay`、按鈕是 `Button` 的子類，
+      各自只在「對的階段」顯示與作用，透過 `addOverlay` 加入、畫在網格之上。詳見 [畫面覆蓋層](../guide/ui.md)。
