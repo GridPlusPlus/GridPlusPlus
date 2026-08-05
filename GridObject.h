@@ -1,6 +1,8 @@
 /**
  * @file GridObject.h
  * @brief Grid++ 網格物件基底類別。
+ *
+ * 此檔為核心實作拆分；一般使用者請 include "GridPlusPlus.h"。
  */
 #ifndef GRIDOBJECT_H
 #define GRIDOBJECT_H
@@ -48,6 +50,7 @@ public:
     void  setTint(Color c) { tint = c; }
 
     // 把自己畫出來；預設繪製 assetName，子類別可覆寫。
+    // 因為實作需要完整的 GridEngine 定義，所以放在 GridPlusPlus.h 最後。
     virtual void render(GridEngine* engine);
 
     void setEngine(GridEngine* e) { engine = e; }
@@ -61,6 +64,7 @@ protected:
     Color tint = WHITE;
     GridEngine* engine = nullptr;
 };
+
 
 // 用函式指標定義行為的入門物件。
 class CallbackGridObject : public GridObject {

@@ -1,6 +1,8 @@
 /**
  * @file Overlay.h
  * @brief Grid++ 畫面覆蓋層基底類別。
+ *
+ * 此檔為核心實作拆分；一般使用者請 include "GridPlusPlus.h"。
  */
 #ifndef OVERLAY_H
 #define OVERLAY_H

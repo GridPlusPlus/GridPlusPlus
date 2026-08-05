@@ -1,6 +1,8 @@
 /**
  * @file GridEngine.h
  * @brief Grid++ 遊戲引擎。
+ *
+ * 此檔為核心實作拆分；一般使用者請 include "GridPlusPlus.h"。
  */
 #ifndef GRIDENGINE_H
 #define GRIDENGINE_H
@@ -123,10 +125,5 @@ private:
     std::vector<GridObject*> objects;
     std::vector<Overlay*> overlays;
 };
-
-// GridEngine 定義完成後才能實作預設 render。
-inline void GridObject::render(GridEngine* engine) {
-    engine->drawCell(assetName, gridX, gridY, direction, tint);
-}
 
 #endif // GRIDENGINE_H
