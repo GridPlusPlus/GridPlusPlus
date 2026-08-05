@@ -1,8 +1,8 @@
 // =============================================================================
-//  examples/pacman_easy —— Pac-Man「入門版」（示範 CallbackGridObject）
+//  examples/pacman_easy —— Pac-Man「入門版」（示範 callback spawn）
 //
 //  刻意寫得像 C：沒有自訂 class、沒有繼承，只用「全域變數 + 一般函式」。
-//  角色的行為靠 CallbackGridObject——先寫好函式，初始化時把函式名字傳進去即可。
+//  角色的行為靠傳給 spawn 的函式決定，不需要自訂 class。
 //  因為只有一個玩家、一隻鬼，它們的狀態放全域變數就夠了。
 //
 //  玩法：方向鍵移動，吃光所有豆子獲勝，碰到鬼魂失敗。（結束後畫面會定格）
@@ -56,6 +56,7 @@ void playerMove(GridObject* self) {
 
 // 玩家撞到東西：撞到鬼就失敗
 void playerHit(GridObject* self, GridObject* other) {
+    (void)self;
     if (other->getTag() == "ghost") {
         gState = 2;
         SetWindowTitle("GAME OVER");
@@ -63,11 +64,10 @@ void playerHit(GridObject* self, GridObject* other) {
     }
 }
 
-// 豆子被玩家吃到：移出地圖（等於消失），剩餘數量 -1；吃光就贏
+// 豆子被玩家吃到：隱藏並停止碰撞，剩餘數量 -1；吃光就贏
 void pelletEaten(GridObject* self, GridObject* other) {
     if (other->getTag() == "player") {
-        self->setX(-1);                                  // 移到畫面外：看不到、也不會再被吃
-        self->setY(-1);
+        self->setVisible(false);
         gPellets = gPellets - 1;
         if (gPellets <= 0) {
             gState = 1;
@@ -113,17 +113,15 @@ int main() {
             if (t == 1) {
                 gMaze->setWall(x, y, true);
             } else if (t == 0) {
-                game.spawn(new CallbackGridObject("pellet", x, y, NULL, pelletEaten));
+                game.spawn("pellet", x, y, NULL, pelletEaten);
                 gPellets = gPellets + 1;
             } else if (t == 2) {
-                gPlayer = new CallbackGridObject("pacman", x, y, playerMove, playerHit);
+                gPlayer = game.spawn("pacman", x, y, playerMove, playerHit);
                 gPlayer->setTag("player");
-                game.spawn(gPlayer);
             } else if (t == 3) {
-                CallbackGridObject* ghost = new CallbackGridObject("ghost", x, y, ghostMove);
+                GridObject* ghost = game.spawn("ghost", x, y, ghostMove);
                 ghost->setTag("ghost");
                 ghost->setTint(RED);      // 白色鬼魂素材染成紅色
-                game.spawn(ghost);
             }
         }
     }

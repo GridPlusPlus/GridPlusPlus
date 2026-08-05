@@ -49,6 +49,10 @@ public:
     Color getTint() const { return tint; }
     void  setTint(Color c) { tint = c; }
 
+    // 隱藏時仍會更新，但不會繪製或參與碰撞。
+    bool isVisible() const { return visible; }
+    void setVisible(bool value) { visible = value; }
+
     // 把自己畫出來；預設繪製 assetName，子類別可覆寫。
     // 因為實作需要完整的 GridEngine 定義，所以放在 GridPlusPlus.h 最後。
     virtual void render(GridEngine* engine);
@@ -63,6 +67,9 @@ protected:
     int direction = 0;
     Color tint = WHITE;
     GridEngine* engine = nullptr;
+
+private:
+    bool visible = true;
 };
 
 
