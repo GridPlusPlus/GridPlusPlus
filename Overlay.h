@@ -11,12 +11,18 @@
 
 #include <string>
 
+class GridEngine;
+
 // 使用像素座標、繪製在網格世界上方的畫面內容。
 class Overlay {
 public:
     virtual ~Overlay() {}
     virtual void onUpdate() {}
     virtual void draw() {}
+
+private:
+    friend class GridEngine;
+    GridEngine* engine = nullptr;
 };
 
 // 文字標籤：在 (x, y) 畫一行文字。

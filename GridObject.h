@@ -57,7 +57,6 @@ public:
     // 因為實作需要完整的 GridEngine 定義，所以放在 GridPlusPlus.h 最後。
     virtual void render(GridEngine* engine);
 
-    void setEngine(GridEngine* e) { engine = e; }
     GridEngine* getEngine() const { return engine; }
 
 protected:
@@ -69,6 +68,9 @@ protected:
     GridEngine* engine = nullptr;
 
 private:
+    friend class GridEngine;
+    void setEngine(GridEngine* e) { engine = e; }
+
     bool visible = true;
 };
 

@@ -29,14 +29,28 @@ enum {
 };
 
 static int testFrame = 0;
+static bool testWindowOpen = false;
+static int testTextureLoads = 0;
+static int testTextureUnloads = 0;
+static int testTextureUnloadsAfterClose = 0;
 
-inline void InitWindow(int, int, const char*) { testFrame = 0; }
-inline void CloseWindow() {}
+inline void InitWindow(int, int, const char*) {
+    testFrame = 0;
+    testWindowOpen = true;
+}
+inline void CloseWindow() { testWindowOpen = false; }
 inline void SetTargetFPS(int) {}
 inline bool WindowShouldClose() { return testFrame++ >= 2; }
 inline Texture2D LoadTextureFromImage(Image image) {
-    Texture2D texture = {0, image.width, image.height, image.mipmaps, image.format};
+    Texture2D texture = {
+        (unsigned int)++testTextureLoads,
+        image.width, image.height, image.mipmaps, image.format
+    };
     return texture;
+}
+inline void UnloadTexture(Texture2D) {
+    testTextureUnloads++;
+    if (!testWindowOpen) testTextureUnloadsAfterClose++;
 }
 inline void DrawTexturePro(Texture2D, Rectangle, Rectangle, Vector2, float, Color) {}
 inline void DrawRectangle(int, int, int, int, Color) {}

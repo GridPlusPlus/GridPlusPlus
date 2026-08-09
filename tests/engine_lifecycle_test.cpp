@@ -1,6 +1,7 @@
 #include "GridPlusPlus.h"
 
 #include <cassert>
+#include <stdexcept>
 
 static int callbackUpdates = 0;
 static int destroyedUpdates = 0;
@@ -14,6 +15,9 @@ static int hiddenDraws = 0;
 static int hideOnCollisionCalls = 0;
 static int clearedDestructors = 0;
 static int replacementUpdates = 0;
+static int engineCleanupDestructors = 0;
+static int overlayDestructors = 0;
+static int runtimeOverlayUpdates = 0;
 
 static void updateCallback(GridObject*) {
     callbackUpdates++;
@@ -83,41 +87,122 @@ public:
     }
 };
 
+class EngineCleanupObject : public GridObject {
+public:
+    ~EngineCleanupObject() override { engineCleanupDestructors++; }
+};
+
+class RuntimeChildOverlay : public Overlay {
+public:
+    ~RuntimeChildOverlay() override { overlayDestructors++; }
+    void onUpdate() override { runtimeOverlayUpdates++; }
+};
+
+class RuntimeAddingOverlay : public Overlay {
+public:
+    explicit RuntimeAddingOverlay(GridEngine* engine) : engine(engine) {}
+    ~RuntimeAddingOverlay() override { overlayDestructors++; }
+
+    void onUpdate() override {
+        if (added) return;
+        engine->addOverlay(new RuntimeChildOverlay());
+        added = true;
+    }
+
+private:
+    GridEngine* engine;
+    bool added = false;
+};
+
 int main() {
-    GridEngine game(2, 2);
+    {
+        GridEngine game(2, 2);
 
-    GridObject* callbackObject = game.spawn("", 0, 0, updateCallback);
-    assert(callbackObject != nullptr);
-    GridObject* existingObject = new SelfDestroyingObject();
-    assert(game.spawn(existingObject) == existingObject);
-    game.spawn(new RuntimeSpawner());
-    HiddenObject* hidden = new HiddenObject();
-    hidden->setVisible(false);
-    game.spawn(hidden);
-    game.spawn(new HideOnCollision());
-    game.spawn(new GridObject("", 5, 5));
-    game.spawn(new GridObject("", 5, 5));
+        bool nullSpawnRejected = false;
+        try {
+            game.spawn(nullptr);
+        } catch (const std::invalid_argument&) {
+            nullSpawnRejected = true;
+        }
+        assert(nullSpawnRejected);
 
-    game.run();
+        GridObject* callbackObject = game.spawn("", 0, 0, updateCallback);
+        assert(callbackObject != nullptr);
+        GridObject* existingObject = new SelfDestroyingObject();
+        assert(game.spawn(existingObject) == existingObject);
+        game.spawn(new RuntimeSpawner());
+        HiddenObject* hidden = new HiddenObject();
+        hidden->setVisible(false);
+        game.spawn(hidden);
+        game.spawn(new HideOnCollision());
+        game.spawn(new GridObject("", 5, 5));
+        game.spawn(new GridObject("", 5, 5));
 
-    assert(callbackUpdates == 2);
-    assert(destroyedUpdates == 1);
-    assert(destroyedCollisions == 0);
-    assert(destroyedDraws == 0);
-    assert(destructors == 1);
-    assert(runtimeSpawnUpdates == 1);
-    assert(hiddenUpdates == 2);
-    assert(hiddenCollisions == 0);
-    assert(hiddenDraws == 0);
-    assert(hideOnCollisionCalls == 1);
+        EngineCleanupObject* ownedObject = new EngineCleanupObject();
+        game.spawn(ownedObject);
+        bool duplicateSpawnRejected = false;
+        try {
+            game.spawn(ownedObject);
+        } catch (const std::logic_error&) {
+            duplicateSpawnRejected = true;
+        }
+        assert(duplicateSpawnRejected);
 
-    game.clearObjects();
+        bool nullOverlayRejected = false;
+        try {
+            game.addOverlay(nullptr);
+        } catch (const std::invalid_argument&) {
+            nullOverlayRejected = true;
+        }
+        assert(nullOverlayRejected);
 
-    GridEngine restartedGame(2, 2);
-    restartedGame.spawn(new ClearAndRespawn());
-    restartedGame.run();
+        RuntimeAddingOverlay* overlay = new RuntimeAddingOverlay(&game);
+        game.addOverlay(overlay);
+        bool duplicateOverlayRejected = false;
+        try {
+            game.addOverlay(overlay);
+        } catch (const std::logic_error&) {
+            duplicateOverlayRejected = true;
+        }
+        assert(duplicateOverlayRejected);
 
-    assert(clearedDestructors == 1);
-    assert(replacementUpdates == 1);
-    restartedGame.clearObjects();
+        game.run();
+
+        assert(callbackUpdates == 2);
+        assert(destroyedUpdates == 1);
+        assert(destroyedCollisions == 0);
+        assert(destroyedDraws == 0);
+        assert(destructors == 1);
+        assert(runtimeSpawnUpdates == 1);
+        assert(hiddenUpdates == 2);
+        assert(hiddenCollisions == 0);
+        assert(hiddenDraws == 0);
+        assert(hideOnCollisionCalls == 1);
+        assert(runtimeOverlayUpdates == 1);
+    }
+    assert(engineCleanupDestructors == 1);
+    assert(overlayDestructors == 2);
+
+    {
+        GridEngine restartedGame(2, 2);
+        restartedGame.spawn(new ClearAndRespawn());
+        restartedGame.run();
+
+        assert(clearedDestructors == 1);
+        assert(replacementUpdates == 1);
+    }
+
+    const int loadsBefore = testTextureLoads;
+    const int unloadsBefore = testTextureUnloads;
+    {
+        GridEngine assetGame(2, 2);
+        assetGame.loadAssets("examples/pacman/pacman.db");
+        const int texturesPerPack = testTextureLoads - loadsBefore;
+        assert(texturesPerPack > 0);
+
+        assetGame.loadAssets("examples/pacman/pacman.db");
+        assert(testTextureUnloads - unloadsBefore == texturesPerPack);
+    }
+    assert(testTextureLoads - loadsBefore == testTextureUnloads - unloadsBefore);
+    assert(testTextureUnloadsAfterClose == 0);
 }

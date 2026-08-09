@@ -16,6 +16,7 @@
 #endif
 
 #include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -30,7 +31,16 @@ public:
         SetTargetFPS(60);
     }
 
-    ~GridEngine() { CloseWindow(); }
+    ~GridEngine() {
+        deleteAllObjects();
+        clearOverlays();
+        // raylib 的 Texture 必須在 OpenGL context 關閉前釋放。
+        assets.clear();
+        CloseWindow();
+    }
+
+    GridEngine(const GridEngine&) = delete;
+    GridEngine& operator=(const GridEngine&) = delete;
 
     void loadAssets(const std::string& dbPath) { assets.load(dbPath); }
 
@@ -43,17 +53,23 @@ public:
     bool getShowGrid() const    { return showGrid; }
 
     // 物件生命週期：
+    // - spawn 後由引擎擁有；回傳指標只能借用，不可自行 delete。
     // - 主迴圈外的 spawn / destroy / clearObjects 立即生效。
     // - 主迴圈內 spawn 的物件從下一幀開始運作。
     // - 主迴圈內 destroy / clearObjects 會立即停用物件，並在幀末釋放記憶體。
     GridObject* spawn(GridObject* obj) {
-        obj->setEngine(this);
+        if (!obj)
+            throw std::invalid_argument("Grid++ 錯誤：不能 spawn nullptr");
+        if (obj->getEngine())
+            throw std::logic_error("Grid++ 錯誤：同一個 GridObject 不能 spawn 兩次");
+
         if (ticking) {
             objectsToSpawn.push_back(obj);
         } else {
             objects.push_back(obj);
-            obj->onStart();
         }
+        obj->setEngine(this);
+        if (!ticking) obj->onStart();
         return obj;
     }
 
@@ -80,7 +96,15 @@ public:
         }
     }
 
-    void addOverlay(Overlay* overlay) { overlays.push_back(overlay); }
+    // 呼叫後由引擎擁有 overlay。
+    void addOverlay(Overlay* overlay) {
+        if (!overlay)
+            throw std::invalid_argument("Grid++ 錯誤：不能加入 nullptr Overlay");
+        if (overlay->engine)
+            throw std::logic_error("Grid++ 錯誤：同一個 Overlay 不能加入兩次");
+        overlays.push_back(overlay);
+        overlay->engine = this;
+    }
 
     // 刪除所有遊戲物件，不影響覆蓋層與素材。
     void clearObjects() {
@@ -89,11 +113,7 @@ public:
             objectsToDestroy.insert(objectsToSpawn.begin(), objectsToSpawn.end());
             return;
         }
-        for (GridObject* o : objects) delete o;
-        for (GridObject* o : objectsToSpawn) delete o;
-        objects.clear();
-        objectsToSpawn.clear();
-        objectsToDestroy.clear();
+        deleteAllObjects();
     }
 
     void run() {
@@ -129,13 +149,28 @@ public:
     }
 
 private:
+    void deleteAllObjects() noexcept {
+        for (GridObject* object : objects) delete object;
+        for (GridObject* object : objectsToSpawn) delete object;
+        objects.clear();
+        objectsToSpawn.clear();
+        objectsToDestroy.clear();
+    }
+
+    void clearOverlays() noexcept {
+        for (Overlay* overlay : overlays) delete overlay;
+        overlays.clear();
+    }
+
     void tick() {
         ticking = true;
 
         // 更新
         for (GridObject* object : objects)
             if (!isPendingDestroy(object)) object->onUpdate();
-        for (Overlay* overlay : overlays) overlay->onUpdate();
+        // 固定本幀數量，讓 callback 中新增 Overlay 不會使 iterator 失效。
+        const size_t overlayCount = overlays.size();
+        for (size_t i = 0; i < overlayCount; i++) overlays[i]->onUpdate();
 
         // 碰撞
         for (size_t i = 0; i < objects.size(); i++) {

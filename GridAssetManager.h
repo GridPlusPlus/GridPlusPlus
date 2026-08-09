@@ -20,6 +20,12 @@
 // 從素材資料庫建立 raylib Texture2D。
 class GridAssetManager {
 public:
+    GridAssetManager() = default;
+    ~GridAssetManager() { clear(); }
+
+    GridAssetManager(const GridAssetManager&) = delete;
+    GridAssetManager& operator=(const GridAssetManager&) = delete;
+
     void load(const std::string& path) {
         std::ifstream f(path, std::ios::binary);
         if (!f) throw std::runtime_error("Grid++ 錯誤：找不到素材檔 '" + path + "'");
@@ -42,30 +48,49 @@ public:
         if (spritesRoot == 0)
             throw std::runtime_error("Grid++ 錯誤：'" + path + "' 裡找不到 sprites 資料表");
 
-        // sprites 欄位依序為 id、name、tags、image_data。
-        database.walkTable(spritesRoot,
-            [&](int64_t, const std::vector<gridpp_detail::Column>& cols) {
-                if (cols.size() < 4) return;
-                std::string name(cols[1].bytes.begin(), cols[1].bytes.end());
-                const std::vector<unsigned char>& blob = cols[3].bytes;
-                if (blob.size() != 4096) {
-                    std::cout << "Grid++ 警告：素材 '" << name
-                              << "' 不是 32x32 RGBA，已略過。\n";
-                    return;
-                }
-                textures.insert({ name, makeTexture(blob) });
-            });
+        std::multimap<std::string, Texture2D> loadedTextures;
+        try {
+            // sprites 欄位依序為 id、name、tags、image_data。
+            database.walkTable(spritesRoot,
+                [&](int64_t, const std::vector<gridpp_detail::Column>& cols) {
+                    if (cols.size() < 4) return;
+                    std::string name(cols[1].bytes.begin(), cols[1].bytes.end());
+                    const std::vector<unsigned char>& blob = cols[3].bytes;
+                    if (blob.size() != 4096) {
+                        std::cout << "Grid++ 警告：素材 '" << name
+                                  << "' 不是 32x32 RGBA，已略過。\n";
+                        return;
+                    }
 
-        // 載入後檢查重複名稱。
-        for (auto it = textures.begin(); it != textures.end(); ) {
-            const std::string key = it->first;
-            size_t c = textures.count(key);
-            if (c > 1)
-                std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << c
-                          << " 次！之後呼叫 get(\"" << key << "\") 會直接報錯。\n";
-            it = textures.upper_bound(key);
+                    Texture2D texture = makeTexture(blob);
+                    try {
+                        loadedTextures.emplace(name, texture);
+                    } catch (...) {
+                        UnloadTexture(texture);
+                        throw;
+                    }
+                });
+
+            // 載入後檢查重複名稱。
+            for (auto it = loadedTextures.begin(); it != loadedTextures.end(); ) {
+                const std::string key = it->first;
+                size_t c = loadedTextures.count(key);
+                if (c > 1)
+                    std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << c
+                              << " 次！之後呼叫 get(\"" << key << "\") 會直接報錯。\n";
+                it = loadedTextures.upper_bound(key);
+            }
+        } catch (...) {
+            unload(loadedTextures);
+            throw;
         }
+
+        // 新素材全部成功後才取代舊素材，避免載入失敗時失去原本資源。
+        clear();
+        textures.swap(loadedTextures);
     }
+
+    void clear() noexcept { unload(textures); }
 
     // 名稱不存在或重複時丟出例外。
     Texture2D get(const std::string& name) {
@@ -82,6 +107,11 @@ public:
     bool has(const std::string& name) const { return textures.count(name) >= 1; }
 
 private:
+    static void unload(std::multimap<std::string, Texture2D>& source) noexcept {
+        for (const auto& entry : source) UnloadTexture(entry.second);
+        source.clear();
+    }
+
     // 將 32×32 RGBA 資料上傳為 raylib texture。
     static Texture2D makeTexture(const std::vector<unsigned char>& rgba) {
         Image img = {};
