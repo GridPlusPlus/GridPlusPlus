@@ -22,6 +22,8 @@ class GridObject {
 public:
     GridObject() = default;
     GridObject(std::string asset_name, int x, int y);
+    GridObject(const GridObject& other);
+    GridObject& operator=(const GridObject&) = delete;
     virtual ~GridObject() = default;
 
     // 引擎呼叫的生命週期函式。
@@ -97,6 +99,16 @@ private:
 
 inline GridObject::GridObject(std::string asset_name, int x, int y)
     : grid_x_(x), grid_y_(y), asset_name_(std::move(asset_name)) {}
+
+inline GridObject::GridObject(const GridObject& other)
+    : grid_x_(other.grid_x_),
+      grid_y_(other.grid_y_),
+      asset_name_(other.asset_name_),
+      tag_(other.tag_),
+      direction_(other.direction_),
+      tint_(other.tint_),
+      visible_(other.visible_),
+      engine_(nullptr) {}
 
 inline void GridObject::Move(int dx, int dy) {
     grid_x_ += dx;

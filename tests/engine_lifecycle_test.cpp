@@ -126,6 +126,8 @@ int main() {
 
         GridObject* callback_object = game.Spawn("", 0, 0, UpdateCallback);
         assert(callback_object != nullptr);
+        GridObject copied_object(*callback_object);
+        assert(copied_object.engine() == nullptr);
         GridObject* existing_object = new SelfDestroyingObject();
         assert(game.Spawn(existing_object) == existing_object);
         game.Spawn(new RuntimeSpawner());
