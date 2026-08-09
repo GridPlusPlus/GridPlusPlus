@@ -15,15 +15,15 @@
 #include "GridPlusPlus.h"
 
 // 一個普通函式：self 就是「這個物件自己」，引擎每幀會把它交給你。
-void playerMove(GridObject* self) {
+void MovePlayer(GridObject* self) {
     if (IsKeyPressed(KEY_RIGHT) &&
-        self->getX() < self->getEngine()->getCols() - 1) self->move(1, 0);
+        self->x() < self->engine()->cols() - 1) self->Move(1, 0);
 }
 
 int main() {
     GridEngine game(10, 10, 40);
-    game.spawn(new CallbackGridObject("hero", 5, 5, playerMove));
-    game.run();
+    game.Spawn(new CallbackGridObject("hero", 5, 5, MovePlayer));
+    game.Run();
 }
 ```
 
@@ -42,17 +42,17 @@ CallbackGridObject(std::string asset, int x, int y,
 | `update` | 每幀要跑的函式，型別 `void(*)(GridObject* self)`。 |
 | `collide` | 選填，同格碰撞時跑的函式 `void(*)(GridObject* self, GridObject* other)`；不填就不處理碰撞。 |
 
-`CallbackGridObject` 其餘功能都跟 `GridObject` 一樣（`getX` / `move` / `setTag` / `setTint`…），
+`CallbackGridObject` 其餘功能都跟 `GridObject` 一樣（`x` / `Move` / `set_tag` / `set_tint`…），
 差別只在「行為用傳進來的函式決定」，而不是覆寫虛擬函式。
 
 ## 兩個要記得的點
 
 **1. 函式一定有一個 `self` 參數。** 普通函式沒有 `this`，所以引擎會把物件本身當 `self`
-傳給你；要操作這個物件就寫 `self->move(...)`、`self->getX()`。這其實是日後 `this` 的
+傳給你；要操作這個物件就寫 `self->Move(...)`、`self->x()`。這其實是日後 `this` 的
 前身——`this` 就是編譯器自動幫你收的那個 `self`。
 
-**2. 用 `getEngine()` 查地圖大小。** 想做邊界檢查時，透過
-`self->getEngine()->getCols()` / `getRows()` 拿到格數。
+**2. 用 `engine()` 查地圖大小。** 想做邊界檢查時，透過
+`self->engine()->cols()` / `rows()` 拿到格數。
 
 ## 天花板：函式沒有「每個物件自己的狀態」
 
@@ -68,14 +68,14 @@ CallbackGridObject(std::string asset, int x, int y,
 - **根本不需要記狀態**的角色（像上面「按鍵才走」的玩家）。
 
 完整示範見範例 `examples/pacman_easy/`：玩家 + 一隻鬼 + 豆子，狀態全部放全域。
-其中「豆子被吃掉」用了一個小技巧——不記 `eaten` 旗標，而是把豆子 `setX(-1)`
-移出畫面（等於消失、也不會再被吃），剛好避開了「每實例狀態」。
+其中「豆子被吃掉」用了一個小技巧——不記 `eaten` 旗標，而是把豆子 `set_visible(false)`，
+讓它不再繪製或碰撞，剛好避開了「每實例狀態」。
 
 ## 升級到繼承版
 
 當你想要「很多個各自記狀態的角色」（例如四隻鬼各有自己的計時器與方向），
 全域變數就不夠用了——**這正是需要類別的時機**：每個物件用自己的成員變數記狀態。
 
-升級很直接：把 `playerMove(GridObject* self)` 搬進
-`class Player : public GridObject` 的 `onUpdate()`，`self->` 換成直接呼叫即可。
+升級很直接：把 `MovePlayer(GridObject* self)` 搬進
+`class Player : public GridObject` 的 `OnUpdate()`，`self->` 換成直接呼叫即可。
 完整版見 [Pac-Man 拆解](../tutorial/pacman.md)。

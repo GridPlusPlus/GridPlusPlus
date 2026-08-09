@@ -10,7 +10,7 @@
 
 - **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫，不需編譯整個函式庫。
 - **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `onStart` / `onUpdate` / `onCollide`。
+- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `.db` 由引擎內建的迷你讀取器處理。
 - **選用的迷宮模組**：`GridMaze` 可讀地圖、自動拼接牆壁外觀、提供碰撞查詢。
 - **唯一依賴 [raylib](https://www.raylib.com/)**：只負責開視窗與畫圖。
@@ -20,19 +20,22 @@
 ```cpp
 #include "GridPlusPlus.h"
 
+using gridpp::GridEngine;
+using gridpp::GridObject;
+
 class Player : public GridObject {
 public:
     Player() : GridObject("hero", 5, 5) {}
-    void onUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) move(1, 0);
+    void OnUpdate() override {
+        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
     }
 };
 
 int main() {
     GridEngine game(10, 10, 32);   // 10x10 網格，每格 32 像素
-    game.loadAssets("assets.db");
-    game.spawn(new Player());
-    game.run();
+    game.LoadAssets("assets.db");
+    game.Spawn(new Player());
+    game.Run();
 }
 ```
 
@@ -48,11 +51,11 @@ int main() {
 
    ```bash
    # Windows / MinGW
-   g++ template.cpp -o game -lraylib -lopengl32 -lgdi32 -lwinmm
+   g++ -std=c++17 template.cpp -o game -lraylib -lopengl32 -lgdi32 -lwinmm
    # Linux
-   g++ template.cpp -o game -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+   g++ -std=c++17 template.cpp -o game -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
    # macOS
-   clang++ template.cpp -o game -lraylib -framework OpenGL -framework Cocoa \
+   clang++ -std=c++17 template.cpp -o game -lraylib -framework OpenGL -framework Cocoa \
        -framework IOKit -framework CoreVideo -framework CoreAudio
    ```
 

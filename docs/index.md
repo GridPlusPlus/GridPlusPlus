@@ -10,7 +10,7 @@
 
 - **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫。
 - **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `onStart` / `onUpdate` / `onCollide`。
+- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `assets.db` 由引擎內建的迷你讀取器處理。
 - **選用的迷宮模組**：`GridMaze` 可讀地圖、自動拼接牆壁外觀、提供碰撞查詢。
 
@@ -19,19 +19,22 @@
 ```cpp
 #include "GridPlusPlus.h"
 
+using gridpp::GridEngine;
+using gridpp::GridObject;
+
 class Player : public GridObject {
 public:
     Player() : GridObject("hero", 5, 5) {}
-    void onUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) move(1, 0);
+    void OnUpdate() override {
+        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
     }
 };
 
 int main() {
     GridEngine game(10, 10, 32);   // 10x10 網格，每格 32 像素
-    game.loadAssets("assets.db");
-    game.spawn(new Player());
-    game.run();
+    game.LoadAssets("assets.db");
+    game.Spawn(new Player());
+    game.Run();
 }
 ```
 

@@ -1,7 +1,7 @@
 # 迷你 SQLite 讀取器
 
 Grid++ 的素材包是 SQLite 檔，但學生編譯遊戲時不需要安裝或連結 SQLite。
-`GridEngine.h` 會自動引入 `GridSQLite.h`，再透過內部的 `SQLiteReader`
+`GridEngine.h` 會自動引入 `GridSQLite.h`，再透過內部的 `SqliteReader`
 找出 `sprites` 資料表並取出素材。
 
 ## 為什麼自己讀檔案格式
@@ -47,17 +47,17 @@ graph TD
 
 | 程式 | 負責什麼 |
 |---|---|
-| `SQLiteReader(data)` | 驗證 magic、page size、編碼、格式版本與檔案頁數。 |
-| `readBEU16` / `readBEU32` | 讀取 SQLite 使用的 big-endian 無號整數。 |
-| `readVarint` | 解碼最長 9 bytes 的 SQLite varint。 |
-| `readBEI64` | 把 record 內 1～8 bytes 的有號整數轉成 `int64_t`。 |
-| `decodeRecord` | 依 serial type 把 record 拆成一排欄位。 |
-| `walkTable` | 從 root page 走訪 table B-tree，串接 overflow pages。 |
+| `SqliteReader(data)` | 驗證 magic、page size、編碼、格式版本與檔案頁數。 |
+| `ReadBigEndianUint16` / `ReadBigEndianUint32` | 讀取 SQLite 使用的 big-endian 無號整數。 |
+| `ReadVarint` | 解碼最長 9 bytes 的 SQLite varint。 |
+| `ReadBigEndianInt64` | 把 record 內 1～8 bytes 的有號整數轉成 `int64_t`。 |
+| `DecodeRecord` | 依 serial type 把 record 拆成一排欄位。 |
+| `WalkTable` | 從 root page 走訪 table B-tree，串接 overflow pages。 |
 
 ## 為什麼要做邊界檢查
 
 解析二進位檔時，檔案裡的 page number、cell offset 與欄位長度都不能直接相信。
-`SQLiteReader` 在每次讀取前檢查範圍，也會拒絕重複頁面、循環 overflow chain、
+`SqliteReader` 在每次讀取前檢查範圍，也會拒絕重複頁面、循環 overflow chain、
 過深的 B-tree、截斷的 record，以及檔頭與實際大小不一致的資料庫。
 
 這些檢查不會讓它變成完整 SQLite；目的只是確保不合法的素材包會明確失敗，
@@ -65,8 +65,8 @@ graph TD
 
 ## Overflow payload 公式
 
-`walkTablePage` 會依 SQLite 規格計算多少 payload 留在葉頁、多少接到 overflow pages。
-其中 `maxLocal = usable - 35`、`minLocal = ((usable - 12) * 32 / 255) - 23`
+`WalkTablePage` 會依 SQLite 規格計算多少 payload 留在葉頁、多少接到 overflow pages。
+其中 `max_local = usable_size_ - 35`、`min_local = ((usable_size_ - 12) * 32 / 255) - 23`
 等公式是檔案格式的一部分，不能自行簡化。每張素材是 4096 bytes，通常會走到這條路徑。
 
 完整實作在 `GridSQLite.h`；素材載入端則在 `GridAssetManager.h` 的

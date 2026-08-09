@@ -2,13 +2,12 @@
  * @file GridAssetManager.h
  * @brief GridEngine 內部使用的素材管理器。
  */
-#ifndef GRIDASSETMANAGER_H
-#define GRIDASSETMANAGER_H
+#ifndef GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
+#define GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
 
-#include "GridSQLite.h"
-#include "raylib.h"
-
+#include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -17,113 +16,127 @@
 #include <string>
 #include <vector>
 
+#include "GridSQLite.h"
+#include "raylib.h"
+
+namespace gridpp {
+
 // 從素材資料庫建立 raylib Texture2D。
 class GridAssetManager {
 public:
     GridAssetManager() = default;
-    ~GridAssetManager() { clear(); }
+    ~GridAssetManager();
 
     GridAssetManager(const GridAssetManager&) = delete;
     GridAssetManager& operator=(const GridAssetManager&) = delete;
 
-    void load(const std::string& path) {
-        std::ifstream f(path, std::ios::binary);
-        if (!f) throw std::runtime_error("Grid++ 錯誤：找不到素材檔 '" + path + "'");
-        std::vector<unsigned char> data(
-            (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-
-        gridpp_detail::SQLiteReader database(data);
-
-        // sqlite_master 欄位依序為 type、name、tbl_name、rootpage、sql。
-        uint32_t spritesRoot = 0;
-        database.walkTable(1,
-            [&](int64_t, const std::vector<gridpp_detail::Column>& cols) {
-                if (cols.size() >= 4 && cols[0].kind == 1 && cols[3].kind == 0) {
-                    std::string ttype(cols[0].bytes.begin(), cols[0].bytes.end());
-                    std::string tname(cols[2].bytes.begin(), cols[2].bytes.end());
-                    if (ttype == "table" && tname == "sprites")
-                        spritesRoot = (uint32_t)cols[3].i;
-                }
-            });
-        if (spritesRoot == 0)
-            throw std::runtime_error("Grid++ 錯誤：'" + path + "' 裡找不到 sprites 資料表");
-
-        std::multimap<std::string, Texture2D> loadedTextures;
-        try {
-            // sprites 欄位依序為 id、name、tags、image_data。
-            database.walkTable(spritesRoot,
-                [&](int64_t, const std::vector<gridpp_detail::Column>& cols) {
-                    if (cols.size() < 4) return;
-                    std::string name(cols[1].bytes.begin(), cols[1].bytes.end());
-                    const std::vector<unsigned char>& blob = cols[3].bytes;
-                    if (blob.size() != 4096) {
-                        std::cout << "Grid++ 警告：素材 '" << name
-                                  << "' 不是 32x32 RGBA，已略過。\n";
-                        return;
-                    }
-
-                    Texture2D texture = makeTexture(blob);
-                    try {
-                        loadedTextures.emplace(name, texture);
-                    } catch (...) {
-                        UnloadTexture(texture);
-                        throw;
-                    }
-                });
-
-            // 載入後檢查重複名稱。
-            for (auto it = loadedTextures.begin(); it != loadedTextures.end(); ) {
-                const std::string key = it->first;
-                size_t c = loadedTextures.count(key);
-                if (c > 1)
-                    std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << c
-                              << " 次！之後呼叫 get(\"" << key << "\") 會直接報錯。\n";
-                it = loadedTextures.upper_bound(key);
-            }
-        } catch (...) {
-            unload(loadedTextures);
-            throw;
-        }
-
-        // 新素材全部成功後才取代舊素材，避免載入失敗時失去原本資源。
-        clear();
-        textures.swap(loadedTextures);
-    }
-
-    void clear() noexcept { unload(textures); }
+    void Load(const std::filesystem::path& path);
 
     // 名稱不存在或重複時丟出例外。
-    Texture2D get(const std::string& name) {
-        size_t c = textures.count(name);
-        if (c == 0)
-            throw std::runtime_error("Grid++ 錯誤：找不到素材 '" + name + "'");
-        if (c > 1)
-            throw std::runtime_error(
-                "Grid++ 錯誤：素材名稱 '" + name + "' 重複出現 " + std::to_string(c) +
-                " 次，無法分辨你要哪一個！請讓素材名稱保持唯一。");
-        return textures.find(name)->second;
-    }
+    Texture2D Get(const std::string& name) const;
+    bool Has(const std::string& name) const { return textures_.count(name) != 0; }
 
-    bool has(const std::string& name) const { return textures.count(name) >= 1; }
+    void Clear() noexcept { Unload(textures_); }
 
 private:
-    static void unload(std::multimap<std::string, Texture2D>& source) noexcept {
-        for (const auto& entry : source) UnloadTexture(entry.second);
-        source.clear();
-    }
+    static void Unload(std::multimap<std::string, Texture2D>& source) noexcept;
 
     // 將 32×32 RGBA 資料上傳為 raylib texture。
-    static Texture2D makeTexture(const std::vector<unsigned char>& rgba) {
-        Image img = {};
-        img.data    = (void*)rgba.data();
-        img.width   = 32;
-        img.height  = 32;
-        img.mipmaps = 1;
-        img.format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        return LoadTextureFromImage(img);
-    }
+    static Texture2D MakeTexture(const std::vector<unsigned char>& rgba);
 
-    std::multimap<std::string, Texture2D> textures;
+    std::multimap<std::string, Texture2D> textures_;
 };
 
-#endif // GRIDASSETMANAGER_H
+// Implementation details only below here.
+
+inline GridAssetManager::~GridAssetManager() { Clear(); }
+
+inline void GridAssetManager::Load(const std::filesystem::path& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) throw std::runtime_error("GridAssetManager Error: Cannot open '" + path.string() + "'");
+    const std::vector<unsigned char> data{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+
+    internal::SqliteReader database(data);
+
+    // sqlite_master 欄位依序為 type、name、tbl_name、rootpage、sql。
+    std::uint32_t sprites_root = 0;
+    database.WalkTable(1, [&](std::int64_t, const std::vector<internal::Column>& columns) {
+        if (columns.size() >= 4 && columns[0].kind == 1 && columns[3].kind == 0) {
+            const std::string type(columns[0].bytes.begin(), columns[0].bytes.end());
+            const std::string name(columns[2].bytes.begin(), columns[2].bytes.end());
+            if (type == "table" && name == "sprites") sprites_root = static_cast<std::uint32_t>(columns[3].integer);
+        }
+    });
+    if (sprites_root == 0) {
+        throw std::runtime_error("GridAssetManager Error: Table 'sprites' not found in '" + path.string() + "'");
+    }
+
+    std::multimap<std::string, Texture2D> loaded_textures;
+    try {
+        // sprites 欄位依序為 id、name、tags、image_data。
+        database.WalkTable(sprites_root, [&](std::int64_t, const std::vector<internal::Column>& columns) {
+            if (columns.size() < 4) return;
+            const std::string name(columns[1].bytes.begin(), columns[1].bytes.end());
+            const std::vector<unsigned char>& blob = columns[3].bytes;
+            if (blob.size() != 4096) {
+                std::cout << "Grid++ 警告：素材 '" << name << "' 不是 32x32 RGBA，已略過。\n";
+                return;
+            }
+
+            const Texture2D texture = MakeTexture(blob);
+            try {
+                loaded_textures.emplace(name, texture);
+            } catch (...) {
+                UnloadTexture(texture);
+                throw;
+            }
+        });
+
+        // 載入後檢查重複名稱。
+        for (auto it = loaded_textures.begin(); it != loaded_textures.end();) {
+            const std::string& key = it->first;
+            const std::size_t count = loaded_textures.count(key);
+            if (count > 1) {
+                std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << count << " 次！之後呼叫 Get(\"" << key
+                          << "\") 會直接報錯。\n";
+            }
+            it = loaded_textures.upper_bound(key);
+        }
+    } catch (...) {
+        Unload(loaded_textures);
+        throw;
+    }
+
+    // 新素材全部成功後才取代舊素材，避免載入失敗時失去原本資源。
+    Clear();
+    textures_.swap(loaded_textures);
+}
+
+inline Texture2D GridAssetManager::Get(const std::string& name) const {
+    const std::size_t count = textures_.count(name);
+    if (count == 0) throw std::runtime_error("Grid++ 錯誤：找不到素材 '" + name + "'");
+    if (count > 1) {
+        throw std::runtime_error("Grid++ 錯誤：素材名稱 '" + name + "' 重複出現 " + std::to_string(count) +
+                                 " 次，無法分辨你要哪一個！請讓素材名稱保持唯一。");
+    }
+    return textures_.find(name)->second;
+}
+
+inline void GridAssetManager::Unload(std::multimap<std::string, Texture2D>& source) noexcept {
+    for (const auto& entry : source) UnloadTexture(entry.second);
+    source.clear();
+}
+
+inline Texture2D GridAssetManager::MakeTexture(const std::vector<unsigned char>& rgba) {
+    Image image = {};
+    image.data = const_cast<unsigned char*>(rgba.data());
+    image.width = 32;
+    image.height = 32;
+    image.mipmaps = 1;
+    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    return LoadTextureFromImage(image);
+}
+
+}  // namespace gridpp
+
+#endif  // GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_

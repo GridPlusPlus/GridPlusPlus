@@ -4,70 +4,89 @@
  *
  * 此檔為核心實作拆分；一般使用者請 include "GridPlusPlus.h"。
  */
-#ifndef OVERLAY_H
-#define OVERLAY_H
+#ifndef GRID_PLUS_PLUS_OVERLAY_H_
+#define GRID_PLUS_PLUS_OVERLAY_H_
+
+#include <string>
+#include <utility>
 
 #include "raylib.h"
 
-#include <string>
+namespace gridpp {
 
 class GridEngine;
 
 // 使用像素座標、繪製在網格世界上方的畫面內容。
 class Overlay {
 public:
-    virtual ~Overlay() {}
-    virtual void onUpdate() {}
-    virtual void draw() {}
+    virtual ~Overlay() = default;
+    virtual void OnUpdate() {}
+    virtual void Draw() {}
 
 private:
     friend class GridEngine;
-    GridEngine* engine = nullptr;
+
+    GridEngine* engine_ = nullptr;
 };
 
 // 文字標籤：在 (x, y) 畫一行文字。
 class Label : public Overlay {
 public:
-    Label(const std::string& text, int x, int y, int fontSize = 20, Color color = BLACK)
-        : text(text), x(x), y(y), fontSize(fontSize), color(color) {}
+    Label(std::string text, int x, int y, int font_size = 20, Color color = BLACK);
 
-    void setText(const std::string& t) { text = t; }
+    void set_text(const std::string& text) { text_ = text; }
+    void Draw() override;
 
-    void draw() override {
-        DrawText(text.c_str(), x, y, fontSize, color);
-    }
-
-protected:
-    std::string text;
-    int x, y, fontSize;
-    Color color;
+private:
+    std::string text_;
+    int x_;
+    int y_;
+    int font_size_;
+    Color color_;
 };
 
 // 可點擊的文字按鈕。
 class Button : public Overlay {
 public:
-    Button(const std::string& text, int x, int y, int w, int h)
-        : text(text), x(x), y(y), w(w), h(h) {}
+    Button(std::string text, int x, int y, int width, int height);
 
-    virtual void onClick() {}
+    virtual void OnClick() {}
+    void OnUpdate() override;
+    void Draw() override;
 
-    void onUpdate() override {
-        Vector2 m = GetMousePosition();
-        hover = (m.x >= x && m.x <= x + w && m.y >= y && m.y <= y + h);
-        if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) onClick();
-    }
-
-    void draw() override {
-        DrawRectangle(x, y, w, h, hover ? SKYBLUE : LIGHTGRAY);
-        DrawRectangleLines(x, y, w, h, DARKGRAY);
-        int fs = 20, tw = MeasureText(text.c_str(), fs);
-        DrawText(text.c_str(), x + (w - tw) / 2, y + (h - fs) / 2, fs, BLACK);
-    }
-
-protected:
-    std::string text;
-    int x, y, w, h;
-    bool hover = false;
+private:
+    std::string text_;
+    int x_;
+    int y_;
+    int width_;
+    int height_;
+    bool hover_ = false;
 };
 
-#endif // OVERLAY_H
+// Implementation details only below here.
+
+inline Label::Label(std::string text, int x, int y, int font_size, Color color)
+    : text_(std::move(text)), x_(x), y_(y), font_size_(font_size), color_(color) {}
+
+inline void Label::Draw() { DrawText(text_.c_str(), x_, y_, font_size_, color_); }
+
+inline Button::Button(std::string text, int x, int y, int width, int height)
+    : text_(std::move(text)), x_(x), y_(y), width_(width), height_(height) {}
+
+inline void Button::OnUpdate() {
+    const Vector2 mouse = GetMousePosition();
+    hover_ = mouse.x >= x_ && mouse.x <= x_ + width_ && mouse.y >= y_ && mouse.y <= y_ + height_;
+    if (hover_ && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) OnClick();
+}
+
+inline void Button::Draw() {
+    DrawRectangle(x_, y_, width_, height_, hover_ ? SKYBLUE : LIGHTGRAY);
+    DrawRectangleLines(x_, y_, width_, height_, DARKGRAY);
+    constexpr int kFontSize = 20;
+    const int text_width = MeasureText(text_.c_str(), kFontSize);
+    DrawText(text_.c_str(), x_ + (width_ - text_width) / 2, y_ + (height_ - kFontSize) / 2, kFontSize, BLACK);
+}
+
+}  // namespace gridpp
+
+#endif  // GRID_PLUS_PLUS_OVERLAY_H_

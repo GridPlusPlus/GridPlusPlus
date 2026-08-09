@@ -1,6 +1,6 @@
 # 開始使用
 
-Grid++ 只依賴 [raylib](https://www.raylib.com/)（負責開視窗與畫圖），編譯器需支援 C++11
+Grid++ 只依賴 [raylib](https://www.raylib.com/)（負責開視窗與畫圖），編譯器需支援 C++17
 （GCC / Clang / MSVC 皆可）。下面依作業系統說明：先裝 raylib，再編譯內附的 Pac-Man 範例。
 
 ## 1. 安裝 raylib
@@ -69,7 +69,7 @@ cd examples/pacman
 raylib 已裝進工具鏈（MSYS2 / MinGW）時，要連結幾個 Windows 系統函式庫：
 
 ```bash
-g++ main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
+g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
 ./game
 ```
 
@@ -77,7 +77,7 @@ g++ main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
 複製到 `game.exe` 同一資料夾：
 
 ```bash
-g++ main.cpp -I../.. -L../../lib -lraylibdll -lopengl32 -lgdi32 -lwinmm -o game
+g++ -std=c++17 main.cpp -I../.. -L../../lib -lraylibdll -lopengl32 -lgdi32 -lwinmm -o game
 cp ../../lib/raylib.dll .      # 動態庫：dll 要和 game.exe 同資料夾
 ./game
 ```
@@ -87,7 +87,7 @@ cp ../../lib/raylib.dll .      # 動態庫：dll 要和 game.exe 同資料夾
 系統函式庫換成 OpenGL / X11 / pthread / 數學庫：
 
 ```bash
-g++ main.cpp -o game -I../.. -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+g++ -std=c++17 main.cpp -o game -I../.. -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 ./game
 ```
 
@@ -96,7 +96,7 @@ Wayland 環境若連結出錯，可改加 raylib 官方文件列出的 Wayland �
 ### macOS
 
 ```bash
-g++ main.cpp -o game -I../.. -I$(brew --prefix raylib)/include -L$(brew --prefix raylib)/lib -lraylib
+g++ -std=c++17 main.cpp -o game -I../.. -I$(brew --prefix raylib)/include -L$(brew --prefix raylib)/lib -lraylib
 ./game
 ```
 
@@ -110,22 +110,28 @@ g++ main.cpp -o game -I../.. -I$(brew --prefix raylib)/include -L$(brew --prefix
 
 最小骨架如下，把它存成 `.cpp`，用上面的方式編譯即可：
 
+Grid++ 的型別放在 `gridpp` namespace；下面用 `using` 只引入需要的兩個型別。後續文件的短片段會省略
+這些 `using` 宣告。
+
 ```cpp
 #include "GridPlusPlus.h"
+
+using gridpp::GridEngine;
+using gridpp::GridObject;
 
 class Player : public GridObject {
 public:
     Player() : GridObject("pacman", 5, 5) {}
-    void onUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) move(1, 0);
+    void OnUpdate() override {
+        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
     }
 };
 
 int main() {
     GridEngine game(10, 10, 32);
-    game.loadAssets("assets.db");
-    game.spawn(new Player());
-    game.run();
+    game.LoadAssets("assets.db");
+    game.Spawn(new Player());
+    game.Run();
 }
 ```
 

@@ -25,7 +25,7 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 === "Windows"
 
     ```bash
-    g++ main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
+    g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
     ./game
     ```
 
@@ -35,14 +35,14 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 === "Linux"
 
     ```bash
-    g++ main.cpp -I../.. -o game $(pkg-config --libs raylib)
+    g++ -std=c++17 main.cpp -I../.. -o game $(pkg-config --libs raylib)
     ./game
     ```
 
 === "macOS"
 
     ```bash
-    clang++ main.cpp -I../.. -o game -lraylib \
+    clang++ -std=c++17 main.cpp -I../.. -o game -lraylib \
         -framework OpenGL -framework Cocoa -framework IOKit \
         -framework CoreVideo -framework CoreAudio
     ./game
@@ -53,25 +53,25 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 
 ## 程式怎麼運作
 
-**地圖**是一個寫死的二維陣列 `gMap[H][W]`（`1`=牆 `0`=豆子 `2`=玩家 `3`=鬼魂），
+**地圖**是一個寫死的二維陣列 `kMap[kHeight][kWidth]`（`1`=牆 `0`=豆子 `2`=玩家 `3`=鬼魂），
 `main()` 用兩層 for 迴圈逐格擺好牆、豆子、玩家、鬼。迷宮用最簡單的畫法：
-`GridMaze` + `setWallAsset("wall_cross")`，所有牆都用同一張實心方塊。
+`GridMaze` + `SetWallAsset("wall_cross")`，所有牆都用同一張實心方塊。
 
 **角色的行為都是普通函式**，在 `new CallbackGridObject(...)` 時傳進去：
 
-- `playerMove(self)`：方向鍵按一下走一格，用 `isWall()` 檢查前面不是牆才走。
-- `ghostMove(self)`：每 15 幀走一格（比玩家慢），往玩家的方向靠近、會避開牆。
-- `pelletEaten(self, other)`：被玩家吃到就 `setX(-1)` 移出畫面（等於消失），剩餘 -1。
-- `playerHit(self, other)`：撞到 tag 為 `ghost` 的東西就失敗。
+- `MovePlayer(self)`：方向鍵按一下走一格，用 `IsWall()` 檢查前面不是牆才走。
+- `MoveGhost(self)`：每 15 幀走一格（比玩家慢），往玩家的方向靠近、會避開牆。
+- `EatPellet(self, other)`：被玩家吃到就 `set_visible(false)`，剩餘 -1。
+- `HitPlayer(self, other)`：撞到 tag 為 `ghost` 的東西就失敗。
 
-**狀態全部放全域變數**：`gState`（遊戲中/贏/輸）、`gPellets`（剩幾顆豆子）、
-`gGhostTimer`（鬼的計時器）、`gPlayer`（讓鬼知道玩家在哪）、`gMaze`（查牆用）。
+**狀態全部放全域變數**：`g_state`（遊戲中/贏/輸）、`g_pellets`（剩幾顆豆子）、
+`g_ghost_timer`（鬼的計時器）、`g_player`（讓鬼知道玩家在哪）、`g_maze`（查牆用）。
 因為**只有一個玩家、一隻鬼**，這些狀態放全域就夠——這正是 `CallbackGridObject` 能用的前提。
 
 !!! tip "兩個關鍵小地方"
     - **`self` 參數**：普通函式沒有 `this`，所以引擎把物件本身當 `self` 傳進來，
-      要操作它就寫 `self->move(...)`。
-    - **豆子不用記「吃了沒」**：直接把被吃的豆子移出畫面，就不需要每顆豆子各自的旗標——
+      要操作它就寫 `self->Move(...)`。
+    - **豆子不用記「吃了沒」**：直接隱藏被吃的豆子，就不需要每顆豆子各自的旗標——
       剛好繞過 `CallbackGridObject`「沒有每實例狀態」的限制。
 
 ## 接下來
