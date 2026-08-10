@@ -13,6 +13,7 @@
 - **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `assets.db` 由引擎內建的迷你讀取器處理。
 - **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
+- **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。
 
 ## 最小範例
 

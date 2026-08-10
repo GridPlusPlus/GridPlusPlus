@@ -13,6 +13,7 @@
 - **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `.db` 由引擎內建的迷你讀取器處理。
 - **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
+- **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。
 - **唯一依賴 [raylib](https://www.raylib.com/)**：只負責開視窗與畫圖。
 
 ## 最小範例
@@ -71,6 +72,7 @@ int main() {
 | `Overlay.h` | `Overlay` 與現成的 `Label`、`Button`。 |
 | `GridSQLite.h` | 核心內部使用的唯讀迷你 SQLite 讀取器。 |
 | `GridMaze.h` | 選用的迷宮模組（牆面網格、自動拼接、牆壁查詢）。 |
+| `GridShapes.h` | 選用的免素材基本圖形。 |
 | `template.cpp` | 起手式模板：一個角色在邊界內移動，複製它開始寫自己的遊戲。 |
 | `examples/pacman/` | 完整範例：用三個模組寫成的小 Pac-Man（見其 README）。 |
 | `docs/` | 文件原始碼（[MkDocs](https://www.mkdocs.org/) 格式）。 |

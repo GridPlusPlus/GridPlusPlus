@@ -138,6 +138,17 @@ int  height() const;
 | `SetWallTiles(...)` | 6 種基本形狀，靠旋轉自動拼接。 |
 | `width/height` | 迷宮欄數 / 列數。 |
 
+## GridShapes
+
+不需素材包的選用圖形模組。額外 `#include "GridShapes.h"` 後使用：
+
+```cpp
+game.Spawn(new gridpp::shapes::Circle(2, 3, 24, BLUE));
+```
+
+`Square`、`Circle`、`Triangle`、`Pentagon`、`Star` 都接受
+`(x, y, size, color)`；`size` 是像素，並可用 `size()` / `set_size()` 修改。
+
 ## Overlay
 
 畫面覆蓋層的基底類別。定義於 `Overlay.h`（主標頭 `GridPlusPlus.h` 也會引入）。
