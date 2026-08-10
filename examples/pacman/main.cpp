@@ -5,20 +5,24 @@
 //  逐行拆解見文件 docs/tutorial/pacman.md。
 // =============================================================================
 #include <cstdlib>
-#include <fstream>
+#include <exception>
+#include <iostream>
 #include <string>
 
 #include "GridMaze.h"  // 用 -I../.. 指到專案根；會自動帶進核心 GridPlusPlus.h
+#include "LevelMap.h"
 
 using gridpp::Button;
 using gridpp::GridEngine;
 using gridpp::GridMaze;
 using gridpp::GridObject;
 using gridpp::Overlay;
+using pacman_example::LevelMap;
+using pacman_example::LoadLevelMap;
 
 namespace {
 
-// 本範例除了 string 外不使用 STL 容器：地圖邊讀邊處理，物件直接 Spawn。
+// 地圖啟動時完整驗證一次，再用固定陣列內容建立與重建關卡。
 
 // 四個方向，對應 set_direction 的 0~3：右、上、左、下
 constexpr int kDirectionX[4] = {1, 0, -1, 0};
@@ -31,6 +35,7 @@ bool g_paused = false;           // 是否暫停（由暫停按鈕切換）
 GridMaze* g_maze = nullptr;      // 讓角色查詢牆壁
 GridObject* g_player = nullptr;  // 讓鬼魂知道玩家在哪
 GridEngine* g_game = nullptr;    // 讓「重新開始」按鈕能重建世界
+LevelMap g_level;
 
 // 曼哈頓距離。
 int ManhattanDistance(int from_x, int from_y, int to_x, int to_y) {
@@ -142,18 +147,15 @@ private:
     int wanted_direction_ = -1;
 };
 
-// 依 map.txt 佈置一局：清掉上一局 → 重建迷宮、豆子、角色。開始與重新開始都呼叫它。
-void BuildLevel(GridEngine& game) {
+// 依已驗證的地圖佈置一局：清掉上一局 → 重建迷宮、豆子、角色。
+void BuildLevel(GridEngine& game, const LevelMap& level) {
     game.ClearObjects();
     g_pellets_left = 0;
     g_paused = false;
+    g_maze = nullptr;
+    g_player = nullptr;
 
-    std::ifstream file("map.txt");
-    int rows;
-    int cols;
-    file >> rows >> cols;
-
-    GridMaze* maze = new GridMaze(cols, rows);
+    GridMaze* maze = new GridMaze(level.cols, level.rows);
     // 自動拼接：給 6 種基本牆形狀，其餘方向引擎會旋轉素材湊出來。
     maze->SetWallTiles("wall_iso", "wall_end", "wall_straight", "wall_corner", "wall_tee", "wall_cross");
     game.Spawn(maze);  // 先放迷宮（畫最底層）
@@ -162,10 +164,9 @@ void BuildLevel(GridEngine& game) {
     const Color colors[4] = {RED, PINK, SKYBLUE, ORANGE};  // 四隻鬼的顏色
     int ghost_count = 0;
     Pacman* player = nullptr;
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
-            int tile;
-            file >> tile;
+    for (int y = 0; y < level.rows; ++y) {
+        for (int x = 0; x < level.cols; ++x) {
+            const int tile = level.tiles[y][x];
             if (tile == 1) {
                 maze->SetWall(x, y, true);
             } else if (tile == 0) {
@@ -230,7 +231,7 @@ public:
     RestartButton(int x, int y, int width, int height) : Button("Restart", x, y, width, height) {}
     // 重來一局。
     void OnClick() override {
-        BuildLevel(*g_game);
+        BuildLevel(*g_game, g_level);
         g_state = 1;
     }
     void OnUpdate() override {
@@ -256,31 +257,31 @@ public:
 }  // namespace
 
 int main() {
-    int rows;
-    int cols;
-    {
-        std::ifstream file("map.txt");
-        file >> rows >> cols;
+    try {
+        g_level = LoadLevelMap("map.txt");
+
+        GridEngine game(g_level.cols, g_level.rows, 32);
+        g_game = &game;
+        game.LoadAssets("pacman.db");
+        game.set_background_color(BLACK);  // Pac-Man 經典黑底（格線預設已關）
+
+        BuildLevel(game, g_level);  // 先建好一局
+        g_state = 0;                // 停在開始畫面
+
+        // 畫面覆蓋層（ScoreOverlay 先加，按鈕畫在它之上）
+        constexpr int kButtonWidth = 120;
+        constexpr int kButtonHeight = 40;
+        const int button_x = g_level.cols * 32 / 2 - kButtonWidth / 2;
+        const int button_y = g_level.rows * 32 / 2;
+        game.AddOverlay(new ScoreOverlay());
+        game.AddOverlay(new StartButton(button_x, button_y, kButtonWidth, kButtonHeight));
+        game.AddOverlay(new RestartButton(button_x, button_y, kButtonWidth, kButtonHeight));
+        game.AddOverlay(new PauseButton(g_level.cols * 32 - 88, 6, 82, 24));
+
+        game.Run();
+        return EXIT_SUCCESS;
+    } catch (const std::exception& error) {
+        std::cerr << error.what() << '\n';
+        return EXIT_FAILURE;
     }
-
-    GridEngine game(cols, rows, 32);
-    g_game = &game;
-    game.LoadAssets("pacman.db");
-    game.set_background_color(BLACK);  // Pac-Man 經典黑底（格線預設已關）
-
-    BuildLevel(game);  // 先建好一局
-    g_state = 0;       // 停在開始畫面
-
-    // 畫面覆蓋層（ScoreOverlay 先加，按鈕畫在它之上）
-    constexpr int kButtonWidth = 120;
-    constexpr int kButtonHeight = 40;
-    const int button_x = cols * 32 / 2 - kButtonWidth / 2;
-    const int button_y = rows * 32 / 2;
-    game.AddOverlay(new ScoreOverlay());
-    game.AddOverlay(new StartButton(button_x, button_y, kButtonWidth, kButtonHeight));
-    game.AddOverlay(new RestartButton(button_x, button_y, kButtonWidth, kButtonHeight));
-    game.AddOverlay(new PauseButton(cols * 32 - 88, 6, 82, 24));
-
-    game.Run();
-    return 0;
 }

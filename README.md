@@ -12,7 +12,7 @@
 - **一行 API**：開視窗、載素材、放物件、開跑，各一行。
 - **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `.db` 由引擎內建的迷你讀取器處理。
-- **選用的迷宮模組**：`GridMaze` 可讀地圖、自動拼接牆壁外觀、提供碰撞查詢。
+- **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
 - **唯一依賴 [raylib](https://www.raylib.com/)**：只負責開視窗與畫圖。
 
 ## 最小範例
@@ -70,7 +70,7 @@ int main() {
 | `GridObject.h` | `GridObject` 與函式版的 `CallbackGridObject`。 |
 | `Overlay.h` | `Overlay` 與現成的 `Label`、`Button`。 |
 | `GridSQLite.h` | 核心內部使用的唯讀迷你 SQLite 讀取器。 |
-| `GridMaze.h` | 選用的迷宮模組（讀地圖、牆壁自動拼接、碰撞查詢）。 |
+| `GridMaze.h` | 選用的迷宮模組（牆面網格、自動拼接、牆壁查詢）。 |
 | `template.cpp` | 起手式模板：一個角色在邊界內移動，複製它開始寫自己的遊戲。 |
 | `examples/pacman/` | 完整範例：用三個模組寫成的小 Pac-Man（見其 README）。 |
 | `docs/` | 文件原始碼（[MkDocs](https://www.mkdocs.org/) 格式）。 |

@@ -189,13 +189,13 @@ void OnCollide(GridObject* other) override {
 各按鈕也只在對的階段顯示與作用（見 [畫面覆蓋層](../guide/ui.md)）。
 
 **重新開始**靠兩件事：引擎的 `ClearObjects()`（刪掉上一局的所有物件）＋
-把佈置流程抽成一個 `BuildLevel(game)` 函式，開始與重來都呼叫它。
+把佈置流程抽成 `BuildLevel(game, level)`，開始與重來都使用啟動時已驗證的地圖。
 
 ```cpp
-void BuildLevel(GridEngine& game) {
+void BuildLevel(GridEngine& game, const LevelMap& level) {
     game.ClearObjects();          // 清掉上一局
     g_pellets_left = 0;
-    // ...重新讀 map.txt、建立迷宮、生成豆子/鬼魂/玩家...
+    // ...用已驗證的 level 建立迷宮、生成豆子/鬼魂/玩家...
 }
 ```
 
@@ -203,20 +203,19 @@ void BuildLevel(GridEngine& game) {
 
 `main()` 只做高層次的事：
 
-1. 讀 `map.txt` 的維度，開引擎、載素材，用 `set_background_color(BLACK)` 設成經典黑底
+1. 完整讀取並驗證 `map.txt`，再開引擎、載素材，用 `set_background_color(BLACK)` 設成經典黑底
    （網格線預設已關閉）。
-2. `BuildLevel(game)` 佈置第一局，把 `g_state` 設成 `0`（停在開始畫面）。
+2. `BuildLevel(game, level)` 佈置第一局，把 `g_state` 設成 `0`（停在開始畫面）。
 3. `AddOverlay` 加上分數、Start、Restart、Pause。
 4. `game.Run()`。
 
 其中 `BuildLevel` 內部：建立 `GridMaze(cols, rows)`、用 `SetWallTiles` 給 6 種基本牆形狀
-（其餘方向靠旋轉自動拼接出全部 16 種連通），再逐格讀整數——`1` 用 `SetWall` 設牆、
+（其餘方向靠旋轉自動拼接出全部 16 種連通），再逐格使用已驗證的整數——`1` 用 `SetWall` 設牆、
 `0` 生成豆子、`2` 記住玩家、`3` 生成鬼魂。
 
 !!! note "為什麼不用 vector？"
-    這個範例刻意不使用 `vector` 等 STL 容器（只用到 `string` 與讀檔的 `ifstream`）。
-    因為地圖是「邊讀邊處理」、物件讀到就直接 `Spawn`，所以全程不需要先把資料存進
-    `vector`。迷宮也改成 `GridMaze(cols,rows)` + `SetWall` 的逐格設定方式。
+    地圖用固定 64 × 64 陣列暫存，先驗證完整內容再建立物件，不需要 `vector`。
+    迷宮仍使用 `GridMaze(cols,rows)` + `SetWall` 逐格設定。
 
 !!! tip "重點觀念"
     - **碰撞分兩種**：豆子用引擎的「同格碰撞」（`OnCollide`）；牆壁用迷宮的 `IsWall()` 主動查詢。
