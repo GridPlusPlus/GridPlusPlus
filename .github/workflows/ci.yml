@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run tests
+        run: |
+          set -eux
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/engine_lifecycle_test.cpp -o /tmp/lifecycle
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/maze_test.cpp -o /tmp/maze
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/pacman_map_test.cpp -o /tmp/map
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/shapes_test.cpp -o /tmp/shapes
+          g++ -std=c++17 -Wall -Wextra -pedantic -I. tests/sqlite_reader_test.cpp -o /tmp/sqlite
+          /tmp/lifecycle
+          /tmp/maze
+          /tmp/map
+          /tmp/shapes
+          /tmp/sqlite
+      - name: Compile examples
+        run: |
+          set -eux
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. template.cpp -o /tmp/template
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman/main.cpp -o /tmp/pacman
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman_easy/main.cpp -o /tmp/pacman-easy
