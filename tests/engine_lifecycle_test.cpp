@@ -22,6 +22,9 @@ static int replacement_updates = 0;
 static int engine_cleanup_destructors = 0;
 static int overlay_destructors = 0;
 static int runtime_overlay_updates = 0;
+static int runtime_overlay_draws = 0;
+static int draw_added_overlay_updates = 0;
+static int draw_added_overlay_draws = 0;
 
 static void UpdateCallback(GridObject*) { ++callback_updates; }
 
@@ -94,6 +97,7 @@ class RuntimeChildOverlay : public Overlay {
 public:
     ~RuntimeChildOverlay() override { ++overlay_destructors; }
     void OnUpdate() override { ++runtime_overlay_updates; }
+    void Draw() override { ++runtime_overlay_draws; }
 };
 
 class RuntimeAddingOverlay : public Overlay {
@@ -104,6 +108,29 @@ public:
     void OnUpdate() override {
         if (added_) return;
         engine_->AddOverlay(new RuntimeChildOverlay());
+        added_ = true;
+    }
+
+private:
+    GridEngine* engine_;
+    bool added_ = false;
+};
+
+class DrawAddedOverlay : public Overlay {
+public:
+    ~DrawAddedOverlay() override { ++overlay_destructors; }
+    void OnUpdate() override { ++draw_added_overlay_updates; }
+    void Draw() override { ++draw_added_overlay_draws; }
+};
+
+class RuntimeDrawingOverlay : public Overlay {
+public:
+    explicit RuntimeDrawingOverlay(GridEngine* engine) : engine_(engine) {}
+    ~RuntimeDrawingOverlay() override { ++overlay_destructors; }
+
+    void Draw() override {
+        if (added_) return;
+        engine_->AddOverlay(new DrawAddedOverlay());
         added_ = true;
     }
 
@@ -126,6 +153,8 @@ int main() {
 
         GridObject* callback_object = game.Spawn("", 0, 0, UpdateCallback);
         assert(callback_object != nullptr);
+        callback_object->set_asset_name("changed");
+        assert(callback_object->asset_name() == "changed");
         GridObject copied_object(*callback_object);
         assert(copied_object.engine() == nullptr);
         GridObject* existing_object = new SelfDestroyingObject();
@@ -158,6 +187,7 @@ int main() {
 
         RuntimeAddingOverlay* overlay = new RuntimeAddingOverlay(&game);
         game.AddOverlay(overlay);
+        game.AddOverlay(new RuntimeDrawingOverlay(&game));
         bool duplicate_overlay_rejected = false;
         try {
             game.AddOverlay(overlay);
@@ -179,9 +209,12 @@ int main() {
         assert(hidden_draws == 0);
         assert(hide_on_collision_calls == 1);
         assert(runtime_overlay_updates == 1);
+        assert(runtime_overlay_draws == 1);
+        assert(draw_added_overlay_updates == 1);
+        assert(draw_added_overlay_draws == 1);
     }
     assert(engine_cleanup_destructors == 1);
-    assert(overlay_destructors == 2);
+    assert(overlay_destructors == 4);
 
     {
         GridEngine restarted_game(2, 2);

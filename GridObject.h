@@ -42,6 +42,7 @@ public:
     void Move(int dx, int dy);
 
     const std::string& asset_name() const { return asset_name_; }
+    void set_asset_name(const std::string& asset_name) { asset_name_ = asset_name; }
 
     // 身分標記，碰撞時分辨對方。
     const std::string& tag() const { return tag_; }

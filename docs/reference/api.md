@@ -60,6 +60,7 @@ void set_x(int x);   void set_y(int y);
 void Move(int dx, int dy);
 
 const std::string& asset_name() const;
+void set_asset_name(const std::string& asset_name);
 const std::string& tag() const;
 void set_tag(const std::string& tag);
 
@@ -82,6 +83,7 @@ GridEngine* engine() const;       // 取得所屬引擎（Spawn 後才有效）
 | `OnCollide(other)` | 同格碰撞時呼叫。覆寫用。 |
 | `Render(engine)` | 畫自己；預設畫 `asset_name`。可覆寫。 |
 | `x/y/set_x/set_y/Move` | 存取格子座標。 |
+| `asset_name/set_asset_name` | 讀取或更換物件繪製的素材名稱。 |
 | `tag/set_tag` | 身分標記，碰撞時分辨對象。 |
 | `direction/set_direction` | 朝向 0~3，繪製時旋轉素材（重複利用同一張圖）。 |
 | `tint/set_tint` | 調色，把素材染成不同顏色（diffuse color）。 |
@@ -129,8 +131,8 @@ int  height() const;
 
 | 成員 | 說明 |
 |---|---|
-| `GridMaze(cols, rows)` | 建立指定大小的空迷宮（全是空地）。 |
-| `SetWall(x, y, wall)` | 設定某格是不是牆。 |
+| `GridMaze(cols, rows)` | 建立 1～64 欄、1～64 列的空迷宮；非法尺寸丟出例外。 |
+| `SetWall(x, y, wall)` | 設定某格是不是牆；界外座標丟出例外。 |
 | `IsWall(x, y)` | 那格是否為牆（界外當牆）。 |
 | `SetWallAsset(name)` | 所有牆同一張圖。 |
 | `SetWallTiles(...)` | 6 種基本形狀，靠旋轉自動拼接。 |

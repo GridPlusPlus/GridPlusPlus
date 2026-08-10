@@ -7,7 +7,7 @@
 #ifndef GRID_PLUS_PLUS_GRID_MAZE_H_
 #define GRID_PLUS_PLUS_GRID_MAZE_H_
 
-#include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -18,10 +18,13 @@ namespace gridpp {
 // 迷宮物件。
 class GridMaze : public GridObject {
 public:
+    static constexpr int kMaxWidth = 64;
+    static constexpr int kMaxHeight = 64;
+
     // 建立空白迷宮，尺寸上限為 64×64。
     GridMaze(int cols, int rows);
 
-    // 界外座標不處理。
+    // 界外座標會丟出 std::out_of_range。
     void SetWall(int x, int y, bool wall);
 
     // 界外座標視為牆。
@@ -41,9 +44,6 @@ public:
     void Render(GridEngine* engine) override;
 
 private:
-    static constexpr int kMaxWidth = 64;
-    static constexpr int kMaxHeight = 64;
-
     // 鄰居是否為牆。上、右、下、左分別使用 bits 0 到 3。
     int ConnectivityMask(int x, int y) const;
 
@@ -61,13 +61,19 @@ private:
 
 // Implementation details only below here.
 
-inline GridMaze::GridMaze(int cols, int rows)
-    : GridObject("", -1, -1), width_(std::clamp(cols, 0, kMaxWidth)), height_(std::clamp(rows, 0, kMaxHeight)) {
+inline GridMaze::GridMaze(int cols, int rows) : GridObject("", -1, -1), width_(cols), height_(rows) {
+    if (cols < 1 || rows < 1 || cols > kMaxWidth || rows > kMaxHeight) {
+        throw std::invalid_argument("GridMaze Error: dimensions must be between 1x1 and 64x64");
+    }
     set_tag("maze");
 }
 
 inline void GridMaze::SetWall(int x, int y, bool wall) {
-    if (x >= 0 && y >= 0 && x < width_ && y < height_) walls_[y][x] = wall;
+    if (x < 0 || y < 0 || x >= width_ || y >= height_) {
+        throw std::out_of_range("GridMaze Error: wall position (" + std::to_string(x) + ", " + std::to_string(y) +
+                                ") is outside " + std::to_string(width_) + "x" + std::to_string(height_) + " maze");
+    }
+    walls_[y][x] = wall;
 }
 
 inline bool GridMaze::IsWall(int x, int y) const {
@@ -75,7 +81,10 @@ inline bool GridMaze::IsWall(int x, int y) const {
     return walls_[y][x];
 }
 
-inline void GridMaze::SetWallAsset(const std::string& asset) { single_wall_ = asset; }
+inline void GridMaze::SetWallAsset(const std::string& asset) {
+    single_wall_ = asset;
+    use_tiles_ = false;
+}
 
 inline void GridMaze::SetWallTiles(const std::string& isolated, const std::string& end, const std::string& straight,
                                    const std::string& corner, const std::string& tee, const std::string& cross) {

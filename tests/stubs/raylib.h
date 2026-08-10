@@ -35,11 +35,14 @@ static const Color SKYBLUE = {102, 191, 255, 255};
 
 static int test_frame = 0;
 static bool test_window_open = false;
+static int test_init_window_calls = 0;
 static int test_texture_loads = 0;
 static int test_texture_unloads = 0;
 static int test_texture_unloads_after_close = 0;
+static unsigned int test_last_texture_id = 0;
 
 inline void InitWindow(int, int, const char*) {
+    ++test_init_window_calls;
     test_frame = 0;
     test_window_open = true;
 }
@@ -55,8 +58,10 @@ inline void UnloadTexture(Texture2D) {
     ++test_texture_unloads;
     if (!test_window_open) ++test_texture_unloads_after_close;
 }
-inline void DrawTexturePro(Texture2D, Rectangle, Rectangle, Vector2, float, Color) {}
 inline void DrawRectangle(int, int, int, int, Color) {}
+inline void DrawTexturePro(Texture2D texture, Rectangle, Rectangle, Vector2, float, Color) {
+    test_last_texture_id = texture.id;
+}
 inline void DrawRectangleLines(int, int, int, int, Color) {}
 inline void DrawLine(int, int, int, int, Color) {}
 inline void BeginDrawing() {}

@@ -101,6 +101,9 @@ private:
 // Implementation details only below here.
 
 inline GridEngine::GridEngine(int cols, int rows, int grid_size) : cols_(cols), rows_(rows), grid_size_(grid_size) {
+    if (cols < 1 || rows < 1 || grid_size < 1) {
+        throw std::invalid_argument("GridEngine Error: cols, rows, and grid size must be greater than 0");
+    }
     // 材質需要在視窗建立後才能上傳至 GPU。
     InitWindow(cols_ * grid_size_, rows_ * grid_size_, "Grid++ Game");
     SetTargetFPS(60);
@@ -195,12 +198,13 @@ inline void GridEngine::DrawCell(const std::string& asset_name, int grid_x, int 
 
 inline void GridEngine::Tick() {
     ticking_ = true;
+    // 執行期間加入的 Overlay 從下一幀開始更新與繪製。
+    const std::size_t overlay_count = overlays_.size();
 
     // 更新
     for (GridObject* object : objects_) {
         if (!IsPendingDestroy(object)) object->OnUpdate();
     }
-    const std::size_t overlay_count = overlays_.size(); // 固定本幀數量，讓 callback 中新增 Overlay 不會使 iterator 失效。
     for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->OnUpdate();
 
     // 碰撞
@@ -225,7 +229,7 @@ inline void GridEngine::Tick() {
     for (GridObject* object : objects_) {
         if (!IsPendingDestroy(object) && object->visible()) object->Render(this);
     }
-    for (Overlay* overlay : overlays_) overlay->Draw();
+    for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->Draw();
     EndDrawing();
 
     ticking_ = false;
