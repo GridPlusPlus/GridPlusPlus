@@ -13,7 +13,7 @@
 
 | 函式 | 何時被呼叫 | 你通常在裡面做 |
 |---|---|---|
-| `OnStart()` | 被 `Spawn()` 放進世界時，呼叫一次 | 初始化、印訊息 |
+| `OnSpawn()` | 被 `Spawn()` 放進世界時，呼叫一次 | 初始化、印訊息 |
 | `OnUpdate()` | 每一幀 | 讀鍵盤、改變座標 |
 | `OnCollide(other)` | 和另一物件踩在同一格時 | 判斷對方是誰、做反應 |
 
@@ -22,7 +22,7 @@ class Player : public GridObject {
 public:
     Player() : GridObject("hero", 5, 5) {}
 
-    void OnStart() override {
+    void OnSpawn() override {
         std::cout << "玩家出生於 (" << x() << ", " << y() << ")\n";
     }
     void OnUpdate() override {

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 
 #include "GridMaze.h"
@@ -49,6 +50,27 @@ int main() {
     } catch (const std::invalid_argument&) {
     }
     assert(test_init_window_calls == windows_before);
+
+    try {
+        GridEngine oversized_game(65, 1, 128);
+        (void)oversized_game;
+        assert(false);
+    } catch (const std::invalid_argument&) {
+    }
+    assert(test_init_window_calls == windows_before);
+
+    try {
+        GridEngine overflowing_game(std::numeric_limits<int>::max(), 1, std::numeric_limits<int>::max());
+        (void)overflowing_game;
+        assert(false);
+    } catch (const std::invalid_argument&) {
+    }
+    assert(test_init_window_calls == windows_before);
+
+    {
+        GridEngine maximum_size_game(64, 1, 128);
+        assert(test_init_window_calls == windows_before + 1);
+    }
 
     GridEngine game(2, 2);
     game.LoadAssets("examples/pacman/pacman.db");

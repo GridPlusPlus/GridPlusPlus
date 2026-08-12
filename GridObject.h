@@ -17,7 +17,7 @@ namespace gridpp {
 class GridEngine;
 
 // 遊戲世界中的網格物件。
-// 繼承它並覆寫 OnStart / OnUpdate / OnCollide。詳見 docs/guide/game-objects.md。
+// 繼承它並覆寫 OnSpawn / OnUpdate / OnCollide。詳見 docs/guide/game-objects.md。
 class GridObject {
 public:
     GridObject() = default;
@@ -27,7 +27,7 @@ public:
     virtual ~GridObject() = default;
 
     // 引擎呼叫的生命週期函式。
-    virtual void OnStart() {}
+    virtual void OnSpawn() {}
     virtual void OnUpdate() {}
     virtual void OnCollide(GridObject* other) { (void)other; }
 

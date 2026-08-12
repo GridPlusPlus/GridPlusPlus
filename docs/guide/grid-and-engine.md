@@ -25,9 +25,9 @@ game.Run();                    // 4. 開始遊戲（內建主循環）
 
 | 方法 | 說明 |
 |---|---|
-| `GridEngine(cols, rows, grid_size = 32)` | 建立並開視窗。視窗大小 = `cols*grid_size` × `rows*grid_size`。 |
+| `GridEngine(cols, rows, grid_size = 32)` | 建立並開視窗。視窗大小 = `cols*grid_size` × `rows*grid_size`，寬、高各不得超過 8192 像素。 |
 | `LoadAssets(path)` | 從 `assets.db` 載入素材（要在建立引擎之後呼叫）。 |
-| `Spawn(obj)` | 把物件放進世界，並立刻呼叫它的 `OnStart()`。 |
+| `Spawn(obj)` | 把物件放進世界，並呼叫它的 `OnSpawn()`。 |
 | `Run()` | 進入遊戲主循環，直到關閉視窗或按 ESC。 |
 | `set_background_color(color)` | 設定背景顏色（每幀清畫面時使用），預設 `RAYWHITE`。 |
 | `set_show_grid(show)` | 開啟/關閉網格線。**預設關閉**，需要時傳 `true` 打開。 |

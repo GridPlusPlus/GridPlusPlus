@@ -30,12 +30,12 @@ void DrawCell(const std::string& asset_name, int grid_x, int grid_y,
 
 | 成員 | 說明 |
 |---|---|
-| `GridEngine(cols, rows, grid_size)` | 建立引擎並開視窗。 |
+| `GridEngine(cols, rows, grid_size)` | 建立引擎並開視窗；視窗寬、高各不得超過 8192 像素。 |
 | `LoadAssets(path)` | 載入 `assets.db`。需在建立引擎後呼叫。 |
 | `set_background_color/background_color` | 背景顏色（每幀清畫面用），預設 `RAYWHITE`。 |
 | `set_show_grid/show_grid` | 網格線開關，預設關閉，需要時傳 `true` 打開。 |
 | `cols/rows/grid_size()` | 查詢地圖大小與格子像素。 |
-| `Spawn(obj)` | 放入物件並呼叫其 `OnStart()`。 |
+| `Spawn(obj)` | 放入物件並呼叫其 `OnSpawn()`。 |
 | `Destroy(obj)` | 停止並刪除指定物件。 |
 | `ClearObjects()` | 刪除並清空所有遊戲物件（用於重新開始；不影響覆蓋層）。 |
 | `AddOverlay(overlay)` | 加入畫面覆蓋層（畫在網格之上）。 |
@@ -50,7 +50,7 @@ void DrawCell(const std::string& asset_name, int grid_x, int grid_y,
 GridObject();
 GridObject(std::string asset_name, int x, int y);
 
-virtual void OnStart();
+virtual void OnSpawn();
 virtual void OnUpdate();
 virtual void OnCollide(GridObject* other);
 virtual void Render(GridEngine* engine);
@@ -80,7 +80,7 @@ GridEngine* engine() const;       // 取得所屬引擎（Spawn 後才有效）
 | 成員 | 說明 |
 |---|---|
 | 建構子（兩個） | 空的 / 指定素材與座標（重載示範）。 |
-| `OnStart()` | 被 `Spawn` 時呼叫一次。覆寫用。 |
+| `OnSpawn()` | 被 `Spawn` 時呼叫一次。覆寫用。 |
 | `OnUpdate()` | 每幀呼叫。覆寫用。 |
 | `OnCollide(other)` | 同格碰撞時呼叫。覆寫用。 |
 | `Render(engine)` | 畫自己；預設畫 `asset_name`。可覆寫。 |

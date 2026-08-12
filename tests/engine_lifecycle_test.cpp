@@ -13,6 +13,7 @@ static int destroyed_collisions = 0;
 static int destroyed_draws = 0;
 static int destructors = 0;
 static int runtime_spawn_updates = 0;
+static int runtime_spawn_calls = 0;
 static int hidden_updates = 0;
 static int hidden_collisions = 0;
 static int hidden_draws = 0;
@@ -25,10 +26,12 @@ static int runtime_overlay_updates = 0;
 static int runtime_overlay_draws = 0;
 static int draw_added_overlay_updates = 0;
 static int draw_added_overlay_draws = 0;
+static int out_of_bounds_collisions = 0;
+static int failed_spawn_destructors = 0;
+static int pending_spawn_calls = 0;
+static int pending_spawn_destructors = 0;
 
 static void UpdateCallback(GridObject*) { ++callback_updates; }
-
-static void UpdateRuntimeSpawn(GridObject*) { ++runtime_spawn_updates; }
 
 static void UpdateReplacement(GridObject*) { ++replacement_updates; }
 
@@ -46,13 +49,44 @@ public:
     void Render(GridEngine*) override { ++destroyed_draws; }
 };
 
+class RuntimeSpawnedObject : public GridObject {
+public:
+    void OnSpawn() override { ++runtime_spawn_calls; }
+    void OnUpdate() override { ++runtime_spawn_updates; }
+};
+
 class RuntimeSpawner : public GridObject {
 public:
     RuntimeSpawner() : GridObject("", 1, 0) {}
 
     void OnUpdate() override {
         if (spawned_) return;
-        engine()->Spawn("", 1, 1, UpdateRuntimeSpawn);
+        engine()->Spawn(new RuntimeSpawnedObject());
+        spawned_ = true;
+    }
+
+private:
+    bool spawned_ = false;
+};
+
+class ThrowingOnSpawn : public GridObject {
+public:
+    ~ThrowingOnSpawn() override { ++failed_spawn_destructors; }
+    void OnSpawn() override { throw std::runtime_error("spawn failed"); }
+};
+
+class PendingAfterSpawnFailure : public GridObject {
+public:
+    ~PendingAfterSpawnFailure() override { ++pending_spawn_destructors; }
+    void OnSpawn() override { ++pending_spawn_calls; }
+};
+
+class RuntimeSpawnFailure : public GridObject {
+public:
+    void OnUpdate() override {
+        if (spawned_) return;
+        engine()->Spawn(new ThrowingOnSpawn());
+        engine()->Spawn(new PendingAfterSpawnFailure());
         spawned_ = true;
     }
 
@@ -70,12 +104,18 @@ public:
 
 class HideOnCollision : public GridObject {
 public:
-    HideOnCollision() : GridObject("", 5, 5) {}
+    HideOnCollision() : GridObject("", 0, 1) {}
 
     void OnCollide(GridObject*) override {
         ++hide_on_collision_calls;
         set_visible(false);
     }
+};
+
+class OutOfBoundsCollisionCounter : public GridObject {
+public:
+    OutOfBoundsCollisionCounter(int x, int y) : GridObject("", x, y) {}
+    void OnCollide(GridObject*) override { ++out_of_bounds_collisions; }
 };
 
 class ClearAndRespawn : public GridObject {
@@ -164,8 +204,13 @@ int main() {
         hidden->set_visible(false);
         game.Spawn(hidden);
         game.Spawn(new HideOnCollision());
-        game.Spawn(new GridObject("", 5, 5));
-        game.Spawn(new GridObject("", 5, 5));
+        game.Spawn(new GridObject("", 0, 1));
+        game.Spawn(new GridObject("", 0, 1));
+        for (const auto [x, y] :
+             {std::pair{-1, -1}, std::pair{-1, 0}, std::pair{0, -1}, std::pair{2, 0}, std::pair{0, 2}}) {
+            game.Spawn(new OutOfBoundsCollisionCounter(x, y));
+            game.Spawn(new GridObject("", x, y));
+        }
 
         EngineCleanupObject* owned_object = new EngineCleanupObject();
         game.Spawn(owned_object);
@@ -204,10 +249,12 @@ int main() {
         assert(destroyed_draws == 0);
         assert(destructors == 1);
         assert(runtime_spawn_updates == 1);
+        assert(runtime_spawn_calls == 1);
         assert(hidden_updates == 2);
         assert(hidden_collisions == 0);
         assert(hidden_draws == 0);
         assert(hide_on_collision_calls == 1);
+        assert(out_of_bounds_collisions == 0);
         assert(runtime_overlay_updates == 1);
         assert(runtime_overlay_draws == 1);
         assert(draw_added_overlay_updates == 1);
@@ -215,6 +262,36 @@ int main() {
     }
     assert(engine_cleanup_destructors == 1);
     assert(overlay_destructors == 4);
+
+    {
+        GridEngine game(1, 1);
+        bool spawn_failure_caught = false;
+        try {
+            game.Spawn(new ThrowingOnSpawn());
+        } catch (const std::runtime_error&) {
+            spawn_failure_caught = true;
+        }
+        assert(spawn_failure_caught);
+        assert(failed_spawn_destructors == 1);
+    }
+
+    {
+        GridEngine game(1, 1);
+        game.Spawn(new RuntimeSpawnFailure());
+        bool spawn_failure_caught = false;
+        try {
+            game.Run();
+        } catch (const std::runtime_error&) {
+            spawn_failure_caught = true;
+        }
+        assert(spawn_failure_caught);
+        assert(failed_spawn_destructors == 2);
+        assert(pending_spawn_calls == 0);
+
+        game.Run();
+        assert(pending_spawn_calls == 1);
+    }
+    assert(pending_spawn_destructors == 1);
 
     {
         GridEngine restarted_game(2, 2);

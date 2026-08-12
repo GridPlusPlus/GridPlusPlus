@@ -10,7 +10,7 @@
 
 - **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫，不需編譯整個函式庫。
 - **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnStart` / `OnUpdate` / `OnCollide`。
+- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnSpawn` / `OnUpdate` / `OnCollide`。
 - **不需要連結 SQLite**：素材包 `.db` 由引擎內建的迷你讀取器處理。
 - **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
 - **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。

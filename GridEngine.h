@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -29,6 +30,8 @@ namespace gridpp {
 // 建立視窗並管理主迴圈、網格物件、覆蓋層與碰撞。
 class GridEngine {
 public:
+    static constexpr int kMaxWindowSize = 8192;
+
     GridEngine(int cols, int rows, int grid_size = 32);
     ~GridEngine();
 
@@ -76,6 +79,7 @@ public:
 
 private:
     void Tick();
+    void InvokeOnSpawn(GridObject* object);
     bool IsPendingDestroy(GridObject* object) const;
     void FlushLifecycleChanges();
     void DrawGrid();
@@ -104,8 +108,15 @@ inline GridEngine::GridEngine(int cols, int rows, int grid_size) : cols_(cols), 
     if (cols < 1 || rows < 1 || grid_size < 1) {
         throw std::invalid_argument("GridEngine Error: cols, rows, and grid size must be greater than 0");
     }
+
+    const std::int64_t window_width = static_cast<std::int64_t>(cols_) * grid_size_;
+    const std::int64_t window_height = static_cast<std::int64_t>(rows_) * grid_size_;
+    if (window_width > kMaxWindowSize || window_height > kMaxWindowSize) {
+        throw std::invalid_argument("GridEngine Error: window width and height must not exceed 8192 pixels");
+    }
+
     // 材質需要在視窗建立後才能上傳至 GPU。
-    InitWindow(cols_ * grid_size_, rows_ * grid_size_, "Grid++ Game");
+    InitWindow(static_cast<int>(window_width), static_cast<int>(window_height), "Grid++ Game");
     SetTargetFPS(60);
 }
 
@@ -124,13 +135,18 @@ inline GridObject* GridEngine::Spawn(GridObject* object) {
         throw std::logic_error("GridEngine Error: Same GridObject cannot be Spawned twice");
     object->set_engine(this);
 
-    if (ticking_) {
-        objects_to_spawn_.push_back(object);
-    } else {
-        objects_.push_back(object);
+    try {
+        if (ticking_) {
+            objects_to_spawn_.push_back(object);
+        } else {
+            objects_.push_back(object);
+        }
+    } catch (...) {
+        delete object;
+        throw;
     }
 
-    if (!ticking_) object->OnStart();
+    if (!ticking_) InvokeOnSpawn(object);
     return object;
 }
 
@@ -208,16 +224,20 @@ inline void GridEngine::Tick() {
     for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->OnUpdate();
 
     // 碰撞
+    const auto can_collide = [&](GridObject* object) {
+        return !IsPendingDestroy(object) && object->visible() && object->x() >= 0 && object->x() < cols_ &&
+               object->y() >= 0 && object->y() < rows_;
+    };
     for (std::size_t i = 0; i < objects_.size(); ++i) {
-        if (IsPendingDestroy(objects_[i]) || !objects_[i]->visible()) continue;
+        if (!can_collide(objects_[i])) continue;
         for (std::size_t j = i + 1; j < objects_.size(); ++j) {
-            if (IsPendingDestroy(objects_[j]) || !objects_[j]->visible()) continue;
+            if (!can_collide(objects_[j])) continue;
             if (objects_[i]->x() == objects_[j]->x() && objects_[i]->y() == objects_[j]->y()) {
                 objects_[i]->OnCollide(objects_[j]);
-                if (IsPendingDestroy(objects_[i]) || !objects_[i]->visible()) break;
-                if (IsPendingDestroy(objects_[j]) || !objects_[j]->visible()) continue;
+                if (!can_collide(objects_[i])) break;
+                if (!can_collide(objects_[j])) continue;
                 objects_[j]->OnCollide(objects_[i]);
-                if (IsPendingDestroy(objects_[i]) || !objects_[i]->visible()) break;
+                if (!can_collide(objects_[i])) break;
             }
         }
     }
@@ -242,6 +262,19 @@ inline void GridEngine::Tick() {
 
 inline bool GridEngine::IsPendingDestroy(GridObject* object) const { return objects_to_destroy_.count(object) != 0; }
 
+inline void GridEngine::InvokeOnSpawn(GridObject* object) {
+    try {
+        object->OnSpawn();
+    } catch (...) {
+        const auto it = std::find(objects_.begin(), objects_.end(), object);
+        if (it != objects_.end()) {
+            delete *it;
+            objects_.erase(it);
+        }
+        throw;
+    }
+}
+
 inline void GridEngine::FlushLifecycleChanges() {
     objects_.erase(std::remove_if(objects_.begin(), objects_.end(),
                                   [&](GridObject* object) {
@@ -251,17 +284,21 @@ inline void GridEngine::FlushLifecycleChanges() {
                                   }),
                    objects_.end());
 
-    std::vector<GridObject*> spawned;
-    spawned.swap(objects_to_spawn_);
-    for (GridObject* object : spawned) {
-        if (IsPendingDestroy(object)) {
-            delete object;
-        } else {
-            objects_.push_back(object);
-            object->OnStart();
-        }
-    }
+    objects_to_spawn_.erase(std::remove_if(objects_to_spawn_.begin(), objects_to_spawn_.end(),
+                                           [&](GridObject* object) {
+                                               if (!IsPendingDestroy(object)) return false;
+                                               delete object;
+                                               return true;
+                                           }),
+                            objects_to_spawn_.end());
     objects_to_destroy_.clear();
+
+    while (!objects_to_spawn_.empty()) {
+        GridObject* object = objects_to_spawn_.front();
+        objects_.push_back(object);
+        objects_to_spawn_.erase(objects_to_spawn_.begin());
+        InvokeOnSpawn(object);
+    }
 }
 
 inline void GridEngine::DrawGrid() {
