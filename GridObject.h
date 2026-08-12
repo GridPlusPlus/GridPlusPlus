@@ -56,6 +56,10 @@ public:
     Color tint() const { return tint_; }
     void set_tint(Color tint) { tint_ = tint; }
 
+    // 繪製層級；數值越大越晚繪製。同層級維持 Spawn 順序。
+    int z_index() const { return z_index_; }
+    void set_z_index(int z_index) { z_index_ = z_index; }
+
     // 隱藏時仍會更新，但不會繪製或參與碰撞。
     bool visible() const { return visible_; }
     void set_visible(bool visible) { visible_ = visible; }
@@ -75,6 +79,7 @@ private:
 
     int direction_ = 0;
     Color tint_ = WHITE;
+    int z_index_ = 0;
     bool visible_ = true;
 
     GridEngine* engine_ = nullptr;
@@ -108,6 +113,7 @@ inline GridObject::GridObject(const GridObject& other)
       tag_(other.tag_),
       direction_(other.direction_),
       tint_(other.tint_),
+      z_index_(other.z_index_),
       visible_(other.visible_),
       engine_(nullptr) {}
 

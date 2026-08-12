@@ -16,11 +16,13 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/maze_test.cpp -o /tmp/maze
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/pacman_map_test.cpp -o /tmp/map
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/shapes_test.cpp -o /tmp/shapes
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/z_index_test.cpp -o /tmp/z-index
           g++ -std=c++17 -Wall -Wextra -pedantic -I. tests/sqlite_reader_test.cpp -o /tmp/sqlite
           /tmp/lifecycle
           /tmp/maze
           /tmp/map
           /tmp/shapes
+          /tmp/z-index
           /tmp/sqlite
       - name: Compile examples
         run: |

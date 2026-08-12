@@ -68,6 +68,8 @@ int   direction() const;          // 朝向 0~3
 void  set_direction(int direction);   // 0~3，逆時針每 +1 轉 90°
 Color tint() const;
 void  set_tint(Color tint);           // 調色，預設 WHITE
+int   z_index() const;
+void  set_z_index(int z_index);       // 數值越大越晚繪製，預設 0
 
 bool visible() const;
 void set_visible(bool visible);
@@ -87,6 +89,7 @@ GridEngine* engine() const;       // 取得所屬引擎（Spawn 後才有效）
 | `tag/set_tag` | 身分標記，碰撞時分辨對象。 |
 | `direction/set_direction` | 朝向 0~3，繪製時旋轉素材（重複利用同一張圖）。 |
 | `tint/set_tint` | 調色，把素材染成不同顏色（diffuse color）。 |
+| `z_index/set_z_index` | 繪製層級；數值越大越上層，相同時後 Spawn 的在上方。 |
 | `visible/set_visible` | 控制是否繪製與參與碰撞。 |
 | `engine()` | 取得所屬引擎（`Spawn` 後才有效），例如查地圖大小做邊界檢查。 |
 

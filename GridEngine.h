@@ -226,7 +226,11 @@ inline void GridEngine::Tick() {
     BeginDrawing();
     ClearBackground(background_color_);
     if (show_grid_) DrawGrid();
-    for (GridObject* object : objects_) {
+    std::vector<GridObject*> draw_order = objects_;
+    std::stable_sort(draw_order.begin(), draw_order.end(), [](const GridObject* left, const GridObject* right) {
+        return left->z_index() < right->z_index();
+    });
+    for (GridObject* object : draw_order) {
         if (!IsPendingDestroy(object) && object->visible()) object->Render(this);
     }
     for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->Draw();
