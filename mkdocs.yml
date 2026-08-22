@@ -2,6 +2,20 @@ site_name: Grid++ 文件
 site_description: 給程式初學者的網格遊戲引擎
 docs_dir: docs
 
+plugins:
+  - search
+  - mkdoxy:
+      projects:
+        gridpp:
+          src-dirs: GridPlusPlus.h GridEngine.h GridObject.h Overlay.h GridMaze.h GridShapes.h
+          api-path: api
+          full-doc: true
+          doxy-cfg-file: Doxyfile
+          doxy-cfg:
+            GENERATE_XML: true
+            GENERATE_HTML: false
+            GENERATE_LATEX: false
+
 theme:
   name: material
   language: zh-TW
@@ -35,18 +49,28 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.inlinehilite
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
 
 nav:
   - 首頁: index.md
-  - 開始使用: getting-started.md
-  - 指南:
-      - 網格與引擎: guide/grid-and-engine.md
-      - 函式版物件: guide/callback-grid-object.md
-      - 遊戲物件 (OOP): guide/game-objects.md
-      - 素材包: guide/assets.md
-      - 迷宮: guide/maze.md
-      - 畫面覆蓋層: guide/ui.md
-  - 教學:
-      - Pac-Man 拆解: tutorial/pacman.md
-  - API 速查: reference/api.md
-  - 迷你 SQLite 讀取器: internals/sqlite-reader.md
+  - 01 Grid++ 總覽: 01-overview.md
+  - 02 安裝與建立專案: 02-install.md
+  - 03 GridEngine: 03-grid-engine.md
+  - 04 GridObject: 04-grid-object.md
+  - 05 Overlay: 05-overlay.md
+  - 06 CallbackGridObject: 06-callback-grid-object.md
+  - 07 物件狀態與自訂 GridObject: 07-custom-grid-object.md
+  - 08 素材與素材包: 08-assets.md
+  - 09 不需素材的基本圖形: 09-shapes.md
+  - 10 迷宮與 GridMaze: 10-maze.md
+  - 11 物件生命週期: 11-lifecycle.md
+  - 12 使用 Git 保存專案: 12-publishing.md
+  - API 參考:
+      - 總覽: api/index.md
+      - 類別列表: api/annotated.md
+      - 類別索引: api/classes.md
+      - 命名空間: api/namespaces.md
+      - 檔案: api/files.md

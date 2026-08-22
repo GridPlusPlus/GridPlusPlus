@@ -1,47 +1,15 @@
 # Grid++
 
-**Grid++** 是一個專為「程式初學者」設計的輕量化、網格導向（grid-based）遊戲引擎。
-它把圖形繪製、遊戲主循環、檔案讀取的複雜度全部藏起來，提供「一行搞定」的 API，
-同時刻意留出接口，引導你練習 C++ 的物件導向（繼承、覆寫、重載、封裝）。
+Grid++ 是用於製作網格遊戲的 C++17 函式庫。它提供視窗、遊戲迴圈、繪圖、物件生命週期與同格碰撞，遊戲程式只需定義物件和規則。
 
-![Pac-Man 範例畫面](images/preview.png){ width="280" }
+本教學假設讀者已熟悉變數、條件判斷、迴圈、函式、陣列與指標，不要求預先具備物件導向程式設計經驗。
 
-## 特色
+## 文件內容
 
-- **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫。
-- **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnSpawn` / `OnUpdate` / `OnCollide`。
-- **不需要連結 SQLite**：素材包 `assets.db` 由引擎內建的迷你讀取器處理。
-- **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
-- **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。
+[Grid++ 總覽](01-overview.md)說明 `GridEngine`、`GridObject` 與 `Overlay` 的責任、彼此關係和主要 API。安裝章節接著建立可執行環境；後續章節依序深入 Engine、物件共通狀態、Overlay、callback、自訂類別、素材、基本圖形、迷宮與完整生命週期。
 
-## 最小範例
+打地鼠與 Pacman 作為 API 的使用案例。打地鼠示範函式、指標與 `CallbackGridObject`；Pacman 說明多個物件需要分別保存狀態時，如何衍生 `GridObject`。範例用於解釋功能，不取代各類別的完整說明。
 
-```cpp
-#include "GridPlusPlus.h"
+API 參考由公開 header 中的 Doxygen 註解自動產生，提供類別、函式、參數和例外的精確簽名。概念與操作方式應從編號章節閱讀；需要查詢單一函式時使用 API 參考。
 
-using gridpp::GridEngine;
-using gridpp::GridObject;
-
-class Player : public GridObject {
-public:
-    Player() : GridObject("hero", 5, 5) {}
-    void OnUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
-    }
-};
-
-int main() {
-    GridEngine game(10, 10, 32);   // 10x10 網格，每格 32 像素
-    game.LoadAssets("assets.db");
-    game.Spawn(new Player());
-    game.Run();
-}
-```
-
-## 接下來
-
-- 還沒跑過？先看 [開始使用](getting-started.md)。
-- 想了解核心概念？看 [網格與引擎](guide/grid-and-engine.md) 與 [遊戲物件](guide/game-objects.md)。
-- 想做一個完整遊戲？看 [Pac-Man 拆解](tutorial/pacman.md)。
-- 好奇素材包怎麼被讀出來？看 [迷你 SQLite 讀取器](internals/sqlite-reader.md)。
+[Grid++ 總覽](01-overview.md){ .md-button .md-button--primary }

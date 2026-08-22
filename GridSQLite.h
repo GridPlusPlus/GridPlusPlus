@@ -1,9 +1,5 @@
-/**
- * @file GridSQLite.h
- * @brief Grid++ 內部使用的唯讀 SQLite 素材讀取器。
- *
- * 支援 UTF-8、非 WAL 的 table B-tree 與必要的 record 型別。
- * 只提供資料表走訪，不提供 SQL 或寫入功能。
+/** @file GridSQLite.h
+ *  @brief 定義素材包使用的唯讀 SQLite 讀取器。
  */
 #ifndef GRID_PLUS_PLUS_GRID_SQLITE_H_
 #define GRID_PLUS_PLUS_GRID_SQLITE_H_
@@ -62,7 +58,7 @@ private:
     std::size_t usable_size_ = 0;
 };
 
-// Implementation details only below here.
+// Inline definitions
 
 inline SqliteReader::SqliteReader(const std::vector<unsigned char>& data) : data_(data) {
     static constexpr unsigned char kMagic[] = "SQLite format 3";

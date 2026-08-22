@@ -1,6 +1,5 @@
-/**
- * @file GridAssetManager.h
- * @brief GridEngine 內部使用的素材管理器。
+/** @file GridAssetManager.h
+ *  @brief 定義 GridEngine 內部使用的素材管理器。
  */
 #ifndef GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
 #define GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
@@ -21,7 +20,7 @@
 
 namespace gridpp {
 
-// 從素材資料庫建立 raylib Texture2D。
+// 從素材資料庫建立 raylib 材質。
 class GridAssetManager {
 public:
     GridAssetManager() = default;
@@ -32,11 +31,10 @@ public:
 
     void Load(const std::filesystem::path& path);
 
-    // 名稱不存在或重複時丟出例外。
     Texture2D Get(const std::string& name) const;
-    bool Has(const std::string& name) const { return textures_.count(name) != 0; }
+    bool Has(const std::string& name) const;
 
-    void Clear() noexcept { Unload(textures_); }
+    void Clear() noexcept;
 
 private:
     static void Unload(std::multimap<std::string, Texture2D>& source) noexcept;
@@ -47,7 +45,7 @@ private:
     std::multimap<std::string, Texture2D> textures_;
 };
 
-// Implementation details only below here.
+// Inline definitions
 
 inline GridAssetManager::~GridAssetManager() { Clear(); }
 
@@ -121,6 +119,10 @@ inline Texture2D GridAssetManager::Get(const std::string& name) const {
     }
     return textures_.find(name)->second;
 }
+
+inline bool GridAssetManager::Has(const std::string& name) const { return textures_.count(name) != 0; }
+
+inline void GridAssetManager::Clear() noexcept { Unload(textures_); }
 
 inline void GridAssetManager::Unload(std::multimap<std::string, Texture2D>& source) noexcept {
     for (const auto& entry : source) UnloadTexture(entry.second);

@@ -1,99 +1,88 @@
 # Grid++
 
-**Grid++** 是一個專為「程式初學者」設計的輕量化、網格導向（grid-based）遊戲引擎。
-它把圖形繪製、遊戲主循環、檔案讀取的複雜度全部藏起來，提供「一行搞定」的 API，
-同時刻意留出接口，引導你練習 C++ 的物件導向（繼承、覆寫、重載、封裝）。
+Grid++ 是供程式設計入門課程使用的 C++17 網格遊戲函式庫。它處理視窗、遊戲迴圈、繪圖與碰撞，讓課程先使用函式與指標建立遊戲，再以 class、繼承與物件狀態處理更複雜的行為。
 
-![Pac-Man 範例畫面](docs/images/preview.png)
+![Pacman 範例畫面](docs/images/preview.png)
 
-## 特色
+## 主要內容
 
-- **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫，不需編譯整個函式庫。
-- **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnSpawn` / `OnUpdate` / `OnCollide`。
-- **不需要連結 SQLite**：素材包 `.db` 由引擎內建的迷你讀取器處理。
-- **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
-- **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。
-- **唯一依賴 [raylib](https://www.raylib.com/)**：只負責開視窗與畫圖。
+- `GridEngine`：管理視窗、遊戲迴圈、物件與碰撞。
+- `GridObject`：存在網格中的玩家、敵人與道具。
+- `Overlay`：使用像素座標，顯示在遊戲物件上方。
+- `GridMaze`：選用的迷宮與牆面模組。
+- `gridpp::shapes`：不需素材包的基本圖形。
 
-## 最小範例
+Grid++ 是 header-only library，唯一的外部依賴是 [raylib](https://www.raylib.com/)。
 
-```cpp
-#include "GridPlusPlus.h"
+## 快速執行
 
-using gridpp::GridEngine;
-using gridpp::GridObject;
+Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w64。請先依照[安裝與建立專案](docs/02-install.md)準備函式庫，再執行對應指令。
 
-class Player : public GridObject {
-public:
-    Player() : GridObject("hero", 5, 5) {}
-    void OnUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
-    }
-};
+### WSL / Linux
 
-int main() {
-    GridEngine game(10, 10, 32);   // 10x10 網格，每格 32 像素
-    game.LoadAssets("assets.db");
-    game.Spawn(new Player());
-    game.Run();
-}
+```bash
+git clone https://github.com/GridPlusPlus/GridPlusPlus.git
+cd GridPlusPlus
+g++ -std=c++17 template.cpp -o game \
+    -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+./game
 ```
 
-可直接編譯的起手式模板在根目錄的 [`template.cpp`](template.cpp)（不需素材包就能跑）。
+### Windows / MinGW-w64
 
-## 快速開始
+```bash
+git clone https://github.com/GridPlusPlus/GridPlusPlus.git
+cd GridPlusPlus
+g++ -std=c++17 template.cpp -o game.exe \
+    -Iraylib/include -Lraylib/lib -lraylib -lgdi32 -lwinmm
+./game.exe
+```
 
-詳細的安裝與三平台編譯說明見 [docs/getting-started.md](docs/getting-started.md)。簡述：
+### macOS
 
-1. **安裝 raylib**——Windows 用 MSYS2（`pacman -S mingw-w64-x86_64-raylib`）、
-   Linux 用套件管理器（`libraylib-dev`）、macOS 用 Homebrew（`brew install raylib`）。
-2. **編譯模板**（在專案根目錄）：
-
-   ```bash
-   # Windows / MinGW
-   g++ -std=c++17 template.cpp -o game -lraylib -lopengl32 -lgdi32 -lwinmm
-   # Linux
-   g++ -std=c++17 template.cpp -o game -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-   # macOS
-   clang++ -std=c++17 template.cpp -o game -lraylib -framework OpenGL -framework Cocoa \
-       -framework IOKit -framework CoreVideo -framework CoreAudio
-   ```
-
-3. 執行 `./game`，用方向鍵移動角色。
-
-## 專案結構
-
-| 路徑 | 說明 |
-|---|---|
-| `GridPlusPlus.h` | 主標頭；一次引入下面三個核心型別。 |
-| `GridEngine.h` | 視窗、主循環、碰撞與素材載入。 |
-| `GridObject.h` | `GridObject` 與函式版的 `CallbackGridObject`。 |
-| `Overlay.h` | `Overlay` 與現成的 `Label`、`Button`。 |
-| `GridSQLite.h` | 核心內部使用的唯讀迷你 SQLite 讀取器。 |
-| `GridMaze.h` | 選用的迷宮模組（牆面網格、自動拼接、牆壁查詢）。 |
-| `GridShapes.h` | 選用的免素材基本圖形。 |
-| `template.cpp` | 起手式模板：一個角色在邊界內移動，複製它開始寫自己的遊戲。 |
-| `examples/pacman/` | 完整範例：用三個模組寫成的小 Pac-Man（見其 README）。 |
-| `docs/` | 文件原始碼（[MkDocs](https://www.mkdocs.org/) 格式）。 |
-
-## 範例
-
-- **[Pac-Man](examples/pacman/)**——方向鍵移動、吃光豆子獲勝、被鬼抓到失敗。
-  完整的編譯、玩法與程式邏輯見 [examples/pacman/README.md](examples/pacman/README.md)，
-  逐行拆解見 [docs/tutorial/pacman.md](docs/tutorial/pacman.md)。
+```bash
+git clone https://github.com/GridPlusPlus/GridPlusPlus.git
+cd GridPlusPlus
+g++ -std=c++17 template.cpp -o game $(pkg-config --cflags --libs raylib)
+./game
+```
 
 ## 文件
 
-完整指南、API 速查與引擎內部原理都在 [`docs/`](docs/index.md)，可用 MkDocs 在本機預覽：
+文件以 Grid++ 功能為主線，依序說明核心架構、`GridEngine`、`GridObject`、Overlay、callback、自訂物件、素材、基本圖形、迷宮與物件生命週期。打地鼠與 Pacman 分散在相關章節中，用於展示 API 在完整情境中的組合方式。
+
+文件檔名使用兩位數編號，與建議閱讀順序一致。API reference 由公開 header 中的 Doxygen 註解自動產生，不混入操作教學。
+
+## 專案結構
+
+| 路徑 | 用途 |
+|---|---|
+| `GridPlusPlus.h` | 一般遊戲使用的主 header。 |
+| `GridEngine.h` | `GridEngine`。 |
+| `GridObject.h` | `GridObject` 與 `CallbackGridObject`。 |
+| `Overlay.h` | `Overlay`、`Label` 與 `Button`。 |
+| `GridMaze.h` | 選用的迷宮模組。 |
+| `GridShapes.h` | 選用的基本圖形。 |
+| `template.cpp` | 可直接編譯的起始程式。 |
+| `examples/` | Pacman 的 callback 與物件導向版本。 |
+| `tests/` | 引擎、生命週期、迷宮、圖形與素材測試。 |
+| `docs/` | MkDocs 教學文件。 |
+
+## 預覽文件
+
+需要 Python、Doxygen 與以下指令：
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
 ```
 
-從 [開始使用](docs/getting-started.md) 與 [遊戲物件 (OOP)](docs/guide/game-objects.md) 兩篇入手最快。
+瀏覽器開啟 `http://127.0.0.1:8000/`。MkDoxy 會在建置時一併更新 API 文件。
+
+## 測試
+
+CI 使用 raylib stub 編譯並執行 `tests/`，也會確認 template 與兩個 Pacman 範例能以 C++17 編譯。實際圖形顯示仍應使用已安裝的 raylib 測試。
 
 ## 授權
 
-本專案採用 [MIT 授權](LICENSE)。依賴的 raylib 為 zlib/libpng 授權，請另行安裝。
+Grid++ 採用 [MIT License](LICENSE)。raylib 使用 zlib/libpng License。

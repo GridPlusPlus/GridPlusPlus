@@ -1,8 +1,5 @@
-/**
- * @file GridMaze.h
- * @brief Grid++ 迷宮擴充模組。
- *
- * 提供固定大小的牆面網格與自動拼接繪製。是一個會把整片牆畫出來的 GridObject。
+/** @file GridMaze.h
+ *  @brief 定義固定大小的迷宮物件。
  */
 #ifndef GRID_PLUS_PLUS_GRID_MAZE_H_
 #define GRID_PLUS_PLUS_GRID_MAZE_H_
@@ -15,31 +12,53 @@
 
 namespace gridpp {
 
-// 迷宮物件。
+/** 儲存牆面網格並繪製整座迷宮。 */
 class GridMaze : public GridObject {
 public:
     static constexpr int kMaxWidth = 64;
     static constexpr int kMaxHeight = 64;
 
-    // 建立空白迷宮，尺寸上限為 64×64。
+    /**
+     * 建立空白迷宮。
+     * @param cols 迷宮欄數，範圍為 1 到 kMaxWidth。
+     * @param rows 迷宮列數，範圍為 1 到 kMaxHeight。
+     * @throws std::invalid_argument 若尺寸超出範圍。
+     */
     GridMaze(int cols, int rows);
 
-    // 界外座標會丟出 std::out_of_range。
+    /**
+     * 設定一格是否為牆。
+     * @param x 網格 x 座標。
+     * @param y 網格 y 座標。
+     * @param wall true 表示牆，false 表示通道。
+     * @throws std::out_of_range 若座標位於迷宮外。
+     */
     void SetWall(int x, int y, bool wall);
 
-    // 界外座標視為牆。
+    /**
+     * @param x 網格 x 座標。
+     * @param y 網格 y 座標。
+     * @return 指定位置是否為牆；迷宮外一律回傳 true。
+     */
     bool IsWall(int x, int y) const;
 
-    // 所有牆使用同一素材。
+    /** 所有牆使用同一素材；最後呼叫此函式會切換至單一素材模式。 */
     void SetWallAsset(const std::string& asset);
 
-    // 由六種基本形狀及旋轉方向拼出所有連通組合。
-    // 參數依序為孤立、端點、直線、轉角、T 形與十字。
+    /**
+     * 設定自動拼接牆面使用的六種素材，並切換至自動拼接模式。
+     * @param isolated 孤立牆素材。
+     * @param end 端點素材。
+     * @param straight 直線素材。
+     * @param corner 轉角素材。
+     * @param tee T 形素材。
+     * @param cross 十字素材。
+     */
     void SetWallTiles(const std::string& isolated, const std::string& end, const std::string& straight,
                       const std::string& corner, const std::string& tee, const std::string& cross);
 
-    int width() const { return width_; }
-    int height() const { return height_; }
+    int width() const;
+    int height() const;
 
     void Render(GridEngine* engine) override;
 
@@ -59,7 +78,7 @@ private:
     bool use_tiles_ = false;
 };
 
-// Implementation details only below here.
+// Inline definitions
 
 inline GridMaze::GridMaze(int cols, int rows) : GridObject("", -1, -1), width_(cols), height_(rows) {
     if (cols < 1 || rows < 1 || cols > kMaxWidth || rows > kMaxHeight) {
@@ -96,6 +115,10 @@ inline void GridMaze::SetWallTiles(const std::string& isolated, const std::strin
     wall_tiles_[5] = cross;
     use_tiles_ = true;
 }
+
+inline int GridMaze::width() const { return width_; }
+
+inline int GridMaze::height() const { return height_; }
 
 inline void GridMaze::Render(GridEngine* engine) {
     for (int y = 0; y < height_; ++y) {

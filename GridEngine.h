@@ -1,8 +1,5 @@
-/**
- * @file GridEngine.h
- * @brief Grid++ 遊戲引擎。
- *
- * 此檔為核心實作拆分；一般使用者請 include "GridPlusPlus.h"。
+/** @file GridEngine.h
+ *  @brief 定義 Grid++ 遊戲引擎。
  */
 #ifndef GRID_PLUS_PLUS_GRID_ENGINE_H_
 #define GRID_PLUS_PLUS_GRID_ENGINE_H_
@@ -27,60 +24,102 @@
 
 namespace gridpp {
 
-// 建立視窗並管理主迴圈、網格物件、覆蓋層與碰撞。
+/** 建立視窗並管理遊戲物件、碰撞、繪製與主迴圈。 */
 class GridEngine {
 public:
     static constexpr int kMaxWindowSize = 8192;
 
+    /**
+     * 建立遊戲引擎與視窗。
+     * @param cols 網格欄數。
+     * @param rows 網格列數。
+     * @param grid_size 每格的像素寬度與高度。
+     * @throws std::invalid_argument 若任一參數小於 1，或視窗寬、高超過 kMaxWindowSize。
+     */
     GridEngine(int cols, int rows, int grid_size = 32);
     ~GridEngine();
 
-    GridEngine(const GridEngine&) = delete;
-    GridEngine& operator=(const GridEngine&) = delete;
+    GridEngine(const GridEngine& other) = delete;
+    GridEngine& operator=(const GridEngine& other) = delete;
 
-    void LoadAssets(const std::filesystem::path& database_path) { assets_.Load(database_path); }
+    /**
+     * 載入素材包並取代目前素材。
+     * @param database_path 素材包路徑。
+     * @throws std::runtime_error 若檔案無法讀取或素材包格式無效。
+     */
+    void LoadAssets(const std::filesystem::path& database_path);
 
-    // 背景預設為 RAYWHITE。
-    void set_background_color(Color color) { background_color_ = color; }
-    Color background_color() const { return background_color_; }
+    void set_background_color(Color color);
+    Color background_color() const;
 
-    // 網格線預設關閉。
-    void set_show_grid(bool show) { show_grid_ = show; }
-    bool show_grid() const { return show_grid_; }
+    void set_show_grid(bool show);
+    bool show_grid() const;
 
-    int cols() const { return cols_; }
-    int rows() const { return rows_; }
-    int grid_size() const { return grid_size_; }
+    int cols() const;
+    int rows() const;
+    int grid_size() const;
 
-    // 物件生命週期：
-    // - Spawn 後由引擎擁有；回傳指標只能借用，不可自行 delete。
-    // - 主迴圈外的 Spawn / Destroy / ClearObjects 立即生效。
-    // - 主迴圈內 Spawn 的物件從下一幀開始運作。
-    // - 主迴圈內 Destroy / ClearObjects 會立即停用物件，並在幀末釋放記憶體。
+    /**
+     * 將物件加入遊戲並接管其所有權。
+     *
+     * 主迴圈外會立即呼叫 GridObject::OnSpawn()。主迴圈內加入的物件會在幀末呼叫 OnSpawn()，並從
+     * 下一幀開始更新、碰撞與繪製。
+     *
+     * @param object 使用 `new` 建立且尚未屬於任何引擎的物件。
+     * @return 指向已加入物件的借用指標；呼叫端不可 delete。
+     * @throws std::invalid_argument 若 object 是 nullptr。
+     * @throws std::logic_error 若 object 已屬於一個引擎。
+     */
     GridObject* Spawn(GridObject* object);
 
-    // 建立函式版物件；呼叫端不需要知道 CallbackGridObject。
+    /**
+     * 建立並加入函式版物件。
+     * @param asset_name 繪製時使用的素材名稱。
+     * @param x 初始網格 x 座標。
+     * @param y 初始網格 y 座標。
+     * @param update 每幀呼叫的函式；可以是 nullptr。
+     * @param collide 發生碰撞時呼叫的函式；可以是 nullptr。
+     * @return 指向已加入物件的借用指標；呼叫端不可 delete。
+     */
     GridObject* Spawn(const std::string& asset_name, int x, int y, CallbackGridObject::UpdateFn update,
                       CallbackGridObject::CollideFn collide = nullptr);
 
-    // 立即停止物件的更新、碰撞與繪製，並在這一幀結束後才釋放記憶體。
+    /**
+     * 刪除引擎擁有的物件。
+     *
+     * 主迴圈內呼叫時，物件會立即停止更新、碰撞與繪製，並在幀末釋放。
+     * @param object 要刪除的借用指標；nullptr 或不屬於此引擎的指標不會產生效果。
+     */
     void Destroy(GridObject* object);
 
-    // 刪除所有遊戲物件，不影響覆蓋層與素材。
+    /** 刪除所有遊戲物件；不影響 Overlay 與已載入的素材。 */
     void ClearObjects();
 
-    // 呼叫後由引擎擁有 overlay。
+    /**
+     * 加入畫面覆蓋層並接管其所有權。
+     * @param overlay 使用 `new` 建立且尚未屬於任何引擎的 Overlay。
+     * @throws std::invalid_argument 若 overlay 是 nullptr。
+     * @throws std::logic_error 若 overlay 已屬於一個引擎。
+     */
     void AddOverlay(Overlay* overlay);
 
+    /** 執行遊戲主迴圈，直到視窗關閉。 */
     void Run();
 
-    // 在網格座標繪製素材，素材不存在時繪製紅色方塊。
+    /**
+     * 在指定網格座標繪製素材；素材不存在時繪製紅色方塊。
+     * @param asset_name 素材名稱。
+     * @param grid_x 網格 x 座標。
+     * @param grid_y 網格 y 座標。
+     * @param direction 逆時針旋轉的 90 度倍數。
+     * @param tint 繪製時套用的顏色。
+     */
     void DrawCell(const std::string& asset_name, int grid_x, int grid_y, int direction = 0, Color tint = WHITE);
 
 private:
     void Tick();
-    void InvokeOnSpawn(GridObject* object);
     bool IsPendingDestroy(GridObject* object) const;
+    void InvokeOnSpawn(GridObject* object);
     void FlushLifecycleChanges();
     void DrawGrid();
     void DeleteAllObjects() noexcept;
@@ -102,7 +141,7 @@ private:
     std::vector<Overlay*> overlays_;
 };
 
-// Implementation details only below here.
+// Inline definitions
 
 inline GridEngine::GridEngine(int cols, int rows, int grid_size) : cols_(cols), rows_(rows), grid_size_(grid_size) {
     if (cols < 1 || rows < 1 || grid_size < 1) {
@@ -128,7 +167,22 @@ inline GridEngine::~GridEngine() {
     CloseWindow();
 }
 
-// spawn for user-created object
+inline void GridEngine::LoadAssets(const std::filesystem::path& database_path) { assets_.Load(database_path); }
+
+inline void GridEngine::set_background_color(Color color) { background_color_ = color; }
+
+inline Color GridEngine::background_color() const { return background_color_; }
+
+inline void GridEngine::set_show_grid(bool show) { show_grid_ = show; }
+
+inline bool GridEngine::show_grid() const { return show_grid_; }
+
+inline int GridEngine::cols() const { return cols_; }
+
+inline int GridEngine::rows() const { return rows_; }
+
+inline int GridEngine::grid_size() const { return grid_size_; }
+
 inline GridObject* GridEngine::Spawn(GridObject* object) {
     if (object == nullptr) throw std::invalid_argument("GridEngine Error: Cannot Spawn nullptr GridObject");
     if (object->engine() != nullptr)
@@ -150,7 +204,6 @@ inline GridObject* GridEngine::Spawn(GridObject* object) {
     return object;
 }
 
-// spawn for callback object; user doesn't need to know about CallbackGridObject
 inline GridObject* GridEngine::Spawn(const std::string& asset_name, int x, int y, CallbackGridObject::UpdateFn update,
                                      CallbackGridObject::CollideFn collide) {
     return Spawn(new CallbackGridObject(asset_name, x, y, update, collide));

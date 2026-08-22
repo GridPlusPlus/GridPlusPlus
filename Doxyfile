@@ -1,0 +1,32 @@
+PROJECT_NAME           = "Grid++"
+PROJECT_BRIEF          = "給 C++ 初學者使用的網格遊戲函式庫"
+OUTPUT_DIRECTORY       = site
+OUTPUT_LANGUAGE        = Chinese-Traditional
+
+INPUT                  = GridPlusPlus.h \
+                         GridEngine.h \
+                         GridObject.h \
+                         Overlay.h \
+                         GridMaze.h \
+                         GridShapes.h
+FILE_PATTERNS          = *.h
+RECURSIVE              = NO
+
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+INHERIT_DOCS           = YES
+JAVADOC_AUTOBRIEF      = YES
+
+GENERATE_XML           = YES
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_AS_ERROR          = YES

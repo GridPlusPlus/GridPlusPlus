@@ -4,9 +4,7 @@
 //  要寫自己的遊戲，從這支複製一份開始改：一個角色用方向鍵在「地圖邊界以內」移動，
 //  按一下走一格。沒有素材包：找不到素材時引擎會用紅色方塊代替，所以不需要 assets.db 就能跑。
 //
-//  編譯（在專案根目錄；raylib 已安裝。其他平台見 docs/getting-started.md）：
-//    g++ -std=c++17 template.cpp -o game -lraylib -lopengl32 -lgdi32 -lwinmm          # Windows / MinGW
-//    g++ -std=c++17 template.cpp -o game -lraylib -lGL -lm -lpthread -ldl -lrt -lX11  # Linux
+//  安裝與各平台編譯方式見 docs/02-install.md。
 // =============================================================================
 #include "GridPlusPlus.h"
 

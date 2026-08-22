@@ -7,7 +7,7 @@
 //
 //  玩法：方向鍵移動，吃光所有豆子獲勝，碰到鬼魂失敗。（結束後畫面會定格）
 //
-//  編譯（在本資料夾內，raylib 已安裝；其他平台見 docs/getting-started.md）：
+//  各平台安裝與編譯方式見 docs/02-install.md。
 //    g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
 //  執行前確保本資料夾有 pacman.db（素材，沿用 examples/pacman 的那份）。
 // =============================================================================
