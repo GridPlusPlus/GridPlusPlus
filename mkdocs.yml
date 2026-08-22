@@ -21,6 +21,8 @@ theme:
   language: zh-TW
   features:
     - navigation.sections
+    - navigation.indexes
+    - navigation.footer
     - navigation.top
     - content.code.copy
   palette:
@@ -56,18 +58,42 @@ markdown_extensions:
 
 nav:
   - 首頁: index.md
-  - 01 Grid++ 總覽: 01-overview.md
-  - 02 安裝與建立專案: 02-install.md
-  - 03 GridEngine: 03-grid-engine.md
-  - 04 GridObject: 04-grid-object.md
-  - 05 Overlay: 05-overlay.md
-  - 06 CallbackGridObject: 06-callback-grid-object.md
-  - 07 物件狀態與自訂 GridObject: 07-custom-grid-object.md
-  - 08 素材與素材包: 08-assets.md
-  - 09 不需素材的基本圖形: 09-shapes.md
-  - 10 迷宮與 GridMaze: 10-maze.md
-  - 11 物件生命週期: 11-lifecycle.md
-  - 12 使用 Git 保存專案: 12-publishing.md
+  - 1 開始使用:
+      - 01-getting-started/index.md
+      - 1.1 安裝 raylib: 01-getting-started/01-installation.md
+      - 1.2 第一個 Grid++ 程式: 01-getting-started/02-hello-gridpp.md
+  - 2 製作打地鼠: 02-whack-a-mole/index.md
+  - 3 理解核心模型:
+      - 03-core-model/index.md
+      - 3.1 GridEngine: 03-core-model/01-grid-engine.md
+      - 3.2 GridObject: 03-core-model/02-grid-object.md
+      - 3.3 Overlay: 03-core-model/03-overlay.md
+  - 4 定義物件行為:
+      - 04-object-behavior/index.md
+      - 4.1 CallbackGridObject: 04-object-behavior/01-callbacks.md
+      - 4.2 同格碰撞: 04-object-behavior/02-collisions.md
+  - 5 物件狀態:
+      - 05-object-state/index.md
+      - 5.1 自訂 GridObject: 05-object-state/01-custom-grid-object.md
+      - 5.2 生命週期方法: 05-object-state/02-lifecycle-methods.md
+  - 6 素材與繪製:
+      - 06-drawing/index.md
+      - 6.1 素材包: 06-drawing/01-assets.md
+      - 6.2 基本圖形: 06-drawing/02-shapes.md
+      - 6.3 繪製狀態與順序: 06-drawing/03-rendering.md
+  - 7 製作 Pacman:
+      - 07-pacman/index.md
+      - 7.1 地圖與迷宮: 07-pacman/01-map-and-maze.md
+      - 7.2 玩家移動: 07-pacman/02-player.md
+      - 7.3 豆子與勝利條件: 07-pacman/03-pellets.md
+      - 7.4 多隻鬼的獨立狀態: 07-pacman/04-ghosts.md
+      - 7.5 遊戲狀態與 Overlay: 07-pacman/05-game-states.md
+  - 8 生命週期與所有權:
+      - 08-lifecycle/index.md
+      - 8.1 執行期間新增與刪除: 08-lifecycle/01-runtime-changes.md
+      - 8.2 所有權與借用指標: 08-lifecycle/02-ownership.md
+      - 8.3 每幀執行順序: 08-lifecycle/03-frame-order.md
+  - 9 保存與發布: 09-sharing/index.md
   - API 參考:
       - 總覽: api/index.md
       - 類別列表: api/annotated.md

@@ -63,7 +63,7 @@ bool grid_is_visible = game.show_grid();
 
 `Run()` 持續執行遊戲幀，直到使用者關閉視窗。在桌面平台，它等同於反覆執行 Grid++ 的內部 tick；在 WebAssembly 平台，瀏覽器負責安排每一幀。遊戲程式不應在 `Run()` 外再建立另一個 raylib while-loop。
 
-每幀包含物件更新、Overlay 更新、同格碰撞、物件繪製與 Overlay 繪製。詳細順序以及 runtime spawn、destroy 的延後規則集中在[物件生命週期](11-lifecycle.md)。一般功能只需要在 callback 或覆寫函式中提供行為，不需要直接控制主迴圈。
+每幀包含物件更新、Overlay 更新、同格碰撞、物件繪製與 Overlay 繪製。詳細順序以及 runtime spawn、destroy 的延後規則集中在[生命週期與所有權](../08-lifecycle/index.md)。一般功能只需要在 callback 或覆寫函式中提供行為，不需要直接控制主迴圈。
 
 `Run()` 是阻塞函式。桌面版只有在視窗關閉後才會回傳，因此必須在呼叫前完成初始物件、Overlay 與素材設定。
 
@@ -96,7 +96,7 @@ game.LoadAssets("assets.db");
 game.Spawn("mole", 3, 4, UpdateMole);
 ```
 
-再次載入會取代目前素材，但只有在新素材包完整載入成功後才清除舊 texture。素材檔案與命名規則在[素材包](08-assets.md)說明。不使用素材包時可以依賴紅色 fallback 方塊，或額外引入 `GridShapes.h`。
+再次載入會取代目前素材，但只有在新素材包完整載入成功後才清除舊 texture。素材檔案與命名規則在[素材與素材包](../06-drawing/01-assets.md)說明。不使用素材包時可以依賴紅色 fallback 方塊，或額外引入 `GridShapes.h`。
 
 ## DrawCell
 
@@ -123,4 +123,6 @@ int main() {
 
 Engine 不可複製，因為兩個 Engine 不能同時擁有同一組視窗與資源。需要重新開始遊戲時，通常保留原本的 Engine，並使用 `ClearObjects()` 重建關卡。
 
-[GridObject](04-grid-object.md){ .md-button .md-button--primary }
+[GridObject](02-grid-object.md){ .md-button .md-button--primary }
+
+完整函式簽名見 [GridEngine API](../api/classgridpp_1_1_grid_engine.md)。

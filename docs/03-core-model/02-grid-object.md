@@ -119,3 +119,5 @@ game.Spawn(&local);
 ```
 
 同一指標不可 spawn 兩次，也不可同時交給兩個引擎。`Spawn()` 回傳的指標只在物件仍存在時有效；呼叫 `Destroy()`、`ClearObjects()` 或讓引擎結束生命週期後，不可再次讀取該指標。
+
+完整成員列表見 [GridObject API](../api/classgridpp_1_1_grid_object.md)。

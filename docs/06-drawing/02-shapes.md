@@ -55,3 +55,5 @@ game.Spawn(target);
 ```
 
 基本圖形仍具有座標、tag、visible、z-index 和碰撞行為。它們沒有素材名稱，修改 `asset_name` 不會改變圖形的 `Render()`。需要 callback 行為時，可衍生其中一個圖形類別並覆寫生命週期函式；若只需要一個可點擊或可碰撞的圖形，也可以保存回傳指標並由其他遊戲邏輯修改它。
+
+完整類別索引見 [shapes namespace API](../api/namespacegridpp_1_1shapes.md)。

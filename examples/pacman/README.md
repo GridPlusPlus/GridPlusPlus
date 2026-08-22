@@ -19,7 +19,7 @@
 
 ## 編譯與執行
 
-raylib 的安裝方式見[安裝與設定](../../docs/02-install.md)。Windows 建議使用 WSL，並依照 Linux 指令操作；
+raylib 的安裝方式見[安裝 raylib](../../docs/01-getting-started/01-installation.md)。Windows 建議使用 WSL，並依照 Linux 指令操作；
 需要原生 `.exe` 時才使用 MinGW-w64。`-I../..` 讓編譯器找到專案根目錄的 headers。
 
 === "WSL / Linux"
@@ -172,7 +172,7 @@ void OnCollide(GridObject* other) override {
 | `3` | 失敗 | 壓暗 +「GAME OVER」+ **Restart** 按鈕 |
 
 角色只在 `g_state == 1` 時移動，所以開始畫面與結束畫面都會自動「凍結」。
-各按鈕也只在對的階段顯示與作用（見 [Overlay](../../docs/05-overlay.md)）。
+各按鈕也只在對的階段顯示與作用（見 [Overlay](../../docs/03-core-model/03-overlay.md)）。
 
 **重新開始**靠兩件事：引擎的 `ClearObjects()`（刪掉上一局的所有物件）＋
 把佈置流程抽成 `BuildLevel(game, level)`，開始與重來都使用啟動時已驗證的地圖。
@@ -210,4 +210,4 @@ void BuildLevel(GridEngine& game, const LevelMap& level) {
     - **重複利用素材**：小精靈靠 `set_direction` 旋轉一張圖朝向四個方向；四隻鬼靠 `set_tint`
       把同一張白色素材染成不同顏色；牆壁也靠旋轉，用 6 種基本形狀拼出全部 16 種連通。
     - **覆蓋層與遊戲分開**：分數與訊息放在 `ScoreOverlay : Overlay`、按鈕是 `Button` 的子類，
-      各自只在「對的階段」顯示與作用，透過 `AddOverlay` 加入、畫在網格之上。詳見 [Overlay](../../docs/05-overlay.md)。
+      各自只在「對的階段」顯示與作用，透過 `AddOverlay` 加入、畫在網格之上。詳見 [Overlay](../../docs/03-core-model/03-overlay.md)。

@@ -19,7 +19,7 @@ struct Image {
     int width, height, mipmaps, format;
 };
 
-enum { PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, MOUSE_BUTTON_LEFT, KEY_RIGHT, KEY_UP, KEY_LEFT, KEY_DOWN };
+enum { PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, MOUSE_BUTTON_LEFT, KEY_RIGHT, KEY_UP, KEY_LEFT, KEY_DOWN, KEY_R };
 
 static const Color WHITE = {255, 255, 255, 255};
 static const Color RAYWHITE = {245, 245, 245, 255};
@@ -114,6 +114,7 @@ inline bool IsKeyDown(int) { return false; }
 inline int MeasureText(const char*, int) { return 0; }
 inline void DrawText(const char*, int, int, int, Color) {}
 inline int GetRandomValue(int min, int) { return min; }
+inline double GetTime() { return static_cast<double>(test_frame); }
 inline void SetWindowTitle(const char*) {}
 inline const char* TextFormat(const char*, ...) { return ""; }
 inline int GetScreenWidth() { return 0; }

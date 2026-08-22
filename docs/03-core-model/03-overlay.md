@@ -95,3 +95,5 @@ game.AddOverlay(new Crosshair());
 Overlay 沒有 GridObject 的 tag、visible、z-index 或同格碰撞。若內容需要這些功能，它應該是 `GridObject`，即使外觀上看起來像畫面元件。
 
 Label 顯示遊戲狀態轉換後的文字；分數的計算仍由遊戲規則負責。
+
+完整介面見 [Overlay API](../api/classgridpp_1_1_overlay.md)、[Label API](../api/classgridpp_1_1_label.md)與 [Button API](../api/classgridpp_1_1_button.md)。

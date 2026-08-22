@@ -1,4 +1,4 @@
-# 使用 Git 保存專案
+# 保存與分享專案
 
 每完成一個可執行階段，使用 Git 建立一筆 commit。先檢查目前變更，再加入本次需要保存的來源檔、素材與地圖。
 
@@ -31,5 +31,3 @@ git push
 ```
 
 第一次推送新 branch 時，Git 可能要求設定 upstream。依終端機顯示的 branch 名稱執行 `git push -u origin <branch>`。推送只會傳送 commit，不會包含尚未 commit 的工作目錄變更。
-
-部署 Web demo 需要額外的 WebAssembly 建置與託管 workflow。這項流程不是 Grid++ 核心 API 的一部分，應使用課程或專案提供的部署設定；不要直接把桌面版 `game` 執行檔上傳為網頁。

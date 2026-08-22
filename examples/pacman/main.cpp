@@ -2,7 +2,7 @@
 //  examples/pacman —— Grid++ 範例：Pac-Man 小遊戲
 //
 //  編譯指令、map.txt 格式、遊戲流程與邏輯總覽見同資料夾的 README.md；
-//  自訂物件的說明見 docs/07-custom-grid-object.md。
+//  對應教學見 docs/07-pacman/。
 // =============================================================================
 #include <cstdlib>
 #include <exception>

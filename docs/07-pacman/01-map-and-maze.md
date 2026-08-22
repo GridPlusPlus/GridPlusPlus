@@ -1,4 +1,4 @@
-# 迷宮與 GridMaze
+# 地圖與迷宮
 
 迷宮是另一層網格資料，每一格記錄「這個位置能不能通過」。若將每一面牆都建立成獨立 GridObject，小型地圖仍可運作，但程式會產生大量沒有更新行為的物件，移動時還要等待碰撞發生才知道玩家已經走進牆內。
 
@@ -58,8 +58,81 @@ maze->SetWallTiles(
 
 兩個函式同時負責切換模式，最後呼叫者生效。這使關卡可以在單一牆面素材與自動拼接素材之間切換，不需要重建迷宮。
 
-## 載入文字地圖
+## Pacman 地圖格式
 
-GridMaze 不直接解析檔案。遊戲應先把整份地圖讀入並驗證，再建立或清除目前關卡。驗證至少應包含檔案是否存在、尺寸是否在 1～64、格子數是否正確、tile 值是否合法，以及必要角色的數量。
+`map.txt` 的第一行是列數和欄數，後面包含 `rows × cols` 個 tile。空白和換行都只作為分隔，因此每列可以排成地圖形狀，解析結果仍由第一行的尺寸決定。
 
-只有在驗證成功後才呼叫 `ClearObjects()` 和 `SetWall()`。這個順序可避免讀到半份或錯誤地圖時，先清除仍可使用的舊關卡。Pacman 範例的 `LevelMap` 解析器展示了完整做法。
+```text
+5 7
+1 1 1 1 1 1 1
+1 2 0 0 0 3 1
+1 0 1 1 1 0 1
+1 0 0 0 0 0 1
+1 1 1 1 1 1 1
+```
+
+| Tile | 建立的內容 |
+|---|---|
+| `0` | 通道與一顆豆子 |
+| `1` | 牆面 |
+| `2` | 玩家起點 |
+| `3` | 鬼的起點 |
+
+`LevelMap.h` 提供 `LoadLevelMap(path)`。它會先讀取完整檔案，驗證尺寸介於 1～64、tile 數量正確、每個值位於 0～3、檔尾沒有多餘資料，並確認恰好一個玩家。驗證失敗時丟出以 `Map Error:` 開頭的英文例外。
+
+```cpp
+using pacman_example::LevelMap;
+using pacman_example::LoadLevelMap;
+
+LevelMap level = LoadLevelMap("map.txt");
+GridEngine game(level.cols, level.rows, 32);
+```
+
+這個呼叫順序先驗證檔案，再建立 raylib 視窗。錯誤地圖只會在終端顯示訊息，不會留下無法使用的遊戲視窗。`main()` 捕捉例外並回傳失敗：
+
+```cpp
+int main() {
+    try {
+        g_level = LoadLevelMap("map.txt");
+        GridEngine game(g_level.cols, g_level.rows, 32);
+        // Load assets and build the level.
+        game.Run();
+        return EXIT_SUCCESS;
+    } catch (const std::exception& error) {
+        std::cerr << error.what() << '\n';
+        return EXIT_FAILURE;
+    }
+}
+```
+
+## 從 LevelMap 建立 GridMaze
+
+`BuildLevel()` 收到已驗證的 `LevelMap`，建立相同尺寸的 GridMaze，設定自動拼接牆面素材，再逐格填入牆與遊戲物件。
+
+```cpp
+GridMaze* maze = new GridMaze(level.cols, level.rows);
+maze->SetWallTiles(
+    "wall_iso", "wall_end", "wall_straight",
+    "wall_corner", "wall_tee", "wall_cross"
+);
+game.Spawn(maze);
+
+for (int y = 0; y < level.rows; ++y) {
+    for (int x = 0; x < level.cols; ++x) {
+        if (level.tiles[y][x] == 1) {
+            maze->SetWall(x, y, true);
+        }
+    }
+}
+```
+
+迷宮先 spawn，讓相同 z-index 的玩家、豆子與鬼在它之後繪製。重新開始時，程式重用啟動時已驗證的 `g_level`，不重新讀取磁碟。`BuildLevel()` 先呼叫 `ClearObjects()`，再把舊的全域借用指標設為 `nullptr` 並建立新關卡。
+
+## Summary
+
+- `LevelMap` 在建立 Engine 前完整驗證 `map.txt`。
+- GridMaze 保存牆面網格，角色在移動前用 `IsWall()` 查詢下一格。
+- `SetWallTiles()` 根據相鄰牆面選擇素材與方向。
+- 重新開始會重用已驗證的地圖資料並重建 GridObject。
+
+完整函式簽名與尺寸常數見 [GridMaze API](../api/classgridpp_1_1_grid_maze.md)。
