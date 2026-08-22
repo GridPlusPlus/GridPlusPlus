@@ -62,7 +62,8 @@ nav:
       - 01-getting-started/index.md
       - 1.1 安裝 raylib: 01-getting-started/01-installation.md
       - 1.2 第一個 Grid++ 程式: 01-getting-started/02-hello-gridpp.md
-  - 2 製作打地鼠: 02-whack-a-mole/index.md
+  - 2 製作打地鼠: 
+      - 02-whack-a-mole/index.md
   - 3 理解核心模型:
       - 03-core-model/index.md
       - 3.1 GridEngine: 03-core-model/01-grid-engine.md
