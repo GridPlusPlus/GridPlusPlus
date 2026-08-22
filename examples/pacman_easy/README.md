@@ -5,7 +5,7 @@
 
 **刻意寫得像 C**：整支程式沒有自訂 `class`、沒有繼承，只用「全域變數 + 一般函式」。
 角色的行為靠 `CallbackGridObject`——先寫好普通函式，初始化時把函式名字傳進去即可。
-概念說明見 [函式版物件](../../docs/guide/callback-grid-object.md)；
+概念說明見 [CallbackGridObject](../../docs/04-object-behavior/01-callbacks.md)；
 想看用繼承寫的完整版，見隔壁的 [`examples/pacman/`](../pacman/)。
 
 > 玩法：**方向鍵**移動，吃光所有豆子獲勝，碰到鬼魂失敗。（結束後畫面會定格，重玩就重跑程式）
@@ -19,32 +19,29 @@
 
 ## 編譯與執行
 
-raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../..` 讓編譯器找到專案根目錄的
-`GridMaze.h` / `GridPlusPlus.h`。依平台編譯：
+raylib 的安裝方式見[安裝 raylib](../../docs/01-getting-started/01-installation.md)。Windows 建議使用 WSL，並依照 Linux 指令操作；
+需要原生 `.exe` 時才使用 MinGW-w64。`-I../..` 讓編譯器找到專案根目錄的 headers。
 
-=== "Windows"
+=== "WSL / Linux"
 
     ```bash
-    g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
+    g++ -std=c++17 main.cpp -I../.. -o game \
+        -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
     ./game
     ```
 
-    用 repo 內附的 raylib 動態庫時，改連 `-L../../lib -lraylibdll` 並把 `raylib.dll`
-    複製到本資料夾。
-
-=== "Linux"
+=== "Windows / MinGW-w64"
 
     ```bash
-    g++ -std=c++17 main.cpp -I../.. -o game $(pkg-config --libs raylib)
-    ./game
+    g++ -std=c++17 main.cpp -I../.. -o game.exe \
+        -I../../raylib/include -L../../raylib/lib -lraylib -lgdi32 -lwinmm
+    ./game.exe
     ```
 
 === "macOS"
 
     ```bash
-    clang++ -std=c++17 main.cpp -I../.. -o game -lraylib \
-        -framework OpenGL -framework Cocoa -framework IOKit \
-        -framework CoreVideo -framework CoreAudio
+    g++ -std=c++17 main.cpp -I../.. -o game $(pkg-config --cflags --libs raylib)
     ./game
     ```
 
@@ -78,4 +75,4 @@ raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../
 
 想讓「多隻鬼各自記住自己的計時器與方向」時，全域變數就不夠用了——那就是需要**類別**的時機。
 把這些函式搬進繼承 `GridObject` 的子類別（用成員變數記狀態），就成了
-[`examples/pacman/`](../pacman/) 的完整版。逐行拆解見 [Pac-Man 拆解](../../docs/tutorial/pacman.md)。
+[`examples/pacman/`](../pacman/) 的完整版。物件狀態與繼承的說明見[自訂 GridObject](../../docs/05-object-state/01-custom-grid-object.md)。

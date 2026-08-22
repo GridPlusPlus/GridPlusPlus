@@ -28,5 +28,8 @@ jobs:
         run: |
           set -eux
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. template.cpp -o /tmp/template
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/step_01_board.cpp -o /tmp/whack-board
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/step_02_mole.cpp -o /tmp/whack-mole
+          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/main.cpp -o /tmp/whack-a-mole
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman/main.cpp -o /tmp/pacman
           g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman_easy/main.cpp -o /tmp/pacman-easy

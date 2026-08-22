@@ -14,48 +14,34 @@
 | `main.cpp` | 範例原始碼（完整可編譯版本）。 |
 | `map.txt` | 關卡地圖（純整數，見下方格式）。 |
 | `pacman.db` | 素材包（pacman / ghost / pellet / wall … 等圖檔的打包）。 |
-| `raylib.dll` | 在 Windows 用動態庫時，需與執行檔同資料夾的 raylib 動態庫。 |
 
-`game(.exe)` 與（Windows 動態庫時的）`raylib.dll` 是編譯/執行時產生的檔案，列在 `.gitignore`
-不進版控；`pacman.db` 素材包則隨範例提供，執行前需放在本資料夾內。
+`game`／`game.exe` 是編譯產生的檔案，不進版控；`pacman.db` 素材包則隨範例提供，執行前需放在本資料夾內。
 
 ## 編譯與執行
 
-raylib 的安裝方式見 [開始使用](../../docs/getting-started.md)。`-I../..` 用來讓編譯器找到
-專案根目錄的 `GridMaze.h` / `GridPlusPlus.h`。依平台編譯：
+raylib 的安裝方式見[安裝 raylib](../../docs/01-getting-started/01-installation.md)。Windows 建議使用 WSL，並依照 Linux 指令操作；
+需要原生 `.exe` 時才使用 MinGW-w64。`-I../..` 讓編譯器找到專案根目錄的 headers。
 
-=== "Windows"
-
-    raylib 已裝進工具鏈（MSYS2 / MinGW）時，要連結幾個 Windows 系統函式庫：
+=== "WSL / Linux"
 
     ```bash
-    g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lopengl32 -lgdi32 -lwinmm
+    g++ -std=c++17 main.cpp -I../.. -o game \
+        -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
     ./game
     ```
 
-    改用 repo 內附的 raylib 動態庫時，加 `-L` 並把 dll 複製到執行檔旁：
+=== "Windows / MinGW-w64"
 
     ```bash
-    g++ -std=c++17 main.cpp -I../.. -L../../lib -lraylibdll -lopengl32 -lgdi32 -lwinmm -o game
-    cp ../../lib/raylib.dll .         # 動態庫：dll 要和 game.exe 同資料夾
-    ./game
-    ```
-
-=== "Linux"
-
-    ```bash
-    g++ -std=c++17 main.cpp -I../.. -o game -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-    ./game
+    g++ -std=c++17 main.cpp -I../.. -o game.exe \
+        -I../../raylib/include -L../../raylib/lib -lraylib -lgdi32 -lwinmm
+    ./game.exe
     ```
 
 === "macOS"
 
-    用 Clang，並以 `-framework` 連結 macOS 系統框架：
-
     ```bash
-    clang++ -std=c++17 main.cpp -I../.. -o game -lraylib \
-        -framework OpenGL -framework Cocoa -framework IOKit \
-        -framework CoreVideo -framework CoreAudio
+    g++ -std=c++17 main.cpp -I../.. -o game $(pkg-config --cflags --libs raylib)
     ./game
     ```
 
@@ -186,7 +172,7 @@ void OnCollide(GridObject* other) override {
 | `3` | 失敗 | 壓暗 +「GAME OVER」+ **Restart** 按鈕 |
 
 角色只在 `g_state == 1` 時移動，所以開始畫面與結束畫面都會自動「凍結」。
-各按鈕也只在對的階段顯示與作用（見 [畫面覆蓋層](../../docs/guide/ui.md)）。
+各按鈕也只在對的階段顯示與作用（見 [Overlay](../../docs/03-core-model/03-overlay.md)）。
 
 **重新開始**靠兩件事：引擎的 `ClearObjects()`（刪掉上一局的所有物件）＋
 把佈置流程抽成 `BuildLevel(game, level)`，開始與重來都使用啟動時已驗證的地圖。
@@ -224,4 +210,4 @@ void BuildLevel(GridEngine& game, const LevelMap& level) {
     - **重複利用素材**：小精靈靠 `set_direction` 旋轉一張圖朝向四個方向；四隻鬼靠 `set_tint`
       把同一張白色素材染成不同顏色；牆壁也靠旋轉，用 6 種基本形狀拼出全部 16 種連通。
     - **覆蓋層與遊戲分開**：分數與訊息放在 `ScoreOverlay : Overlay`、按鈕是 `Button` 的子類，
-      各自只在「對的階段」顯示與作用，透過 `AddOverlay` 加入、畫在網格之上。詳見 [畫面覆蓋層](../../docs/guide/ui.md)。
+      各自只在「對的階段」顯示與作用，透過 `AddOverlay` 加入、畫在網格之上。詳見 [Overlay](../../docs/03-core-model/03-overlay.md)。

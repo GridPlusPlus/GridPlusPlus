@@ -1,6 +1,5 @@
-/**
- * @file GridShapes.h
- * @brief 不需素材包的基本網格圖形。
+/** @file GridShapes.h
+ *  @brief 定義不需素材包的基本圖形物件。
  */
 #ifndef GRID_PLUS_PLUS_GRID_SHAPES_H_
 #define GRID_PLUS_PLUS_GRID_SHAPES_H_
@@ -14,10 +13,16 @@
 
 namespace gridpp::shapes {
 
-// 所有基本圖形的共用基底；size 使用像素，圖形置中於所在格。
+/** 基本圖形的共用基底；圖形會置中於所在格。 */
 class Shape : public GridObject {
 public:
-    int size() const { return size_; }
+    int size() const;
+
+    /**
+     * 設定圖形外接框的像素寬度。
+     * @param size 新的像素寬度。
+     * @throws std::invalid_argument 若 size 小於 1。
+     */
     void set_size(int size);
 
 protected:
@@ -28,52 +33,61 @@ private:
     int size_;
 };
 
+/** 填滿的正方形。 */
 class Square : public Shape {
 public:
-    Square(int x, int y, int size, Color color = BLACK) : Shape(x, y, size, color) {}
+    Square(int x, int y, int size, Color color = BLACK);
     void Render(GridEngine* engine) override;
 };
 
+/** 填滿的圓形。 */
 class Circle : public Shape {
 public:
-    Circle(int x, int y, int size, Color color = BLACK) : Shape(x, y, size, color) {}
+    Circle(int x, int y, int size, Color color = BLACK);
     void Render(GridEngine* engine) override;
 };
 
+/** 填滿的正三角形。 */
 class Triangle : public Shape {
 public:
-    Triangle(int x, int y, int size, Color color = BLACK) : Shape(x, y, size, color) {}
+    Triangle(int x, int y, int size, Color color = BLACK);
     void Render(GridEngine* engine) override;
 };
 
+/** 填滿的正五邊形。 */
 class Pentagon : public Shape {
 public:
-    Pentagon(int x, int y, int size, Color color = BLACK) : Shape(x, y, size, color) {}
+    Pentagon(int x, int y, int size, Color color = BLACK);
     void Render(GridEngine* engine) override;
 };
 
+/** 填滿的五芒星。 */
 class Star : public Shape {
 public:
-    Star(int x, int y, int size, Color color = BLACK) : Shape(x, y, size, color) {}
+    Star(int x, int y, int size, Color color = BLACK);
     void Render(GridEngine* engine) override;
 };
 
-// Implementation details only below here.
+// Inline definitions
 
-inline Shape::Shape(int x, int y, int size, Color color) : GridObject("", x, y), size_(size) {
-    set_size(size);
-    set_tint(color);
-}
+inline int Shape::size() const { return size_; }
 
 inline void Shape::set_size(int size) {
     if (size < 1) throw std::invalid_argument("GridShapes Error: size must be greater than 0");
     size_ = size;
 }
 
+inline Shape::Shape(int x, int y, int size, Color color) : GridObject("", x, y), size_(size) {
+    set_size(size);
+    set_tint(color);
+}
+
 inline Vector2 Shape::Center(GridEngine* engine) const {
     const float grid_size = static_cast<float>(engine->grid_size());
     return {(static_cast<float>(x()) + 0.5f) * grid_size, (static_cast<float>(y()) + 0.5f) * grid_size};
 }
+
+inline Square::Square(int x, int y, int size, Color color) : Shape(x, y, size, color) {}
 
 inline void Square::Render(GridEngine* engine) {
     const int grid_size = engine->grid_size();
@@ -82,14 +96,22 @@ inline void Square::Render(GridEngine* engine) {
     DrawRectangle(pixel_x, pixel_y, size(), size(), tint());
 }
 
+inline Circle::Circle(int x, int y, int size, Color color) : Shape(x, y, size, color) {}
+
 inline void Circle::Render(GridEngine* engine) {
     const Vector2 center = Center(engine);
     DrawCircle(static_cast<int>(center.x), static_cast<int>(center.y), size() / 2.0f, tint());
 }
 
+inline Triangle::Triangle(int x, int y, int size, Color color) : Shape(x, y, size, color) {}
+
 inline void Triangle::Render(GridEngine* engine) { DrawPoly(Center(engine), 3, size() / 2.0f, -90.0f, tint()); }
 
+inline Pentagon::Pentagon(int x, int y, int size, Color color) : Shape(x, y, size, color) {}
+
 inline void Pentagon::Render(GridEngine* engine) { DrawPoly(Center(engine), 5, size() / 2.0f, -90.0f, tint()); }
+
+inline Star::Star(int x, int y, int size, Color color) : Shape(x, y, size, color) {}
 
 inline void Star::Render(GridEngine* engine) {
     constexpr float kPi = 3.14159265358979323846f;

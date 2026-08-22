@@ -1,4 +1,4 @@
-# 推到 main 時，自動建置文件站並部署到 GitHub Pages。
+# 推到 main 時，自動建置教學與 API 文件並部署到 GitHub Pages。
 # 啟用方式：在 GitHub 倉庫 Settings → Pages → Source 選 "GitHub Actions"。
 name: Deploy docs
 
@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y doxygen
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build
       - uses: actions/upload-pages-artifact@v3

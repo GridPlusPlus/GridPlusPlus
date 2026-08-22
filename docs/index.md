@@ -1,47 +1,11 @@
 # Grid++
 
-**Grid++** 是一個專為「程式初學者」設計的輕量化、網格導向（grid-based）遊戲引擎。
-它把圖形繪製、遊戲主循環、檔案讀取的複雜度全部藏起來，提供「一行搞定」的 API，
-同時刻意留出接口，引導你練習 C++ 的物件導向（繼承、覆寫、重載、封裝）。
+Grid++ 是用來建立網格遊戲的 C++17 函式庫。遊戲畫面被分成固定大小的格子；玩家、敵人和道具以整數座標位於格子中，Grid++ 負責視窗、主迴圈、物件更新、同格碰撞與繪製。它建立在 [raylib](https://www.raylib.com/) 上，並以 header-only library 的形式提供。
 
-![Pac-Man 範例畫面](images/preview.png){ width="280" }
+本書以兩個可執行專案介紹 Grid++。第 2 章先使用普通函式完成打地鼠，讓 Engine、GridObject、callback 與 Overlay 出現在實際程式中。後續章節分析這些元件的責任，並在多個物件需要分別保存狀態時引入自訂 class。第 7 章再以 Pacman 組合迷宮、素材、碰撞、Overlay 與遊戲狀態。
 
-## 特色
+讀者應已熟悉變數、條件判斷、迴圈、函式、陣列與指標。本書會說明 Grid++ 如何使用函式指標、繼承與虛擬函式，但不重複教授基礎 C++ 語法。
 
-- **Header-only**：`#include "GridPlusPlus.h"` 就能開始寫。
-- **一行 API**：開視窗、載素材、放物件、開跑，各一行。
-- **OOP 教學核心**：繼承 `GridObject`，覆寫 `OnSpawn` / `OnUpdate` / `OnCollide`。
-- **不需要連結 SQLite**：素材包 `assets.db` 由引擎內建的迷你讀取器處理。
-- **選用的迷宮模組**：`GridMaze` 儲存牆面、自動拼接牆壁外觀、提供牆壁查詢。
-- **免素材基本圖形**：選用的 `GridShapes.h` 提供方形、圓形、三角形、五邊形與五芒星。
+教學中的公開 API 會連結至自動產生的 [API 參考](api/index.md)。API 參考適合查詢完整簽名、參數與例外；編號章節說明各項功能在遊戲中的用途與組合方式。
 
-## 最小範例
-
-```cpp
-#include "GridPlusPlus.h"
-
-using gridpp::GridEngine;
-using gridpp::GridObject;
-
-class Player : public GridObject {
-public:
-    Player() : GridObject("hero", 5, 5) {}
-    void OnUpdate() override {
-        if (IsKeyPressed(KEY_RIGHT)) Move(1, 0);
-    }
-};
-
-int main() {
-    GridEngine game(10, 10, 32);   // 10x10 網格，每格 32 像素
-    game.LoadAssets("assets.db");
-    game.Spawn(new Player());
-    game.Run();
-}
-```
-
-## 接下來
-
-- 還沒跑過？先看 [開始使用](getting-started.md)。
-- 想了解核心概念？看 [網格與引擎](guide/grid-and-engine.md) 與 [遊戲物件](guide/game-objects.md)。
-- 想做一個完整遊戲？看 [Pac-Man 拆解](tutorial/pacman.md)。
-- 好奇素材包怎麼被讀出來？看 [迷你 SQLite 讀取器](internals/sqlite-reader.md)。
+[開始使用](01-getting-started/index.md){ .md-button .md-button--primary }
