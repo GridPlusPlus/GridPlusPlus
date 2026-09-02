@@ -101,7 +101,7 @@ void UpdateMole(GridObject* self) {
 }
 ```
 
-完整倒數、Label 更新與 R 重設仍由第 2 章的同一個 callback 完成。這些全局變數屬於整局遊戲，單一地鼠不需要額外資料。
+完整倒數、Label 更新與 R 重設仍由第 3 章的同一個 callback 完成。這些全局變數屬於整局遊戲，單一地鼠不需要額外資料。
 
 ## 碰撞 callback
 

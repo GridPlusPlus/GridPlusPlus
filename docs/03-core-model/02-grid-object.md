@@ -1,123 +1,60 @@
 # GridObject
 
-遊戲世界由許多具有位置和行為的實體組成。玩家會移動，敵人會追蹤，道具會在碰撞後消失；即使它們外觀和規則不同，都需要回答相同的基本問題：目前位於哪一格、應該畫成什麼、是否可見，以及和其他物件同格時要做什麼。
+上一節先將遊戲內容分成 GridObject 與 Overlay，現在從真正存在於網格世界中的物件開始。玩家、敵人、道具和地鼠的規則雖然不同，卻都必須保存位置、決定外觀，並在輪到自己時執行行為。`GridObject` 將這些共同能力整理成一致的介面，使 Engine 不必知道每個角色的具體規則，也能以相同流程更新、碰撞和繪製它們。
 
-`GridObject` 是 Grid++ 對這類遊戲實體的共同描述，也是玩家、敵人、道具和其他網格內容共用的基底。GridObject 把所有物件都會使用的資料和生命週期放在同一個介面中，Engine 因此可以用一致方式更新、碰撞和繪製不同類型的內容。
+## 從一個靜態物件開始
 
-## 資料與行為
-
-一個 GridObject 包含兩類資訊。「資料」描述物件現在的狀態，例如 x、y、素材、方向、顏色與顯示層級；「行為」描述狀態何時改變，例如按鍵後移動、碰到玩家後消失，或每隔一段時間切換素材。
-
-GridObject 已經提供所有物件共通的資料。行為則有兩種提供方式：將普通函式交給 `CallbackGridObject`，或建立衍生 class 覆寫生命週期函式。無論選擇哪一種，Engine 看到的都是 GridObject，因此兩種物件可以同時存在於同一個遊戲。
-
-## 物件與 Engine 的關係
-
-只在 C++ 中建立一個物件，並不會讓它自動出現在遊戲裡。物件必須透過 `GridEngine::Spawn()` 加入某個 Engine，才能進入該 Engine 的更新、碰撞與繪製流程。Spawn 也會把物件的所有權交給 Engine，使資源清理只有一個明確負責者。
-
-下列程式建立一個位於 `(3, 2)` 的物件，並保留 Engine 回傳的借用指標。
+理解 GridObject 是什麼之後，還要區分「在 C++ 中存在」與「已經進入遊戲」兩種狀態。只建立一個物件，並不會讓 Engine 自動知道它；物件必須透過 `Spawn()` 加入，才會參與每一幀的更新與繪製。以下呼叫同時建立地鼠、把它加入 Engine，並回傳一個可用來修改它的借用指標：
 
 ```cpp
-GridObject* player = game.Spawn("player", 3, 2, nullptr);
+gridpp::GridObject* mole = game.Spawn("mole", 3, 2, nullptr);
 ```
 
-這個多載會建立 `CallbackGridObject`，但回傳型別是它的基底類別 `GridObject*`。呼叫端只需使用所有網格物件共通的 API，不必依賴實際類別。
+四個參數依序是素材名稱、x 座標、y 座標與更新函式。`nullptr` 表示地鼠目前沒有更新行為，因此它加入世界後只會停在 `(3, 2)`。若 Engine 尚未載入名為 `mole` 的素材，畫面會先以紅色方塊代替；這個結果仍足以驗證物件確實已被加入，而且網格位置符合預期。
 
-## 將物件加入打地鼠
-
-目前的 8×8 Engine 還沒有任何遊戲內容。加入一個地鼠物件只需要素材名稱與網格位置；第三個參數暫時傳入 `nullptr`，表示物件目前沒有每幀更新函式。
-
-```cpp
-int main() {
-    GridEngine game(8, 8, 64);
-    game.set_background_color(BEIGE);
-    game.set_show_grid(true);
-
-    GridObject* mole = game.Spawn("mole", 3, 4, nullptr);
-    mole->set_tag("mole");
-
-    game.Run();
-}
-```
-
-程式尚未載入名為 `mole` 的素材，因此畫面會在第 3 欄、第 4 列顯示紅色 fallback 方塊。這個結果已足以驗證 `Spawn()`、座標與繪製；素材可以在功能正確後再加入。
+`Spawn()` 回傳的 `mole` 讓程式日後可以修改這隻地鼠，但這個指標不代表所有權仍在呼叫端。物件成功加入後便由 Engine 接管，程式只能在它仍存在時透過指標讀寫內容，不可自行 `delete`。這項關係將在 Engine 小節接著說明，現在只要先記住：`mole` 是找到物件的方式，不是負責釋放物件的角色。
 
 ## 位置與移動
 
-`x()` 和 `y()` 讀取目前位置；`set_x()` 與 `set_y()` 設定單一座標；`Move(dx, dy)` 以相對位移修改兩個座標。Grid++ 不會自動阻止物件離開地圖，移動規則應在遊戲程式中根據 `engine()->cols()`、`engine()->rows()` 或 `GridMaze::IsWall()` 判斷。
+加入 Engine 後，最直接的操作就是改變物件的位置。`x()` 和 `y()` 讀取目前座標，適合判斷物件位於哪一格；`set_x()` 與 `set_y()` 指定新的絕對位置，而 `Move(dx, dy)` 則從現有位置做相對移動。下面的程式先把地鼠放到 `(4, 5)`，再向左移動一格，因此最後讀到的位置是 `(3, 5)`。
 
 ```cpp
-player->set_x(4);
-player->set_y(5);
-player->Move(-1, 0);  // 移動至 (3, 5)
+mole->set_x(4);
+mole->set_y(5);
+mole->Move(-1, 0);  // 現在位於 (3, 5)
 
-int column = player->x();
-int row = player->y();
+int column = mole->x();
+int row = mole->y();
 ```
 
-位於地圖外的物件仍會執行 `OnUpdate()` 和繪製，但不參與碰撞。若素材繪製位置也在視窗外，raylib 會自然裁掉看不見的部分。將物件移至 `(-1, -1)` 可以讓它離開畫面，但需要暫停碰撞與繪製時，應使用 `set_visible(false)` 表達意圖。
+Grid++ 不會自動阻止物件離開地圖。遊戲規則應先根據 `engine()->cols()`、`engine()->rows()` 或迷宮判斷目標位置是否合法。暫時不想顯示或碰撞時，使用 `set_visible(false)`；隱藏的物件仍會更新，因此之後可以自行重新出現。
 
-## 素材與外觀
+## 把行為交給物件
 
-`asset_name()` 指定 `Render()` 使用的素材。`set_asset_name()` 可在遊戲執行期間切換素材。素材名稱不存在或尚未載入素材包時，預設繪製會顯示紅色方塊，讓程式在沒有素材的情況下仍可測試。
-
-```cpp
-player->set_asset_name("player_open");
-player->set_direction(1);
-player->set_tint(YELLOW);
-```
-
-`direction` 以 90 度為單位旋轉素材，數值會正規化到 0～3。方向增加時，素材逆時針旋轉。`tint` 使用 raylib 的 `Color`；`WHITE` 保留原始素材顏色，其餘顏色會與素材混合。
-
-`tag` 是由遊戲自行定義的文字標記，通常用於碰撞時辨識物件類型。它不會自動改變繪製或碰撞規則。
+直接修改座標只能讓物件在初始化時出現在指定位置；若要讓它在遊戲執行期間持續行動，就必須把移動規則交給每幀流程。目前還不需要為地鼠建立自訂 class，因此先用普通函式描述更新行為，再由 `Spawn()` 將函式交給物件。這個函式會收到目前正在更新之物件的借用指標：
 
 ```cpp
-player->set_tag("player");
-
-if (other->tag() == "pellet") {
-    // 處理玩家吃到豆子。
+void UpdateMole(gridpp::GridObject* mole) {
+    mole->Move(1, 0);
 }
+
+gridpp::GridObject* mole = game.Spawn("mole", 0, 0, UpdateMole);
 ```
 
-## 顯示狀態
+這個函式不是由 `main()` 直接呼叫，而是透過 `Spawn()` 交給 Engine。這裡交給 `Spawn()` 的其實是 `UpdateMole` 的函數指標，Grid++ 將這個位置稱為 `UpdateFn`。當每一幀輪到地鼠更新時，Engine 才透過它呼叫 `UpdateMole(mole)`。因此閱讀程式時，可以直接把 `UpdateFn` 理解成「這個物件本幀要執行的更新函式」；它只描述物件的行為，並不負責維持整個遊戲迴圈。
 
-`set_visible(false)` 隱藏物件。隱藏的物件不會繪製，也不會參與碰撞，但仍會每幀執行 `OnUpdate()`。這項行為適合需要暫時消失、之後再次出現的物件。
+由於上述 `UpdateFn` 每次被呼叫都向右移動一格，而 Engine 一秒可能更新約 60 次，畫面中的地鼠會移動得快到難以操作。真正的打地鼠不能把「每幀執行更新函式」直接等同於「每幀都要移動」，而要另外保存下一次允許移動的時間。這個需求也引出了另一個問題：除了 GridObject 已有的座標之外，遊戲新增的狀態究竟應該放在哪裡？
 
-```cpp
-mole->set_visible(false);
+## 狀態應該放在哪裡
 
-// 之後可以重新使用同一物件。
-mole->set_x(6);
-mole->set_y(1);
-mole->set_visible(true);
-```
+判斷狀態的歸屬，可以先問「這份資料描述誰」。座標、素材、方向與顯示狀態描述單一物件，因此已經存於 GridObject；分數和整局倒數描述整場遊戲，應由遊戲流程共同管理；下一次移動時間只描述某一隻地鼠，在概念上便應屬於那個物件。
 
-若物件之後不會再使用，呼叫 `game.Destroy(object)` 釋放它。不要在 `set_visible(false)` 後自行 `delete` 指標；物件仍由引擎持有。
+第三章為了先展示普通函式，只有一隻地鼠，會暫時使用全域變數保存它的移動時間。這項簡化在單一 instance 時可以運作，一旦生成第二隻地鼠，兩者便會錯誤地共用同一份時間。第 5 章將從這個具體限制出發，把個別狀態移入自訂 GridObject class；屆時每個 instance 才會真正擁有自己的資料。
 
-## 繪製順序
+## 其他外觀設定
 
-`z_index` 控制 `GridObject` 的繪製層級。數值較小的物件先畫，數值較大的物件後畫，因此較大的值顯示在上方。預設值是 0，也可以使用負數。
+`set_asset_name()` 可切換素材；`set_direction()`、`set_tint()` 與 `set_z_index()` 分別控制旋轉、顏色與繪製層級。這些設定不改變物件的座標或遊戲規則，將在第 6 章搭配素材與繪製順序完整說明。
 
-```cpp
-floor->set_z_index(-10);
-pellet->set_z_index(0);
-player->set_z_index(10);
-```
-
-相同 z-index 保留 spawn 順序，後 spawn 的物件會較晚繪製。z-index 只影響畫面，不改變更新或碰撞 callback 的執行順序。Overlay 永遠繪製在所有 `GridObject` 上方。
-
-## 所有權
-
-`Spawn(GridObject*)` 與 `AddOverlay(Overlay*)` 接受 raw pointer，是為了讓入門程式保持直接；所有權會在呼叫成功後轉交給引擎。只能傳入使用 `new` 建立、尚未交給其他引擎的物件。
-
-```cpp
-// 正確：引擎接管 new 建立的物件。
-GridObject* object = game.Spawn(new GridObject("box", 1, 1));
-
-// 錯誤：區域變數不是由引擎配置，之後不可由引擎 delete。
-GridObject local("box", 1, 1);
-game.Spawn(&local);
-```
-
-同一指標不可 spawn 兩次，也不可同時交給兩個引擎。`Spawn()` 回傳的指標只在物件仍存在時有效；呼叫 `Destroy()`、`ClearObjects()` 或讓引擎結束生命週期後，不可再次讀取該指標。
+[接著理解 GridEngine](01-grid-engine.md){ .md-button .md-button--primary }
 
 完整成員列表見 [GridObject API](../api/classgridpp_1_1_grid_object.md)。

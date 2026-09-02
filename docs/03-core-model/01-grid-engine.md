@@ -1,128 +1,74 @@
 # GridEngine
 
-遊戲程式需要在視窗存在期間持續工作。它必須反覆讀取輸入、更新角色、判斷碰撞、清除上一張畫面並繪製下一張畫面，還要確保圖片和物件在正確時間建立與釋放。這些工作共同構成整個遊戲依賴的執行環境，不由個別玩家或敵人負責。
+前一節說明了 GridObject 如何保存位置與行為，但物件不會自行輪流更新，也不知道何時應該重畫畫面。`GridEngine` 補上這個缺少的執行環境：它建立視窗、保存已加入的物件與 Overlay，並反覆安排更新、碰撞和繪製。遊戲程式決定角色如何移動、碰撞代表什麼；Engine 則保證這些規則在每一幀按照固定順序被呼叫。
 
-`GridEngine` 就是 Grid++ 提供的執行環境。它代表一個正在運作的網格遊戲世界，同時管理 raylib 視窗、網格尺寸、主迴圈、遊戲物件、Overlay 和素材。遊戲規則不必分別維護這些系統，只需把物件交給 Engine，再描述物件在更新或碰撞時應做什麼。
+這項分工讓不同遊戲共用相同的基礎設施。打地鼠與 Pacman 的內容和勝負條件完全不同，卻都需要視窗、主迴圈與資源清理；將這些重複工作集中在 Engine 後，遊戲程式便能專注於自身規則，而不必為每個專案重新撰寫 raylib while-loop。
 
-## Engine 與遊戲內容的邊界
+## 建立與設定世界
 
-Engine 決定「遊戲如何運轉」，使用者程式決定「這是什麼遊戲」。例如 Engine 知道每一幀要檢查同格物件，卻不知道玩家碰到某個物件代表得分、受傷或過關；這個意義由物件的碰撞行為決定。Engine 知道如何把素材畫到指定格子，卻不知道哪張圖代表玩家。
-
-這個邊界讓不同遊戲共用同一套基礎設施。打地鼠和 Pacman 的規則完全不同，但兩者都需要視窗、更新、繪製和資源清理，因此都可以由 GridEngine 管理。使用者不需要為每個遊戲重寫 raylib 主迴圈。
-
-一個程式通常只建立一個 GridEngine。這個 Engine 對應一個視窗和一個遊戲世界；加入其中的 GridObject 與 Overlay 都由它擁有。重新開始關卡時，通常保留同一個 Engine，再清除並重建其中的物件。
-
-## 建立遊戲世界
-
-建立 GridEngine 時，程式要先決定世界有多少格，以及每一格在視窗中占多少像素。這三個數值建立了遊戲邏輯座標與實際畫面之間的比例關係。
+Engine 必須先知道世界與視窗的大小，才能把網格座標轉成實際畫面。建構子的三個參數依序是欄數、列數與單格像素大小，建立後還可以設定背景顏色與是否顯示參考格線：
 
 ```cpp
-#include "GridPlusPlus.h"
-
-using gridpp::GridEngine;
-
-int main() {
-    GridEngine game(8, 8, 64);
-    game.set_background_color(BEIGE);
-    game.set_show_grid(true);
-    game.Run();
-}
-```
-
-這段程式建立打地鼠使用的遊戲世界。此時 Engine 只顯示 8×8 網格，尚未加入地鼠和畫面資訊。
-
-## 網格與視窗尺寸
-
-建構子的三個參數依序是欄數、列數與單格像素尺寸。`GridEngine game(8, 8, 64)` 會建立寬高皆為 `8 × 64 = 512` 像素的視窗。`cols()`、`rows()` 與 `grid_size()` 可在執行期間讀取這三個設定。
-
-```cpp
-int width_in_cells = game.cols();       // 8
-int height_in_cells = game.rows();      // 8
-int cell_size = game.grid_size();       // 64
-```
-
-三個建構參數都必須大於 0，視窗寬度與高度不得超過 8192 像素。Engine 會先使用較大的整數型別計算乘積，再檢查限制，因此極大的欄數或格子尺寸不會在驗證前造成整數溢位。尺寸錯誤會丟出英文 `std::invalid_argument`，而且不會建立 raylib 視窗。
-
-網格座標不等於像素座標。物件位於 `(3, 2)` 且每格為 64 像素時，該格左上角的像素位置是 `(192, 128)`。一般物件只使用網格座標；Overlay 和直接呼叫 raylib 的自訂繪製才需要像素座標。
-
-## 背景與網格線
-
-`set_background_color()` 設定每幀清除畫面時使用的 raylib `Color`，`background_color()` 讀取目前設定。`set_show_grid(true)` 顯示格線，適合開發時確認物件位置；正式畫面可以關閉。
-
-```cpp
-game.set_background_color(Color{245, 235, 210, 255});
+gridpp::GridEngine game(8, 8, 64);
+game.set_background_color(BEIGE);
 game.set_show_grid(true);
-
-Color background = game.background_color();
-bool grid_is_visible = game.show_grid();
 ```
 
-格線只影響繪製，不會建立牆壁或限制移動。物件能否進入某一格，仍由遊戲程式或 `GridMaze` 判斷。
+這會建立 8 欄、8 列、每格 64 像素的世界，因此視窗寬高都是 `8 × 64 = 512` 像素。`cols()`、`rows()` 與 `grid_size()` 可讀取這三個設定。格線只協助辨認座標，不會建立牆壁或限制移動。
 
-## 遊戲主迴圈
-
-`Run()` 持續執行遊戲幀，直到使用者關閉視窗。在桌面平台，它等同於反覆執行 Grid++ 的內部 tick；在 WebAssembly 平台，瀏覽器負責安排每一幀。遊戲程式不應在 `Run()` 外再建立另一個 raylib while-loop。
-
-每幀包含物件更新、Overlay 更新、同格碰撞、物件繪製與 Overlay 繪製。詳細順序以及 runtime spawn、destroy 的延後規則集中在[生命週期與所有權](../08-lifecycle/index.md)。一般功能只需要在 callback 或覆寫函式中提供行為，不需要直接控制主迴圈。
-
-`Run()` 是阻塞函式。桌面版只有在視窗關閉後才會回傳，因此必須在呼叫前完成初始物件、Overlay 與素材設定。
-
-## 管理物件
-
-`Spawn()` 將 `GridObject` 加入遊戲並接管所有權。函式有兩種主要形式：一種接受已用 `new` 建立的物件，另一種接受素材、位置和 callback，由 Engine 建立 `CallbackGridObject`。
-
-```cpp
-gridpp::GridObject* first = game.Spawn(new gridpp::GridObject("mole", 2, 3));
-gridpp::GridObject* second = game.Spawn("mole", 5, 4, UpdateMole, HitMole);
-```
-
-`Destroy()` 移除單一物件；`ClearObjects()` 移除所有物件。這些函式不會清除 Overlay 或素材。`AddOverlay()` 加入一個 Overlay 並接管其所有權。所有回傳或保留的指標都是借用指標，不應由呼叫端 delete。
-
-```cpp
-game.Destroy(first);
-game.ClearObjects();
-game.AddOverlay(new gridpp::Label("Score: 0", 12, 12));
-```
-
-Engine 可以在主迴圈中接受新的物件與 Overlay。為了避免正在迭代的容器失效，本幀新增的內容會依類型套用明確的延後規則；使用者不需要自行建立佇列。
-
-## 載入素材
-
-`LoadAssets(path)` 載入 Grid++ 素材包。素材應在建立需要它的物件前載入；物件只保存素材名稱，實際 texture 由 Engine 統一持有。
-
-```cpp
-GridEngine game(8, 8, 64);
-game.LoadAssets("assets.db");
-game.Spawn("mole", 3, 4, UpdateMole);
-```
-
-再次載入會取代目前素材，但只有在新素材包完整載入成功後才清除舊 texture。素材檔案與命名規則在[素材與素材包](../06-drawing/01-assets.md)說明。不使用素材包時可以依賴紅色 fallback 方塊，或額外引入 `GridShapes.h`。
-
-## DrawCell
-
-`DrawCell()` 是提供給自訂 `Render()` 和模組使用的低階繪製函式。它將素材畫在指定網格座標，可同時設定旋轉方向與 tint。
-
-```cpp
-void Player::Render(GridEngine* engine) {
-    engine->DrawCell("player", x(), y(), direction(), tint());
-}
-```
-
-一般 `GridObject` 已經透過預設 `Render()` 呼叫等效操作，因此不需重複覆寫。只有需要組合多次繪製或改變預設畫面時才直接使用 `DrawCell()`。
-
-## 資源清理
-
-Engine 解構時會釋放所有物件、Overlay 和 texture，再關閉 raylib 視窗。將 Engine 建立為 `main()` 的區域變數，能讓 C++ 作用域自然控制整個遊戲生命週期。
+這些設定只建立了世界的範圍與外觀，還沒有加入任何遊戲內容。一般程式只需要一個 Engine，接著在 `Run()` 前生成初始物件；以下範例加入一隻靜止的地鼠後，才讓世界開始運行：
 
 ```cpp
 int main() {
-    GridEngine game(8, 8, 64);
+    gridpp::GridEngine game(8, 8, 64);
+    game.set_show_grid(true);
+
+    game.Spawn("mole", 3, 2, nullptr);
+
     game.Run();
-}  // 自動清理資源並關閉視窗
+}
 ```
 
-Engine 不可複製，因為兩個 Engine 不能同時擁有同一組視窗與資源。需要重新開始遊戲時，通常保留原本的 Engine，並使用 `ClearObjects()` 重建關卡。
+## Engine 與遊戲規則的邊界
 
-[GridObject](02-grid-object.md){ .md-button .md-button--primary }
+Engine 知道要檢查兩個物件是否同格，卻不知道同格代表得分、受傷或過關；使用者提供的碰撞函式（`CollideFn`）才賦予它意義。Engine 知道如何把素材畫到指定格子，卻不知道哪個素材名稱代表玩家。
 
-完整函式簽名見 [GridEngine API](../api/classgridpp_1_1_grid_engine.md)。
+從這兩個例子可以看出，Engine 提供的是各種網格遊戲都需要的固定流程，使用者程式填入的則是每個遊戲不同的內容與規則：
+
+| Engine 負責 | 遊戲程式負責 |
+| --- | --- |
+| 建立與清除視窗 | 決定世界大小與背景 |
+| 逐幀呼叫物件行為 | 定義移動、計分與結束條件 |
+| 檢查同格座標 | 解釋碰撞代表什麼 |
+| 依狀態重新繪製 | 選擇素材與畫面內容 |
+| 釋放加入的內容 | 不自行刪除借用指標 |
+
+## `Run()` 前後的界線
+
+上述分工也形成 `Run()` 前後的明確界線。桌面程式在呼叫前建立世界、載入素材，並加入一開始就要存在的物件與 Overlay；呼叫之後，Engine 便持續執行遊戲幀，直到使用者關閉視窗。典型的初始化順序如下：
+
+```cpp
+gridpp::GridEngine game(8, 8, 64);
+game.Spawn("mole", 0, 0, UpdateMole);
+game.AddOverlay(new gridpp::Label("Score: 0", 12, 12));
+game.Run();
+```
+
+這條界線不表示遊戲開始後永遠不能改變內容。`UpdateFn` 或 `CollideFn` 仍可在執行期間生成敵人、刪除道具或切換關卡，只是 Engine 為了避免在巡覽容器時同時改動它，會按照明確規則延後套用部分操作。這些情況尚未出現在打地鼠中，第 8 章再配合實際新增與刪除的需求完整說明。
+
+## 結束時的清理
+
+Engine 取得所有加入內容的所有權。當 `main()` 結束、區域變數 `game` 離開作用域時，Engine 會釋放物件、Overlay 和素材，再關閉視窗。
+
+```cpp
+int main() {
+    gridpp::GridEngine game(8, 8, 64);
+    game.Run();
+}  // game 在這裡解構並清理資源
+```
+
+由於 Engine 代表整個遊戲的執行環境，重新開始一局通常不等於再建立另一個 Engine。較直接的做法是保留原本的視窗和主迴圈，只把物件位置、分數與倒數等遊戲狀態恢復為初始值。第三章的打地鼠將採用這種方式：時間結束後仍保留同一隻地鼠，按下 R 才重新顯示它並開始下一局。
+
+[最後區分 Overlay](03-overlay.md){ .md-button .md-button--primary }
+
+尺寸限制、素材載入、`DrawCell()`、執行期間增刪與完整函式簽名分別見後續主題章及 [GridEngine API](../api/classgridpp_1_1_grid_engine.md)。

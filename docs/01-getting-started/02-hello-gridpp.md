@@ -4,7 +4,14 @@
 
 ## 取得專案範本
 
-前往 [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template)，按 **Fork** 建立自己的遊戲專案，再 clone 自己的 fork。後續指令都在包含 `main.cpp` 與 Grid++ headers 的專案根目錄執行。
+前往 [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template)，按 **Fork** 建立自己的遊戲專案，再從自己 fork 的 **Code** 選單複製網址並執行：
+
+```bash
+git clone <你的-fork-網址>
+cd <專案資料夾>
+```
+
+`<...>` 表示要換成自己的內容，不要連同角括號輸入。後續指令都在包含 `main.cpp` 與 Grid++ headers 的專案根目錄執行。執行 `ls`（Windows 可用 `dir`）時，應能看到 `main.cpp` 與 `GridPlusPlus.h`。
 
 專案範本包含 `main.cpp` 與全部 Grid++ headers。原生 Windows MinGW-w64 還需要把上一節下載的 raylib `include` 與 `lib` 放進專案；下圖只列出和這項設定直接相關的檔案：
 
@@ -39,11 +46,20 @@ int main() {
 }
 ```
 
-`#include "GridPlusPlus.h"` 讓程式可以使用 Grid++ 的核心類別。`GridEngine game(8, 8, 64)` 建立 8 欄、8 列的遊戲世界，每格寬高都是 64 像素，所以視窗大小是 512×512 像素。
+`GridEngine` 是 Grid++ 中管理整個遊戲的核心類別，可以先把它理解成「遊戲世界的控制者」。它負責建立視窗、保存之後加入的遊戲物件，並持續安排更新與繪製。這裡建立的 `game` 是一個 GridEngine instance，代表這個程式唯一的遊戲世界。
 
-`set_show_grid(true)` 顯示格線。格線只協助我們辨認座標，不會建立牆壁或限制移動。`Run()` 啟動遊戲主迴圈，程式會停留在這一行，直到視窗被關閉。
+這個程式依序經過四個階段：
 
-這裡只需要先理解 Engine 代表整個遊戲世界。第 3 章會再說明它如何管理物件、碰撞、繪製與資源。
+1. `#include "GridPlusPlus.h"` 取得 Grid++ 的核心類別。
+2. `GridEngine game(8, 8, 64)` 建立 8 欄、8 列、每格 64 像素的世界，因此視窗大小是 512×512 像素。
+3. `set_show_grid(true)` 在進入遊戲前完成顯示設定。
+4. `Run()` 啟動持續更新與繪製的主迴圈，直到視窗被關閉。
+
+目前這個世界還沒有玩家、敵人或牆壁，只有 Engine 畫出的參考格線。`set_show_grid(true)` 只改變畫面外觀，方便我們看出每一格的位置；它不會替遊戲建立地圖，也不會阻止物件跨越格線。這些遊戲內容與移動規則會在後面的章節由程式加入。
+
+呼叫 `Run()` 可以看成遊戲從「準備」進入「運行」的分界。在它之前，程式先設定 Engine 並加入初始內容；進入 `Run()` 後，Engine 便持續更新狀態與重畫畫面。桌面版的 `Run()` 會一直執行到玩家關閉視窗，之後 `main()` 才繼續往下並結束。
+
+`game` 是 `main()` 中的區域變數。當 `main()` 結束時，它會離開作用域，Engine 的解構函式便釋放遊戲物件、圖片與視窗資源。這裡只需要先掌握「建立 → 設定 → 執行 → 清理」；下一章會解釋 Engine 如何管理物件、碰撞與繪製。
 
 ## 編譯
 
@@ -89,6 +105,6 @@ int main() {
 
 如果編譯器回報找不到 `raylib.h`，請回到安裝章確認 header 路徑。如果連結階段出現 `undefined reference`，請確認編譯指令包含對應平台的 raylib 與系統 library。
 
-現在我們已經有一個可執行的遊戲世界。下一章會在這個網格上加入第一個物件，並把它變成完整的打地鼠。
+在進入下一章前，可以修改建構子的三個數字並重新執行：前兩個數字改變欄、列數，第三個數字改變每格的像素大小。只要能預測視窗與格線如何改變，就已理解這個最小程式。
 
-[製作打地鼠](../02-whack-a-mole/index.md){ .md-button .md-button--primary }
+[理解 Grid++ 核心模型](../03-core-model/index.md){ .md-button .md-button--primary }

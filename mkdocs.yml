@@ -62,13 +62,13 @@ nav:
       - 01-getting-started/index.md
       - 1.1 安裝 raylib: 01-getting-started/01-installation.md
       - 1.2 第一個 Grid++ 程式: 01-getting-started/02-hello-gridpp.md
-  - 2 製作打地鼠: 
-      - 02-whack-a-mole/index.md
-  - 3 理解核心模型:
+  - 2 理解核心模型:
       - 03-core-model/index.md
-      - 3.1 GridEngine: 03-core-model/01-grid-engine.md
-      - 3.2 GridObject: 03-core-model/02-grid-object.md
-      - 3.3 Overlay: 03-core-model/03-overlay.md
+      - 2.1 GridObject: 03-core-model/02-grid-object.md
+      - 2.2 GridEngine: 03-core-model/01-grid-engine.md
+      - 2.3 Overlay: 03-core-model/03-overlay.md
+  - 3 製作打地鼠:
+      - 02-whack-a-mole/index.md
   - 4 定義物件行為:
       - 04-object-behavior/index.md
       - 4.1 CallbackGridObject: 04-object-behavior/01-callbacks.md
@@ -94,7 +94,8 @@ nav:
       - 8.1 執行期間新增與刪除: 08-lifecycle/01-runtime-changes.md
       - 8.2 所有權與借用指標: 08-lifecycle/02-ownership.md
       - 8.3 每幀執行順序: 08-lifecycle/03-frame-order.md
-  - 9 保存與發布: 09-sharing/index.md
+  - 9 保存與發布: 
+      - 09-sharing/index.md
   - API 參考:
       - 總覽: api/index.md
       - 類別列表: api/annotated.md
