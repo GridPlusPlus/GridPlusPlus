@@ -16,14 +16,12 @@ Grid++ 是 header-only library，唯一的外部依賴是 [raylib](https://www.r
 
 ## 快速執行
 
-Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w64。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再執行對應指令。
+Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w64。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再 Fork [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template) 並 clone 自己的 fork。以下指令都在專案根目錄執行。
 
 ### WSL / Linux
 
 ```bash
-git clone https://github.com/GridPlusPlus/GridPlusPlus.git
-cd GridPlusPlus
-g++ -std=c++17 template.cpp -o game \
+g++ -std=c++17 main.cpp -o game \
     -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 ./game
 ```
@@ -31,9 +29,7 @@ g++ -std=c++17 template.cpp -o game \
 ### Windows / MinGW-w64
 
 ```bash
-git clone https://github.com/GridPlusPlus/GridPlusPlus.git
-cd GridPlusPlus
-g++ -std=c++17 template.cpp -o game.exe \
+g++ -std=c++17 main.cpp -o game.exe \
     -Iraylib/include -Lraylib/lib -lraylib -lgdi32 -lwinmm
 ./game.exe
 ```
@@ -41,9 +37,7 @@ g++ -std=c++17 template.cpp -o game.exe \
 ### macOS
 
 ```bash
-git clone https://github.com/GridPlusPlus/GridPlusPlus.git
-cd GridPlusPlus
-g++ -std=c++17 template.cpp -o game $(pkg-config --cflags --libs raylib)
+g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 ./game
 ```
 

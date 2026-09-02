@@ -31,3 +31,7 @@ git push
 ```
 
 第一次推送新 branch 時，Git 可能要求設定 upstream。依終端機顯示的 branch 名稱執行 `git push -u origin <branch>`。推送只會傳送 commit，不會包含尚未 commit 的工作目錄變更。
+
+## 更新 Grid++
+
+範本更新後，可在 GitHub fork 首頁按 **Sync fork**，將新版 Grid++ headers 合併到自己的專案。若曾修改這些 headers，GitHub 可能要求先處理衝突；遊戲程式應集中寫在 `main.cpp` 與自己的檔案中。

@@ -4,9 +4,9 @@
 
 ## 取得專案範本
 
-從課程提供的 Grid++ template repository 建立遊戲專案，再將專案 clone 或下載到電腦。後續指令都在包含 `main.cpp` 與 Grid++ headers 的專案根目錄執行。
+前往 [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template)，按 **Fork** 建立自己的遊戲專案，再 clone 自己的 fork。後續指令都在包含 `main.cpp` 與 Grid++ headers 的專案根目錄執行。
 
-template repository 會包含 `main.cpp` 與全部 Grid++ headers。原生 Windows MinGW-w64 還需要把上一節下載的 raylib `include` 與 `lib` 放進專案；下圖只列出和這項設定直接相關的檔案：
+專案範本包含 `main.cpp` 與全部 Grid++ headers。原生 Windows MinGW-w64 還需要把上一節下載的 raylib `include` 與 `lib` 放進專案；下圖只列出和這項設定直接相關的檔案：
 
 ```text
 your-game/
