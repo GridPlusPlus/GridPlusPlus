@@ -71,8 +71,8 @@ nav:
       - 02-whack-a-mole/index.md
   - 4 定義物件行為:
       - 04-object-behavior/index.md
-      - 4.1 CallbackGridObject: 04-object-behavior/01-callbacks.md
-      - 4.2 同格碰撞: 04-object-behavior/02-collisions.md
+      - 4.1 UpdateFn 與 CollideFn: 04-object-behavior/01-callbacks.md
+      - 4.2 同格互動: 04-object-behavior/02-collisions.md
   - 5 物件狀態:
       - 05-object-state/index.md
       - 5.1 自訂 GridObject: 05-object-state/01-custom-grid-object.md
@@ -82,7 +82,7 @@ nav:
       - 6.1 素材包: 06-drawing/01-assets.md
       - 6.2 基本圖形: 06-drawing/02-shapes.md
       - 6.3 繪製狀態與順序: 06-drawing/03-rendering.md
-  - 7 製作 Pacman:
+  - 7 組裝 Pacman:
       - 07-pacman/index.md
       - 7.1 地圖與迷宮: 07-pacman/01-map-and-maze.md
       - 7.2 玩家移動: 07-pacman/02-player.md
@@ -91,9 +91,9 @@ nav:
       - 7.5 遊戲狀態與 Overlay: 07-pacman/05-game-states.md
   - 8 生命週期與所有權:
       - 08-lifecycle/index.md
-      - 8.1 執行期間新增與刪除: 08-lifecycle/01-runtime-changes.md
-      - 8.2 所有權與借用指標: 08-lifecycle/02-ownership.md
-      - 8.3 每幀執行順序: 08-lifecycle/03-frame-order.md
+      - 8.1 所有權與借用指標: 08-lifecycle/02-ownership.md
+      - 8.2 每幀執行順序: 08-lifecycle/03-frame-order.md
+      - 8.3 執行期間新增與刪除: 08-lifecycle/01-runtime-changes.md
   - 9 保存與發布: 
       - 09-sharing/index.md
   - API 參考:

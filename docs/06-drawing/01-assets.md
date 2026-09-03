@@ -1,12 +1,10 @@
-# 素材與素材包
+# 從素材名稱到素材包
 
-遊戲規則需要一種穩定的方式描述物件外觀。若程式直接依賴每張圖片的檔名、資料夾和 raylib texture，替換美術或分享專案時就必須同時修改許多程式碼。Grid++ 將「物件使用哪個外觀」表示成素材名稱，例如 `player`、`ghost` 或 `wall`。
+遊戲規則需要一種穩定的方式描述外觀，否則程式一旦直接依賴圖片檔名、資料夾位置與 raylib texture，更換美術時便必須連帶修改移動與碰撞程式。Grid++ 因此讓物件只保存 `player`、`ghost` 或 `wall` 之類的素材名稱，Engine 再從已載入的素材包尋找對應圖片；規則知道角色「使用 player 外觀」，卻不必知道圖片如何保存或何時釋放。
 
-素材是可供物件繪製的圖片；素材名稱是程式引用圖片的識別字。素材包則把一組相關素材整理成單一檔案。遊戲只保存名稱，Engine 負責從已載入的素材包找到圖片、建立 GPU texture，並在結束時釋放資源。
+## 先載入並使用既有素材包
 
-這個分離表示遊戲規則不需要知道圖片存在哪裡。玩家物件使用 `player` 素材，但移動與碰撞仍由程式決定；換一份包含同名素材的素材包，可以改變畫面而不改變規則。
-
-Grid++ 素材包實際上是一個包含 32×32 RGBA 圖片的資料庫檔案。它需在物件開始繪製前由 `GridEngine::LoadAssets()` 載入。
+素材包必須在物件開始繪製之前載入，最常見的順序是在建立 Engine 後呼叫 `LoadAssets()`，接著才用素材名稱生成物件。以下程式假設 `assets.db` 與執行中的 `game` 位於同一個目錄；相對路徑是以啟動程式時的目前目錄為基準，而不是以 `main.cpp` 所在位置為基準，因此從不同目錄執行時也必須相應調整路徑。
 
 ```cpp
 int main() {
@@ -17,79 +15,18 @@ int main() {
 }
 ```
 
-相對路徑以執行程式時的目前目錄為基準。若從專案根目錄執行 `./game`，`assets.db` 也應位於專案根目錄，或在程式中提供正確的相對路徑。
-
-## 素材包格式
-
-素材包是標準的 SQLite 資料庫檔案，例如 Pacman 範例使用的 `examples/pacman/pacman.db`。Grid++ 內含一個唯讀的 SQLite 讀取器，會直接解析資料庫並把圖片建立成 raylib 的 `Texture2D`。執行遊戲時不需要另外安裝或連結 SQLite；建立或修改素材包時，則可以使用 Python 標準庫提供的 `sqlite3`。
-
-資料庫必須包含一張名為 `sprites` 的資料表，並依下列順序定義四個欄位。Grid++ 依欄位位置讀取資料，因此建立資料表時不可調換欄位順序。
-
-| 欄位 | 型別 | 內容 |
-| --- | --- | --- |
-| `id` | `INTEGER PRIMARY KEY` | 每筆素材的主鍵。 |
-| `name` | `TEXT` | 程式用來取得素材的名稱，例如 `player`。 |
-| `tags` | `TEXT` | 以逗號分隔的分類標籤；目前不影響載入或繪製。 |
-| `image_data` | `BLOB` | 32×32 像素、依 R、G、B、A 排列的原始位元組。 |
-
-每個像素包含紅、綠、藍與透明度四個位元組，因此一張素材必須剛好包含 `32 × 32 × 4 = 4096` bytes。`image_data` 保存的是解碼後的原始像素；PNG 或 JPEG 的檔案內容仍包含壓縮格式，不能直接寫入這個欄位。
-
-名稱是程式與圖片之間的介面。資料庫本身允許重複名稱，但 Grid++ 載入時會輸出警告，取得重複名稱時則會丟出例外。每個素材名稱應在同一個素材包中保持唯一。
-
-## 建立素材包
-
-以下程式使用 Python 標準庫建立 `assets.db`，並加入一張名為 `red_mole` 的紅色素材。將程式存成 `create_assets.py` 後執行 `python3 create_assets.py`。
-
-```python title="create_assets.py"
-import sqlite3
-
-WIDTH = 32
-HEIGHT = 32
-RGBA_CHANNELS = 4
-
-# 每個像素依序包含 R、G、B、A。這裡建立不透明的紅色圖片。
-image_bytes = bytes((220, 40, 40, 255)) * (WIDTH * HEIGHT)
-
-if len(image_bytes) != WIDTH * HEIGHT * RGBA_CHANNELS:
-    raise ValueError("Asset image must contain exactly 4096 RGBA bytes")
-
-with sqlite3.connect("assets.db") as db:
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sprites (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            tags TEXT,
-            image_data BLOB
-        )
-        """
-    )
-    db.execute(
-        "INSERT INTO sprites (name, tags, image_data) VALUES (?, ?, ?)",
-        ("red_mole", "mole,enemy", image_bytes),
-    )
-```
-
-`sqlite3.connect()` 會在檔案不存在時建立資料庫；`with` 區塊正常結束時會提交變更並關閉連線。SQL 使用 `?` 參數傳入名稱、標籤與二進位資料，避免自行組合 SQL 字串。
-
-若圖片已由其他工具轉換成 32×32 RGBA 原始資料，可以先加入 `from pathlib import Path`，再用 `Path("sprite.rgba").read_bytes()` 取代範例中的純色 `image_bytes`。寫入前仍應檢查長度。Grid++ 遇到長度不等於 4096 bytes 的素材時會輸出警告並略過該筆資料。
-
-## 指定素材
-
-`GridObject` 建構子或函式式 `Spawn()` 的第一個參數是素材名稱。引擎繪製物件時，會在目前素材包中尋找相同名稱的圖片。
+`GridObject` 建構子與函式式 `Spawn()` 的第一個參數都是素材名稱，而 `set_asset_name()` 可以在執行期間切換名稱，因此同一個玩家可以在張嘴與閉嘴之間改變畫面，卻不必重新載入素材包或建立新物件。
 
 ```cpp
-GridObject* player = game.Spawn("player", 2, 3, MovePlayer);
+GridObject* player = game.Spawn("player_closed", 2, 3, MovePlayer);
 player->set_asset_name("player_open");
 ```
 
-`set_asset_name()` 只修改名稱，不會重新載入素材包。這適合用於角色動畫或狀態切換，例如在 `player_open` 與 `player_closed` 之間交替。素材會縮放到一格的大小，再套用物件的 `direction` 與 `tint`。
+Engine 會把圖片縮放到一格大小，再套用物件的 `direction` 與 `tint`；如果素材名稱是空字串、沒有載入素材包，或找不到相符圖片，畫面會以紅色方塊代替，讓座標、移動與碰撞仍可繼續測試。這個方塊是找不到素材時的警示，不是正式美術的一部分，所以看到它時應先檢查執行目錄、資料庫路徑與名稱拼字。
 
-空字串或不存在的素材名稱會以紅色方塊顯示。這項 fallback 讓位置、移動與碰撞可以在素材完成前測試，但不應用來判斷正式素材是否正確載入。
+## 更換整組素材
 
-## 載入與取代
-
-再次呼叫 `LoadAssets()` 會在新素材全部驗證並載入成功後，取代舊素材。若新檔案無法開啟或格式無效，函式會丟出 `std::runtime_error`，原本已載入的素材仍然保留。
+再次呼叫 `LoadAssets()` 可以把目前素材換成另一個素材包，這適合在不改變規則的情況下切換主題或關卡美術。Engine 會先驗證並載入新內容，成功後才取代舊素材；若檔案無法開啟或格式無效，函式會丟出 `std::runtime_error`，原本已能使用的素材仍會保留。
 
 ```cpp
 try {
@@ -99,10 +36,48 @@ try {
 }
 ```
 
-素材名稱必須唯一。重複名稱會在載入時輸出警告，之後嘗試取得該名稱時丟出例外，因為引擎無法判斷應使用哪張圖片。尺寸或格式不符的資料會被略過並輸出警告。
+素材包只負責圖像，不保存物件位置、碰撞規則或遊戲狀態，因此多個物件可以共用同一張圖片，再各自設定方向、顏色與 z-index；`ClearObjects()` 也不會卸載素材，使重新建立關卡時不必重複載入。若遊戲只需要幾何圖形，則可完全省略 `LoadAssets()`，下一節會改用 `GridShapes.h` 建立不依賴外部圖片的畫面。
 
-## 素材與物件的關係
+## 補充：素材包的內部格式
 
-素材包只負責圖像，不保存物件位置、碰撞規則或遊戲狀態。同一素材可由多個 `GridObject` 共用，每個物件仍可設定不同的方向、顏色與 z-index。`ClearObjects()` 不會卸載素材，因此重新建立關卡時不必重複呼叫 `LoadAssets()`。
+!!! info "需要自行製作素材包時再閱讀"
 
-不需要圖片的遊戲可以省略 `LoadAssets()`，改用 `GridShapes.h` 直接呼叫 raylib 繪製圖形。
+    Grid++ 素材包是一個 SQLite 資料庫，其中 `sprites` 資料表依序包含 `id`、`name`、`tags` 與 `image_data` 四個欄位；`image_data` 是 32×32 像素的原始 RGBA 資料，每個像素各用一個 byte 保存紅、綠、藍與透明度，所以每張圖片必須剛好包含 `32 × 32 × 4 = 4096` bytes。PNG 與 JPEG 仍是壓縮檔案格式，不能直接把檔案內容寫進這個欄位，而同一素材包內的名稱也應保持唯一。
+
+    下列完整程式只使用 Python 標準庫，建立一張不透明紅色圖片並寫入 `assets.db`；它刻意使用純色資料，使範例從資料產生到資料庫寫入都能直接執行，不會把「先用其他工具轉換圖片」這個未說明步驟留給讀者猜測。
+
+    ```python title="create_assets.py"
+    import sqlite3
+
+    width = 32
+    height = 32
+    image_bytes = bytes((220, 40, 40, 255)) * (width * height)
+
+    if len(image_bytes) != 4096:
+        raise ValueError("Asset image must contain exactly 4096 RGBA bytes")
+
+    with sqlite3.connect("assets.db") as db:
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sprites (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                tags TEXT,
+                image_data BLOB
+            )
+            """
+        )
+        db.execute(
+            "INSERT INTO sprites (name, tags, image_data) VALUES (?, ?, ?)",
+            ("red_mole", "mole,enemy", image_bytes),
+        )
+    ```
+
+    `with` 區塊會在正常結束時提交變更並關閉連線，而 SQL 的 `?` 參數避免自行拼接資料。這一節說明的是 Grid++ 目前接受的內部格式；若要把真正的 PNG 圖片轉成素材包，仍需要先用能解碼圖片的工具取得 32×32 RGBA 像素，而不是把 PNG bytes 當成 `image_data`。
+
+## Summary
+
+- 程式以素材名稱引用圖片，Engine 負責載入、繪製與釋放素材。
+- 先確認執行目錄與 `LoadAssets()` 路徑，再用 `Spawn()` 或 `set_asset_name()` 選擇圖片。
+- 紅色方塊代表素材尚未找到，可供規則測試，但不代表載入成功。
+- SQLite、RGBA 與 4096 bytes 屬於製作素材包時才需要理解的進階細節。

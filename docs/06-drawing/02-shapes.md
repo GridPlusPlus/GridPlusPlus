@@ -54,6 +54,8 @@ target->set_tint(MAROON);
 game.Spawn(target);
 ```
 
-基本圖形仍具有座標、tag、visible、z-index 和碰撞行為。它們沒有素材名稱，修改 `asset_name` 不會改變圖形的 `Render()`。需要 callback 行為時，可衍生其中一個圖形類別並覆寫生命週期函式；若只需要一個可點擊或可碰撞的圖形，也可以保存回傳指標並由其他遊戲邏輯修改它。
+基本圖形仍具有座標、tag、visible、z-index 和碰撞能力，只是它們不依賴素材名稱，因此修改 `asset_name` 不會改變圖形的 `Render()`。如果圖形需要每個 instance 各自保存計時器或其他狀態，可以像第 5 章的 `Mole` 一樣衍生圖形類別並覆寫生命週期方法；若它只是可點擊或可碰撞的標記，則保留 Engine 回傳的借用指標，由既有遊戲邏輯修改位置、尺寸或顏色即可。
+
+執行五種圖形的範例後，視窗中應在第 1 列由左至右看到紅色方形、橘色圓形、綠色三角形、藍色五邊形與紫色五芒星，而且每個圖形都置中於自己的格子；如果圖形偏離格子中心，應先檢查傳入的是網格座標而不是像素座標，如果圖形互相重疊，則應比較 `size` 與 Engine 的 `grid_size`。
 
 完整類別索引見 [shapes namespace API](../api/namespacegridpp_1_1shapes.md)。
