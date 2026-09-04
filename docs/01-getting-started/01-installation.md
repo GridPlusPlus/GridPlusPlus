@@ -1,98 +1,143 @@
 # 安裝 raylib
 
-Grid++ 本身不需要安裝程序，但編譯器必須能找到 raylib 的標頭檔與函式庫。本節假設電腦已經有可用的 C++17 編譯器。
+Grid++ 使用 raylib 來建立遊戲視窗、接收鍵盤與滑鼠輸入，以及繪製畫面，因此在開始寫 Grid++ 程式以前，需要先在電腦上準備好 raylib。
 
-Windows 使用者建議在 WSL 中開發。WSL 和 Linux 使用相同的工具與編譯指令，也比較接近課程與 CI 的環境。只有需要產生原生 Windows `.exe` 時，才需要使用 MinGW-w64。
+請選擇自己使用的開發環境，按照對應的步驟完成安裝即可。不同平台的安裝方式彼此獨立，不需要全部閱讀。
 
-以下分頁是同一項工作的不同平台做法，只需閱讀你使用的平台。這一節只準備 raylib；下一節會以實際編譯 Grid++ 程式作為完整驗證。
+=== "Windows（WSL）"
 
-=== "WSL"
+````
+如果你在 Windows 上使用 WSL，請在 Ubuntu 終端機中執行以下指令。後面的 Grid++ 教學也可以在同一個環境中完成。
 
-    以下指令都在 WSL 的 Ubuntu 終端機中執行。專案建議放在 Linux 檔案系統，例如 `~/codes`。
+先安裝編譯 raylib 所需的工具與系統套件：
 
-    安裝 raylib 需要的建置工具和圖形函式庫：
+```bash
+sudo apt update
+sudo apt install -y git build-essential \
+    libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+    libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+    libwayland-dev libxkbcommon-dev
+```
 
-    ```bash
-    sudo apt update
-    sudo apt install -y git build-essential \
-        libasound2-dev libx11-dev libxrandr-dev libxi-dev \
-        libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-        libwayland-dev libxkbcommon-dev
-    ```
+接著下載 raylib 6.0，編譯並安裝：
 
-    從官方 6.0 tag 建置並安裝 raylib：
+```bash
+git clone --depth 1 --branch 6.0 https://github.com/raysan5/raylib.git
+cd raylib/src
+make PLATFORM=PLATFORM_DESKTOP
+sudo make install
+cd ../..
+```
 
-    ```bash
-    git clone --depth 1 --branch 6.0 https://github.com/raysan5/raylib.git
-    cd raylib/src
-    make PLATFORM=PLATFORM_DESKTOP
-    sudo make install
-    cd ../..
-    ```
+安裝完成後執行：
 
-    確認標頭檔已經安裝：
+```bash
+test -f /usr/local/include/raylib.h && echo "raylib installed"
+```
 
-    ```bash
-    test -f /usr/local/include/raylib.h && echo "raylib installed"
-    ```
+如果最後看到：
 
-    最後一行應顯示 `raylib installed`。
+```text
+raylib installed
+```
+
+就可以繼續下一節。
+
+!!! note "WSL 必須能顯示圖形視窗"
+
+    Grid++ 是桌面圖形程式，因此 WSL 除了能編譯程式，也必須能開啟 Linux 圖形視窗。如果後面程式可以編譯，執行時卻沒有出現視窗，問題通常在 WSL 的圖形環境，而不是 Grid++ 本身。
+````
 
 === "Ubuntu Linux"
 
-    Ubuntu 使用和 WSL 相同的建置方式：
+````
+先安裝編譯 raylib 所需的工具與系統套件：
 
-    ```bash
-    sudo apt update
-    sudo apt install -y git build-essential \
-        libasound2-dev libx11-dev libxrandr-dev libxi-dev \
-        libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-        libwayland-dev libxkbcommon-dev
+```bash
+sudo apt update
+sudo apt install -y git build-essential \
+    libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+    libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+    libwayland-dev libxkbcommon-dev
+```
 
-    git clone --depth 1 --branch 6.0 https://github.com/raysan5/raylib.git
-    cd raylib/src
-    make PLATFORM=PLATFORM_DESKTOP
-    sudo make install
-    cd ../..
-    ```
+接著下載 raylib 6.0，編譯並安裝：
 
-    其他 Linux distribution 需要改用對應的套件管理器安裝圖形依賴。raylib 的建置步驟維持相同。
+```bash
+git clone --depth 1 --branch 6.0 https://github.com/raysan5/raylib.git
+cd raylib/src
+make PLATFORM=PLATFORM_DESKTOP
+sudo make install
+cd ../..
+```
+
+安裝完成後執行：
+
+```bash
+test -f /usr/local/include/raylib.h && echo "raylib installed"
+```
+
+如果最後看到：
+
+```text
+raylib installed
+```
+
+就可以繼續下一節。
+
+其他 Linux 發行版也可以使用 raylib，但安裝系統套件的指令會有所不同；這份教學主要以 Ubuntu 為例。
+````
 
 === "macOS"
 
-    使用 Homebrew 安裝 raylib 與 `pkg-config`：
+````
+如果尚未安裝 Homebrew，請先完成 Homebrew 的安裝，再執行：
 
-    ```bash
-    brew install raylib pkg-config
-    ```
+```bash
+brew install raylib pkg-config
+```
 
-    確認安裝結果：
+接著確認 raylib 可以被找到：
 
-    ```bash
-    g++ --version
-    pkg-config --modversion raylib
-    ```
+```bash
+pkg-config --modversion raylib
+```
 
-    macOS 的 `g++` 通常是 Apple Clang。文件中的指令仍使用 `g++`，`pkg-config` 會補上 Homebrew raylib 需要的編譯與連結參數。
+如果指令輸出 raylib 的版本號，就代表安裝完成。
 
-=== "Windows / MinGW-w64"
+也可以執行：
 
-    raylib 官方推薦使用 W64Devkit。已設定完成的其他 MinGW-w64 環境也可以使用。
+```bash
+g++ --version
+```
 
-    1. 從 [raylib 6.0 releases](https://github.com/raysan5/raylib/releases/tag/6.0) 下載 `raylib-6.0_win32_mingw-w64.zip`。
-    2. 解壓縮並保留 `include` 與 `lib` 資料夾。下一節會把它們放在遊戲專案的 `raylib/` 資料夾中。
-    3. 執行 `g++ --version`，確認終端機使用 MinGW-w64。
+確認系統中有可用的 C++ 編譯器。macOS 上的 `g++` 通常實際使用 Apple Clang，這不影響後面的教學。
+````
 
-    !!! warning "MinGW-w64"
+=== "Windows（MinGW-w64）"
 
-        raylib 需要 MinGW-w64。舊的 mingw.org MinGW 無法使用。
+````
+如果你不使用 WSL，而是希望直接在 Windows 中編譯 `.exe`，可以使用 MinGW-w64。
 
-## 分清楚安裝、編譯與開啟視窗
+先確認終端機中的編譯器是 MinGW-w64：
 
-上面的檢查只能證明 raylib 的檔案已經放到預期位置，還不能證明 Grid++ 程式能夠編譯，更不能證明目前的桌面環境能顯示遊戲視窗。下一節會用同一份最小程式依序完成這兩項驗證：先確認編譯器能找到標頭檔並連結函式庫，再實際執行程式，確認圖形視窗能正常開啟。
+```bash
+g++ --version
+```
 
-如果程式已經成功編譯，執行時卻無法開啟視窗，應先檢查桌面顯示環境，而不是重新安裝 Grid++。這種情況在沒有圖形桌面的遠端 Linux，或尚未啟用圖形應用程式支援的 WSL 環境特別常見；先嘗試開啟其他圖形程式，便能區分問題究竟來自顯示環境，還是 Grid++ 程式本身。
+接著從 [raylib 6.0 Releases](https://github.com/raysan5/raylib/releases/tag/6.0) 下載 Windows 的 MinGW-w64 版本，解壓縮後保留其中的 `include` 與 `lib` 資料夾。
 
-安裝完成後，我們可以取得 Grid++，並用第一個程式完成上述兩層驗證。
+下一節建立 Grid++ 專案時，會把這兩個資料夾放進專案中，因此目前只需要完成下載與解壓縮。
+
+!!! warning "不要使用舊版 MinGW"
+
+    raylib 需要 MinGW-w64。如果你的環境使用的是早期的 mingw.org MinGW，請改用現代的 MinGW-w64 環境。
+````
+
+## 下一步
+
+完成這一頁之後，我們還沒有真正執行 Grid++。下一節會建立一個只有 8×8 網格的最小程式，並用它確認三件事情：C++ 編譯器可以使用、raylib 可以正確連結，以及遊戲視窗可以開啟。
+
+如果其中任何一步失敗，下一節會依照錯誤發生的位置判斷問題，而不需要在這裡先理解編譯與連結的細節。
 
 [建立第一個 Grid++ 程式](02-hello-gridpp.md){ .md-button .md-button--primary }
