@@ -63,13 +63,13 @@ nav:
       - 1.1 安裝 raylib: 01-getting-started/01-installation.md
       - 1.2 第一個 Grid++ 程式: 01-getting-started/02-hello-gridpp.md
   - 2 理解核心模型:
-      - 03-core-model/index.md
-      - 2.1 GridObject: 03-core-model/02-grid-object.md
-      - 2.2 GridEngine: 03-core-model/01-grid-engine.md
-      - 2.3 Overlay: 03-core-model/03-overlay.md
-      - 2.4 輸入、時間與亂數: 03-core-model/04-raylib-input.md
+      - 02-core-model/index.md
+      - 2.1 GridObject: 02-core-model/02-grid-object.md
+      - 2.2 GridEngine: 02-core-model/01-grid-engine.md
+      - 2.3 Overlay: 02-core-model/03-overlay.md
+      - 2.4 輸入、時間與亂數: 02-core-model/04-raylib-input.md
   - 3 製作打地鼠:
-      - 02-whack-a-mole/index.md
+      - 03-whack-a-mole/index.md
   - 4 定義物件行為:
       - 04-object-behavior/index.md
       - 4.1 UpdateFn 與 CollideFn: 04-object-behavior/01-callbacks.md
