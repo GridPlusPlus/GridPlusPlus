@@ -67,6 +67,7 @@ nav:
       - 2.1 GridObject: 03-core-model/02-grid-object.md
       - 2.2 GridEngine: 03-core-model/01-grid-engine.md
       - 2.3 Overlay: 03-core-model/03-overlay.md
+      - 2.4 輸入、時間與亂數: 03-core-model/04-raylib-input.md
   - 3 製作打地鼠:
       - 02-whack-a-mole/index.md
   - 4 定義物件行為:

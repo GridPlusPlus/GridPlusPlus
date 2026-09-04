@@ -36,8 +36,8 @@ Label 本身只需在文字改變時接收新內容，但有些介面元件也�
 
 Overlay 沒有 GridObject 的 tag、visible、z-index 或同格碰撞，因為它不屬於網格世界。如果一項內容開始需要上述能力，問題通常不是替 Overlay 增加更多設定，而是重新判斷它是否其實應該成為 GridObject。至於執行期間新增 Overlay 的時機與其他生命週期邊界，第 8 章會在出現相應需求後集中說明。
 
-至此，製作第一個遊戲所需的角色已經各就各位：GridObject 表示地鼠，`UpdateFn` 描述地鼠每幀如何改變，GridEngine 推進整個遊戲，Label 則把分數與時間呈現在世界上方。下一章會沿用這四個角色逐步完成打地鼠，讓本章的概念在可執行程式中彼此連接。
+至此，製作第一個遊戲所需的角色已經各就各位：GridObject 表示地鼠，`UpdateFn` 描述地鼠每幀如何改變，GridEngine 推進整個遊戲，Label 則把分數與時間呈現在世界上方。不過，地鼠何時移動、玩家點了哪一格，以及倒數經過多久，仍要透過 raylib 取得；下一節先整理這些遊戲規則會直接用到的函式，再把它們組合成完整的打地鼠程式。
 
-[製作打地鼠](../02-whack-a-mole/index.md){ .md-button .md-button--primary }
+[使用 raylib 讀取輸入與時間](04-raylib-input.md){ .md-button .md-button--primary }
 
 完整介面見 [Overlay API](../api/classgridpp_1_1_overlay.md)、[Label API](../api/classgridpp_1_1_label.md)與 [Button API](../api/classgridpp_1_1_button.md)。

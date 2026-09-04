@@ -2,6 +2,10 @@
 *.exe
 *.o
 *.obj
+*.out
+*.a
+*.so
+*.dylib
 examples/**/game
 # 根目錄範例／模板編譯出的執行檔（Linux/macOS 無副檔名；Windows 的 .exe 已被上面擋掉）
 /game
