@@ -18,10 +18,13 @@ examples/**/raylib.dll
 # === MkDocs 文檔站建置輸出 ===
 /site/
 
-# === Python（皆為暫時性腳本，不進版控）===
+# === Python 暫存內容 ===
 *.py
 __pycache__/
 *.pyc
+# 文件使用的正式工具與測試必須納入版本控制。
+!tools/create_asset_pack.py
+!tests/test_create_asset_pack.py
 
 # === 第三方：raylib（建議學生自行安裝，見 docs/getting-started.md）===
 # 若你想把 raylib 一起打包進 repo 讓學生「解壓即用」，把下面這幾行刪掉即可。

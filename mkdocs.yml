@@ -82,7 +82,7 @@ nav:
       - 6.1 素材包: 06-drawing/01-assets.md
       - 6.2 基本圖形: 06-drawing/02-shapes.md
       - 6.3 繪製狀態與順序: 06-drawing/03-rendering.md
-  - 7 組裝 Pacman:
+  - 7 解析 Pacman:
       - 07-pacman/index.md
       - 7.1 地圖與迷宮: 07-pacman/01-map-and-maze.md
       - 7.2 玩家移動: 07-pacman/02-player.md

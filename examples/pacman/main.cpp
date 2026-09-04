@@ -28,8 +28,14 @@ namespace {
 constexpr int kDirectionX[4] = {1, 0, -1, 0};
 constexpr int kDirectionY[4] = {0, -1, 0, 1};
 
-// 遊戲階段：0=開始畫面, 1=遊戲中, 2=獲勝, 3=失敗
-int g_state = 0;
+enum class GameState {
+    kStart,
+    kPlaying,
+    kWon,
+    kLost,
+};
+
+GameState g_state = GameState::kStart;
 int g_pellets_left = 0;          // 還剩幾顆豆子
 bool g_paused = false;           // 是否暫停（由暫停按鈕切換）
 GridMaze* g_maze = nullptr;      // 讓角色查詢牆壁
@@ -50,7 +56,7 @@ public:
     void OnCollide(GridObject* other) override {
         if (!eaten_ && other->tag() == "pacman") {
             eaten_ = true;
-            if (--g_pellets_left <= 0) g_state = 2;  // 吃完 → 獲勝
+            if (--g_pellets_left <= 0) g_state = GameState::kWon;
         }
     }
     void Render(GridEngine* engine) override {
@@ -70,7 +76,7 @@ public:
     }
 
     void OnUpdate() override {
-        if (g_state != 1 || g_paused || g_player == nullptr) return;
+        if (g_state != GameState::kPlaying || g_paused || g_player == nullptr) return;
         if (++timer_ < 12) return;  // 移動速度（比玩家稍慢）
         timer_ = 0;
 
@@ -119,7 +125,7 @@ public:
     Pacman(int x, int y) : GridObject("pacman", x, y) { set_tag("pacman"); }
 
     void OnUpdate() override {
-        if (g_state != 1 || g_paused) return;
+        if (g_state != GameState::kPlaying || g_paused) return;
         if (IsKeyDown(KEY_RIGHT)) wanted_direction_ = 0;  // 每幀記下想要的方向（緩衝）
         if (IsKeyDown(KEY_UP)) wanted_direction_ = 1;
         if (IsKeyDown(KEY_LEFT)) wanted_direction_ = 2;
@@ -138,7 +144,7 @@ public:
         }
     }
     void OnCollide(GridObject* other) override {
-        if (other->tag() == "ghost") g_state = 3;  // 被鬼抓到 → 失敗
+        if (other->tag() == "ghost") g_state = GameState::kLost;
     }
 
 private:
@@ -190,18 +196,18 @@ void BuildLevel(GridEngine& game, const LevelMap& level) {
 class ScoreOverlay : public Overlay {
 public:
     void Draw() override {
-        if (g_state == 1) {  // 遊戲中：左上角分數
+        if (g_state == GameState::kPlaying) {
             DrawText(TextFormat("Pellets: %d", g_pellets_left), 8, 8, 20, YELLOW);
             if (g_paused) DrawBigText("PAUSED", ORANGE);
             return;
         }
         // 非遊戲中：壓暗背景，畫大字（按鈕由各自的類別畫在這之上）
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.6f));
-        if (g_state == 0)
+        if (g_state == GameState::kStart)
             DrawBigText("PAC-MAN", YELLOW);
-        else if (g_state == 2)
+        else if (g_state == GameState::kWon)
             DrawBigText("YOU WIN!", GREEN);
-        else if (g_state == 3)
+        else if (g_state == GameState::kLost)
             DrawBigText("GAME OVER", RED);
     }
 
@@ -217,12 +223,12 @@ private:
 class StartButton : public Button {
 public:
     StartButton(int x, int y, int width, int height) : Button("Start", x, y, width, height) {}
-    void OnClick() override { g_state = 1; }  // 開始遊戲
+    void OnClick() override { g_state = GameState::kPlaying; }
     void OnUpdate() override {
-        if (g_state == 0) Button::OnUpdate();
+        if (g_state == GameState::kStart) Button::OnUpdate();
     }
     void Draw() override {
-        if (g_state == 0) Button::Draw();
+        if (g_state == GameState::kStart) Button::Draw();
     }
 };
 
@@ -232,13 +238,13 @@ public:
     // 重來一局。
     void OnClick() override {
         BuildLevel(*g_game, g_level);
-        g_state = 1;
+        g_state = GameState::kPlaying;
     }
     void OnUpdate() override {
-        if (g_state == 2 || g_state == 3) Button::OnUpdate();
+        if (g_state == GameState::kWon || g_state == GameState::kLost) Button::OnUpdate();
     }
     void Draw() override {
-        if (g_state == 2 || g_state == 3) Button::Draw();
+        if (g_state == GameState::kWon || g_state == GameState::kLost) Button::Draw();
     }
 };
 
@@ -247,10 +253,10 @@ public:
     PauseButton(int x, int y, int width, int height) : Button("Pause", x, y, width, height) {}
     void OnClick() override { g_paused = !g_paused; }
     void OnUpdate() override {
-        if (g_state == 1) Button::OnUpdate();
+        if (g_state == GameState::kPlaying) Button::OnUpdate();
     }
     void Draw() override {
-        if (g_state == 1) Button::Draw();
+        if (g_state == GameState::kPlaying) Button::Draw();
     }
 };
 
@@ -266,7 +272,7 @@ int main() {
         game.set_background_color(BLACK);  // Pac-Man 經典黑底（格線預設已關）
 
         BuildLevel(game, g_level);  // 先建好一局
-        g_state = 0;                // 停在開始畫面
+        g_state = GameState::kStart;
 
         // 畫面覆蓋層（ScoreOverlay 先加，按鈕畫在它之上）
         constexpr int kButtonWidth = 120;

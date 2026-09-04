@@ -1,6 +1,6 @@
 # 安裝 raylib
 
-Grid++ 本身不需要安裝程序，但編譯器必須能找到 raylib 的 header 與 library。本節假設電腦已經有可用的 C++17 編譯器。
+Grid++ 本身不需要安裝程序，但編譯器必須能找到 raylib 的標頭檔與函式庫。本節假設電腦已經有可用的 C++17 編譯器。
 
 Windows 使用者建議在 WSL 中開發。WSL 和 Linux 使用相同的工具與編譯指令，也比較接近課程與 CI 的環境。只有需要產生原生 Windows `.exe` 時，才需要使用 MinGW-w64。
 
@@ -30,7 +30,7 @@ Windows 使用者建議在 WSL 中開發。WSL 和 Linux 使用相同的工具�
     cd ../..
     ```
 
-    確認 header 已經安裝：
+    確認標頭檔已經安裝：
 
     ```bash
     test -f /usr/local/include/raylib.h && echo "raylib installed"
@@ -87,6 +87,12 @@ Windows 使用者建議在 WSL 中開發。WSL 和 Linux 使用相同的工具�
 
         raylib 需要 MinGW-w64。舊的 mingw.org MinGW 無法使用。
 
-安裝完成後，我們可以取得 Grid++ 並編譯第一個程式。
+## 分清楚安裝、編譯與開啟視窗
+
+上面的檢查只能證明 raylib 的檔案已經放到預期位置，還不能證明 Grid++ 程式能夠編譯，更不能證明目前的桌面環境能顯示遊戲視窗。下一節會用同一份最小程式依序完成這兩項驗證：先確認編譯器能找到標頭檔並連結函式庫，再實際執行程式，確認圖形視窗能正常開啟。
+
+如果程式已經成功編譯，執行時卻無法開啟視窗，應先檢查桌面顯示環境，而不是重新安裝 Grid++。這種情況在沒有圖形桌面的遠端 Linux，或尚未啟用圖形應用程式支援的 WSL 環境特別常見；先嘗試開啟其他圖形程式，便能區分問題究竟來自顯示環境，還是 Grid++ 程式本身。
+
+安裝完成後，我們可以取得 Grid++，並用第一個程式完成上述兩層驗證。
 
 [建立第一個 Grid++ 程式](02-hello-gridpp.md){ .md-button .md-button--primary }

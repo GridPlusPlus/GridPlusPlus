@@ -20,7 +20,7 @@
 ## 編譯與執行
 
 raylib 的安裝方式見[安裝 raylib](../../docs/01-getting-started/01-installation.md)。Windows 建議使用 WSL，並依照 Linux 指令操作；
-需要原生 `.exe` 時才使用 MinGW-w64。`-I../..` 讓編譯器找到專案根目錄的 headers。
+需要原生 `.exe` 時才使用 MinGW-w64。`-I../..` 讓編譯器找到專案根目錄的標頭檔。
 
 === "WSL / Linux"
 
@@ -93,7 +93,7 @@ public:
     void OnCollide(GridObject* other) override {
         if (!eaten_ && other->tag() == "pacman") {
             eaten_ = true;
-            if (--g_pellets_left <= 0) g_state = 2;    // 吃完 → 獲勝
+            if (--g_pellets_left <= 0) g_state = GameState::kWon;
         }
     }
     void Render(GridEngine* engine) override {
@@ -136,7 +136,7 @@ if (dist < best) { best = dist; pick = d; }
 
 ```cpp
 void OnUpdate() override {
-    if (g_state != 1 || g_paused) return;
+    if (g_state != GameState::kPlaying || g_paused) return;
     if (IsKeyDown(KEY_RIGHT)) wanted_direction_ = 0;   // 每幀記下想要的方向（緩衝）
     if (IsKeyDown(KEY_UP))    wanted_direction_ = 1;
     if (IsKeyDown(KEY_LEFT))  wanted_direction_ = 2;
@@ -153,7 +153,7 @@ void OnUpdate() override {
     }
 }
 void OnCollide(GridObject* other) override {
-    if (other->tag() == "ghost") g_state = 3;   // 被抓到 → 失敗
+    if (other->tag() == "ghost") g_state = GameState::kLost;
 }
 ```
 
@@ -162,16 +162,16 @@ void OnCollide(GridObject* other) override {
 
 ## 遊戲流程與畫面
 
-整個遊戲用一個全域 `g_state` 表示目前在哪個階段：
+整個遊戲用 `GameState` 表示目前階段，避免用沒有名稱的整數猜測狀態意義：
 
 | `g_state` | 階段 | 畫面 |
 |---|---|---|
-| `0` | 開始畫面 | 壓暗 + 標題「PAC-MAN」+ **Start** 按鈕 |
-| `1` | 遊戲中 | 左上角分數；右上角 **Pause** 按鈕（可暫停） |
-| `2` | 獲勝 | 壓暗 +「YOU WIN!」+ **Restart** 按鈕 |
-| `3` | 失敗 | 壓暗 +「GAME OVER」+ **Restart** 按鈕 |
+| `GameState::kStart` | 開始畫面 | 壓暗 + 標題「PAC-MAN」+ **Start** 按鈕 |
+| `GameState::kPlaying` | 遊戲中 | 左上角分數；右上角 **Pause** 按鈕（可暫停） |
+| `GameState::kWon` | 獲勝 | 壓暗 +「YOU WIN!」+ **Restart** 按鈕 |
+| `GameState::kLost` | 失敗 | 壓暗 +「GAME OVER」+ **Restart** 按鈕 |
 
-角色只在 `g_state == 1` 時移動，所以開始畫面與結束畫面都會自動「凍結」。
+角色只在 `g_state == GameState::kPlaying` 時移動，所以開始畫面與結束畫面都會自動「凍結」。
 各按鈕也只在對的階段顯示與作用（見 [Overlay](../../docs/03-core-model/03-overlay.md)）。
 
 **重新開始**靠兩件事：引擎的 `ClearObjects()`（刪掉上一局的所有物件）＋

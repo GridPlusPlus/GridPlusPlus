@@ -4,16 +4,16 @@
 
 ## 取得專案範本
 
-前往 [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template)，按 **Fork** 建立自己的遊戲專案，再從自己 fork 的 **Code** 選單複製網址並執行：
+前往 [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template)，按 **Fork** 建立自己的遊戲專案。接著從自己 fork 的 **Code** 選單複製網址並執行：
 
 ```bash
-git clone <你的-fork-網址>
-cd <專案資料夾>
+git clone https://github.com/YOUR_ACCOUNT/YOUR_GAME.git
+cd YOUR_GAME
 ```
 
-`<...>` 表示要換成自己的內容，不要連同角括號輸入。後續指令都在包含 `main.cpp` 與 Grid++ headers 的專案根目錄執行。執行 `ls`（Windows 可用 `dir`）時，應能看到 `main.cpp` 與 `GridPlusPlus.h`。
+請把 `YOUR_ACCOUNT` 與 `YOUR_GAME` 換成自己 fork 的帳號和專案名稱。後續指令都在包含 `main.cpp` 與 Grid++ 標頭檔的專案根目錄執行；執行 `ls`（Windows 可用 `dir`）時，應能看到 `main.cpp` 與 `GridPlusPlus.h`。
 
-專案範本包含 `main.cpp` 與全部 Grid++ headers。原生 Windows MinGW-w64 還需要把上一節下載的 raylib `include` 與 `lib` 放進專案；下圖只列出和這項設定直接相關的檔案：
+專案範本包含 `main.cpp` 與全部 Grid++ 標頭檔。原生 Windows MinGW-w64 還需要把上一節下載的 raylib `include` 與 `lib` 放進專案；下圖只列出和這項設定直接相關的檔案：
 
 ```text
 your-game/
@@ -46,7 +46,7 @@ int main() {
 }
 ```
 
-`GridEngine` 是 Grid++ 中管理整個遊戲的核心類別，可以先把它理解成「遊戲世界的控制者」。它負責建立視窗、保存之後加入的遊戲物件，並持續安排更新與繪製。這裡建立的 `game` 是一個 GridEngine instance，代表這個程式唯一的遊戲世界。
+`GridEngine` 是 Grid++ 中管理整個遊戲的核心類別，可以先把它理解成「遊戲世界的控制者」。它負責建立視窗、保存之後加入的遊戲物件，並持續安排更新與繪製。這裡建立的 `game` 是一個 GridEngine 實例，代表這個程式唯一的遊戲世界。
 
 這個程式依序經過四個階段：
 
@@ -101,9 +101,14 @@ int main() {
     ./game.exe
     ```
 
-視窗中應該出現 8×8 的空白網格。關閉視窗後，`Run()` 回傳，`main()` 結束，Engine 會釋放資源並關閉 raylib。
+視窗中應該出現 8×8 的空白網格，其座標從左上角 `(0, 0)` 開始，x 向右、y 向下增加。關閉視窗後，`Run()` 回傳，`main()` 結束，Engine 會釋放資源並關閉 raylib。
 
-如果編譯器回報找不到 `raylib.h`，請回到安裝章確認 header 路徑。如果連結階段出現 `undefined reference`，請確認編譯指令包含對應平台的 raylib 與系統 library。
+<figure markdown="span">
+  ![8×8 網格座標，左上角為零零，三二位置以藍色標示](../images/grid-coordinates.svg)
+  <figcaption>格線只協助辨認座標；圖中的藍色格位於 x=3、y=2。</figcaption>
+</figure>
+
+如果編譯器回報找不到 `raylib.h`，請回到安裝章確認標頭檔路徑。如果連結階段出現 `undefined reference`，請確認編譯指令包含對應平台的 raylib 與系統函式庫。
 
 在進入下一章前，可以修改建構子的三個數字並重新執行：前兩個數字改變欄、列數，第三個數字改變每格的像素大小。只要能預測視窗與格線如何改變，就已理解這個最小程式。
 

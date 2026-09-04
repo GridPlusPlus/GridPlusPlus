@@ -1,8 +1,8 @@
 # 豆子與勝利條件
 
-每個 `0` tile 會建立一顆豆子。豆子留在固定座標，沒有每幀更新行為；它需要記住自己是否已被吃掉，並在玩家進入同一格時更新全局剩餘數量。這份狀態屬於單一豆子，因此 `Pellet` 使用成員變數 `eaten_`。
+每個 `0` tile 會建立一顆豆子。豆子留在固定座標，沒有每幀更新行為；它需要記住自己是否已被吃掉，並在玩家進入同一格時更新全域剩餘數量。這份狀態屬於單一豆子，因此 `Pellet` 使用成員變數 `eaten_`。以下類別位於共享狀態之後、`Ghost` 與 `Pacman` 之前。
 
-```cpp
+```cpp title="main.cpp 節錄：Pellet 類別"
 class Pellet : public GridObject {
 public:
     Pellet(int x, int y) : GridObject("pellet", x, y) {
@@ -12,7 +12,7 @@ public:
     void OnCollide(GridObject* other) override {
         if (!eaten_ && other->tag() == "pacman") {
             eaten_ = true;
-            if (--g_pellets_left <= 0) g_state = 2;
+            if (--g_pellets_left <= 0) g_state = GameState::kWon;
         }
     }
 
@@ -25,15 +25,15 @@ private:
 };
 ```
 
-`OnCollide()` 先以 `other->tag()` 確認對方是玩家。`eaten_` 防止同一顆豆子重複扣除計數；當 `g_pellets_left` 降到 0，`g_state = 2` 進入勝利畫面。`Render()` 只在豆子尚未被吃掉時呼叫基底繪製。
+`OnCollide()` 先以 `other->tag()` 確認對方是玩家。`eaten_` 防止同一顆豆子重複扣除計數；當 `g_pellets_left` 降到 0，遊戲進入 `GameState::kWon`。`Render()` 只在豆子尚未被吃掉時呼叫基底繪製。
 
-這個版本是為了延續第 5 章「每個 instance 保存自己的狀態」而刻意保留已吃掉的豆子，讓 `eaten_` 同時阻止重複計分並控制繪製；若正式遊戲在豆子被吃掉後不再需要查詢它，碰撞時直接呼叫 `engine()->Destroy(this)` 會更簡單，此時 `eaten_` 與自訂 `Render()` 都可以移除。兩種設計都符合 Grid++ 的碰撞模型，選擇差異不在技巧高低，而在消失後的物件是否仍有需要保留的資料。
+這個版本刻意保留已吃掉的豆子，藉此延續第 5 章「每個實例保存自己的狀態」；`eaten_` 同時阻止重複計分並控制繪製。如果豆子消失後不再需要被查詢，碰撞時直接呼叫 `engine()->Destroy(this)` 會更簡單，此時可以移除 `eaten_` 與自訂 `Render()`。兩種設計都符合碰撞模型，差別在於物件消失後是否仍有資料需要保留。
 
 ## 建立所有豆子
 
 `BuildLevel()` 掃描已驗證的 tile 陣列。每遇到 `0`，便生成一顆 Pellet 並增加剩餘數量。
 
-```cpp
+```cpp title="main.cpp 節錄：BuildLevel() 生成豆子的部分"
 g_pellets_left = 0;
 
 for (int y = 0; y < level.rows; ++y) {
@@ -53,15 +53,15 @@ for (int y = 0; y < level.rows; ++y) {
 
 豆子負責自己的收集行為；玩家則負責碰到鬼時的結果。Pacman 的 `OnCollide()` 使用 ghost tag 將遊戲切換到失敗狀態。
 
-```cpp
+```cpp title="main.cpp 節錄：Pacman::OnCollide()"
 void OnCollide(GridObject* other) override {
-    if (other->tag() == "ghost") g_state = 3;
+    if (other->tag() == "ghost") g_state = GameState::kLost;
 }
 ```
 
 碰撞發生在所有物件更新完成後。同一幀中，玩家與鬼可能各自移入相同格子，Engine 仍會在接下來的碰撞階段找到它們。素材的透明區域與 z-index 不影響結果。
 
-## Summary
+## 本節小結
 
 - 每顆 Pellet 以 `eaten_` 保存自己的收集狀態。
 - tag 讓豆子辨識玩家，讓玩家辨識鬼。

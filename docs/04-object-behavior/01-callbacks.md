@@ -4,9 +4,9 @@
 
 ## 讓物件每一幀更新
 
-一個可作為 `UpdateFn` 使用的函式會接收 `GridObject* self`，其中 `self` 指向這次正在更新的物件，因此同一個函式不必把物件寫死在全域變數中，也能查詢它的位置、改變它的素材，或透過 `engine()` 取得所在的遊戲世界。以下玩家移動函式先讀取方向鍵，再用 Engine 的欄列數避免玩家走出網格；把它交給 `Spawn()` 後，Engine 便會在每一幀替玩家呼叫它。
+一個可作為 `UpdateFn` 使用的函式會接收 `GridObject* self`，其中 `self` 指向這次正在更新的物件，因此同一個函式不必把物件寫死在全域變數中，也能查詢它的位置，或透過 `engine()` 取得所在的遊戲世界。以下程式是更新函式及其生成位置的完整片段；函式必須寫在 `main()` 前面，`Spawn()` 則放在 `main()` 中建立 Engine 之後、呼叫 `Run()` 之前。
 
-```cpp
+```cpp title="main.cpp（省略第 1 章已出現的 include 與編譯設定）"
 void MovePlayer(GridObject* self) {
     GridEngine* game = self->engine();
 
@@ -24,7 +24,7 @@ void MovePlayer(GridObject* self) {
 GridObject* player = game.Spawn("player", 1, 1, MovePlayer);
 ```
 
-`self` 與 `game` 都只是借用指標，物件的生命週期仍由 Engine 管理，因此函式不應自行 `delete self`，也不應把取得的指標當成自己擁有的資源；若物件需要永久離開世界，應要求所屬 Engine 執行 `Destroy(self)`，詳細的安全時機會集中到第 8 章說明。
+`self` 與 `game` 都只是借用指標，物件的生命週期仍由 Engine 管理，因此函式不應自行 `delete self`，也不應把取得的指標當成自己擁有的資源。物件需要永久離開世界時，應要求所屬 Engine 執行 `Destroy(self)`；詳細的安全時機集中在第 8 章說明。
 
 !!! info "C++ 函式指標"
 
@@ -59,42 +59,25 @@ GridObject* player = game.Spawn("player", 1, 1, MovePlayer);
 
     這段語法是理解底層機制的補充，而不是使用 Grid++ 時必須反覆書寫的形式；實際程式直接把符合參數規格的函式名稱交給 `Spawn()` 即可，若傳入 `nullptr`，則表示物件不需要處理對應事件。
 
-## 同時指定更新與碰撞行為
+## 看懂 Spawn 的兩個行為參數
 
-當物件除了每幀更新之外，也需要在相遇時作出反應，`Spawn()` 可以在素材名稱與初始座標之後依序接收 `UpdateFn` 和 `CollideFn`；沒有某項行為時可以傳入 `nullptr`，而最後的 `CollideFn` 具有預設值，因此只需要更新的物件可以直接省略它。
+當物件除了每幀更新之外，也需要在相遇時作出反應，`Spawn()` 可以在素材名稱與初始座標之後依序接收 `UpdateFn` 和 `CollideFn`。沒有某項行為時可以傳入 `nullptr`；最後的 `CollideFn` 具有預設值，因此只需要更新的物件可以省略它。下列第一行只用來標示參數順序，不是一段可以直接編譯的程式。
 
-```cpp
+```cpp title="Spawn 參數順序"
 game.Spawn(asset_name, x, y, update_fn, collide_fn);
 ```
 
-```cpp
+下一節才會定義 `CollectPellet` 並完成玩家吃豆子的程式；目前先比較三種常見組合：牆面沒有每幀行為，玩家只需要 `MovePlayer`，豆子則不更新位置，只在碰撞時執行 `CollectPellet`。
+
+```cpp title="main() 內的生成方式（CollectPellet 將於下一節定義）"
 game.Spawn("wall", 2, 2, nullptr);
 game.Spawn("player", 1, 1, MovePlayer);
 game.Spawn("pellet", 4, 1, nullptr, CollectPellet);
 ```
 
-前三行分別建立不需更新的牆面、只需更新的玩家，以及只需處理碰撞的豆子。豆子的 `CollectPellet` 接收 `self` 與 `other`：前者是正在處理碰撞的豆子，後者是和它位於同一格的另一個物件，因此函式必須先辨認對方是不是玩家，才能決定是否加分與移除自己。
-
-```cpp
-void CollectPellet(GridObject* self, GridObject* other) {
-    if (other->tag() != "player") return;
-
-    ++score;
-    self->engine()->Destroy(self);
-}
-
-GridObject* pellet = game.Spawn(
-    "pellet", 2, 3, nullptr, CollectPellet
-);
-```
-
-這裡的 `tag` 把「座標相同」轉換成有遊戲意義的「玩家吃到豆子」，下一節會完整說明同格判定與 tag 的分工；至於同一幀內的精確配對順序，以及碰撞過程中刪除物件會如何影響後續事件，則留到第 8 章建立完整生命週期模型後再處理。
-
-## Summary
+## 本節小結
 
 - `UpdateFn` 每幀收到 `self`；`CollideFn` 在同格時另外收到 `other`。
 - 兩者背後使用函式指標，通常只要把符合參數規格的函式名稱交給 `Spawn()`。
 - `nullptr` 表示不處理對應事件。
 - 函式式行為適合只需使用 GridObject 內建資料或整局共用狀態的物件。
-
-學會更新與碰撞之後，下一節會把兩者組合成玩家吃豆子的完整互動；等到第 5 章需要讓多個物件各自保存計時器時，再進一步處理普通函式無法直接承擔的資料歸屬問題。

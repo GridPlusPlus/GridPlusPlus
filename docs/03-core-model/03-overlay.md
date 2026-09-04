@@ -19,7 +19,7 @@ GridObject 與 Overlay 都以視窗左上角為座標原點，但兩者使用不
 
 打地鼠目前只需要在畫面左上角顯示分數，因此可以直接使用 Grid++ 內建的 `Label`。以下程式先建立一行文字，接著把 Label 加入 Engine，最後透過保留下來的借用指標更新顯示內容：
 
-```cpp
+```cpp title="main() 節錄：加入並更新分數標籤"
 gridpp::Label* score_label = new gridpp::Label("Score: 0", 12, 12, 24, BLACK);
 game.AddOverlay(score_label);
 

@@ -12,7 +12,7 @@ Grid++ 是供程式設計入門課程使用的 C++17 網格遊戲函式庫。它
 - `GridMaze`：選用的迷宮與牆面模組。
 - `gridpp::shapes`：不需素材包的基本圖形。
 
-Grid++ 是 header-only library，唯一的外部依賴是 [raylib](https://www.raylib.com/)。
+Grid++ 是只需引入標頭檔的函式庫，唯一的外部相依是 [raylib](https://www.raylib.com/)。
 
 ## 快速執行
 
@@ -43,22 +43,22 @@ g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 
 ## 文件
 
-文件先以普通函式完成打地鼠，再深入說明 `GridEngine`、`GridObject`、Overlay、callback、碰撞、物件狀態與繪製。Pacman 專案接著組合迷宮、自訂物件、素材與遊戲狀態；最後整理生命週期、所有權和每幀順序。
+文件先建立核心模型，再以普通函式完成打地鼠，接著說明 `UpdateFn`、`CollideFn`、碰撞、物件狀態與繪製。Pacman 專案組合迷宮、自訂物件、素材與遊戲狀態；最後整理生命週期、所有權、每幀順序與可重現的發布流程。
 
-章節使用編號資料夾，節使用資料夾內的編號檔名。API reference 由公開 header 中的 Doxygen 註解自動產生，與操作教學分開維護。
+章節使用編號資料夾，節使用資料夾內的編號檔名。API 參考由公開標頭檔中的 Doxygen 註解自動產生，與操作教學分開維護。
 
 ## 專案結構
 
 | 路徑 | 用途 |
 |---|---|
-| `GridPlusPlus.h` | 一般遊戲使用的主 header。 |
+| `GridPlusPlus.h` | 一般遊戲使用的主標頭檔。 |
 | `GridEngine.h` | `GridEngine`。 |
 | `GridObject.h` | `GridObject` 與 `CallbackGridObject`。 |
 | `Overlay.h` | `Overlay`、`Label` 與 `Button`。 |
 | `GridMaze.h` | 選用的迷宮模組。 |
 | `GridShapes.h` | 選用的基本圖形。 |
 | `template.cpp` | 可直接編譯的起始程式。 |
-| `examples/` | 打地鼠、Pacman callback 版與完整 Pacman。 |
+| `examples/` | 打地鼠、Pacman 函式式版本與完整 Pacman。 |
 | `tests/` | 引擎、生命週期、迷宮、圖形與素材測試。 |
 | `docs/` | MkDocs 教學文件。 |
 

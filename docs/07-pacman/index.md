@@ -1,13 +1,13 @@
-# 組裝 Pacman
+# 解析完整的 Pacman 範例
 
-打地鼠把主要規則集中在單一 `UpdateFn` 中，而 Pacman 同時需要可查詢的迷宮、持續移動的玩家、多隻各自保存方向與計時器的鬼、分布於通道上的豆子，以及協調開始、暫停、勝利和失敗的畫面，因此它適合用來檢查前面學過的 Engine、物件、Overlay、碰撞、成員狀態與素材能否真正組成一個完整遊戲。本章不是要求讀者在每一頁另寫一個彼此獨立的小程式，而是依照資料相依順序解析並組裝 repository 中同一份可執行範例；每完成一節，都應回到 `examples/pacman/main.cpp` 對照新增的責任最後被放在哪裡。
+打地鼠讓讀者從空白檔案逐步完成遊戲，Pacman 的任務不同：它是一份已完成的案例，用來觀察迷宮、玩家、鬼、豆子、共享狀態與 Overlay 如何共同運作。本章依照資料相依順序導讀 [`examples/pacman/main.cpp`](https://github.com/GridPlusPlus/GridPlusPlus/blob/main/examples/pacman/main.cpp)。各頁節錄不能單獨貼上執行；標示「`main.cpp` 節錄」的程式碼區塊，都要放回這份檔案的既有位置理解。
 
-完整程式由下列四個檔案組成，其中 `main.cpp` 是各節程式片段最後共同回到的位置，而另外三個檔案分別提供讀圖工具、關卡資料與美術資源：
+先在 `examples/pacman/` 編譯並玩一次完成品，確認方向鍵、碰撞與按鈕的實際結果，再依序閱讀地圖、玩家、豆子、鬼與遊戲狀態。完整範例由下列四個檔案組成：
 
 | 檔案 | 用途 |
 |---|---|
 | `main.cpp` | 遊戲物件、關卡建立、Overlay 與 `main()` |
-| `LevelMap.h` | 讀取並驗證文字地圖的提供工具 |
+| `LevelMap.h` | 讀取並驗證文字地圖的輔助工具 |
 | `map.txt` | 21×19 關卡資料 |
 | `pacman.db` | 玩家、鬼、豆子與牆面素材 |
 
@@ -19,14 +19,26 @@ g++ -std=c++17 main.cpp -I../.. -o game \
 ./game
 ```
 
-WSL、Linux 與 MinGW-w64 的連結參數見[安裝 raylib](../01-getting-started/01-installation.md)。程式使用相對路徑讀取 `map.txt` 與 `pacman.db`，因此應從 `examples/pacman/` 執行。
+其他平台的連結參數見[安裝 raylib](../01-getting-started/01-installation.md)。程式使用相對路徑讀取 `map.txt` 與 `pacman.db`，所以必須從 `examples/pacman/` 執行。
 
-## 先看懂全局資料如何連接物件
+<figure markdown="span">
+  ![Pacman 完成畫面：黑色迷宮中包含豆子、四隻不同顏色的鬼與黃色玩家](../images/preview.png)
+  <figcaption>完成品應正確載入迷宮與素材；若看見紅色替代方塊，表示素材包或執行目錄有誤。</figcaption>
+</figure>
 
-在開始撰寫迷宮與角色之前，必須先知道後續各類別會共同依賴哪些資料，否則讀者會在玩家程式中突然遇到尚未解釋的 `g_maze`，又在鬼的程式中看到來源不明的 `g_player`。這些變數不是每個物件各自擁有的狀態，而是整個關卡只有一份的共享關係，因此範例將它們集中放在 `main.cpp` 前段：
+## 先看懂共享資料
 
-```cpp
-int g_state = 0;
+後續類別會共同使用 `g_maze`、`g_player` 與遊戲階段，因此閱讀角色之前必須先知道這些名稱的來源。它們不是每個物件各自擁有的狀態，而是整個關卡只有一份的共享資料；其中遊戲階段使用具名的 `GameState`，避免以 `0`、`1`、`2`、`3` 猜測數字意義。
+
+```cpp title="main.cpp 節錄：方向常數之後的共享狀態"
+enum class GameState {
+    kStart,
+    kPlaying,
+    kWon,
+    kLost,
+};
+
+GameState g_state = GameState::kStart;
 int g_pellets_left = 0;
 bool g_paused = false;
 GridMaze* g_maze = nullptr;
@@ -35,10 +47,10 @@ GridEngine* g_game = nullptr;
 LevelMap g_level;
 ```
 
-`g_state` 與 `g_paused` 決定角色是否應該移動，`g_pellets_left` 讓最後一顆豆子觸發勝利，`g_maze` 供玩家和鬼查詢下一格是不是牆，`g_player` 讓鬼知道追逐目標，而 `g_game` 與 `g_level` 則讓重新開始按鈕可以重建同一關。三個指標都只是指向 Engine 已擁有物件的借用關係，`BuildLevel()` 清除舊關卡時必須先重設，再在生成新迷宮與玩家後重新指定；第 8 章會進一步說明這些指標何時失效。
+`g_state` 與 `g_paused` 決定角色是否更新，`g_pellets_left` 讓最後一顆豆子觸發勝利；`g_maze` 供角色查詢牆面，`g_player` 則讓鬼取得追逐目標。最後，`g_game` 與 `g_level` 讓重新開始按鈕重建同一關。三個指標都是 Engine 所擁有物件的借用指標；`BuildLevel()` 清除舊關卡時必須先重設，再指向新生成的迷宮與玩家。
 
-這個全局設計刻意保持範例集中，讓初學者能在一個檔案中追蹤完整流程；當遊戲繼續成長時，可以把共享狀態收進 `Game` 類別，但那是程式組織方式的下一步，不影響本章要學的物件分工。接下來的組裝順序也依照相依關係展開：先讀取地圖並建立 `g_maze`，再建立依賴迷宮的玩家、豆子與鬼，最後才加入讀取整局狀態的 Overlay 與按鈕。
+這種全域設計讓小型案例維持在一個檔案中，代價是多個類別都依賴 `g_` 變數，因此不能被誤認為大型遊戲的推薦架構。接下來依照相依關係閱讀：先看地圖如何建立 `g_maze`，再看玩家、豆子與鬼如何使用共享資料，最後檢查 Overlay 與按鈕如何呈現 `GameState`。
 
-## 完成後應看見什麼
+## 完成品驗收
 
-方向鍵會改變玩家接下來想走的方向，玩家持續沿可通行方向前進，吃完所有豆子便進入勝利狀態，碰到任何鬼則進入失敗狀態，而 Start、Pause 與 Restart 按鈕分別控制遊戲開始、暫停和重新建立關卡。若其中一項結果沒有出現，應依章節順序確認地圖是否成功載入、共享指標是否在生成物件後指定、角色更新是否被狀態允許，以及碰撞是否使用正確 tag，而不是只確認程式能編譯便視為完成。
+方向鍵應改變玩家接下來想走的方向，玩家會沿通道持續前進；吃完所有豆子進入勝利畫面，碰到鬼進入失敗畫面，而 Start、Pause 與 Restart 分別控制開始、暫停和重建關卡。閱讀每一節後，都應回到已編譯的完成品操作對應功能；本章的驗收依據是可觀察行為，不是節錄本身看起來合理。

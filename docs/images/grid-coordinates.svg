@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" role="img" aria-labelledby="title desc">
+  <title id="title">8×8 網格與座標方向</title>
+  <desc id="desc">左上角是零零，x 向右增加，y 向下增加，三二格以藍色標示。</desc>
+  <rect width="720" height="420" rx="18" fill="#f7f8fc"/>
+  <g transform="translate(144 54)">
+    <rect width="320" height="320" fill="#fff" stroke="#334155" stroke-width="2"/>
+    <g stroke="#cbd5e1" stroke-width="1">
+      <path d="M40 0v320M80 0v320M120 0v320M160 0v320M200 0v320M240 0v320M280 0v320"/>
+      <path d="M0 40h320M0 80h320M0 120h320M0 160h320M0 200h320M0 240h320M0 280h320"/>
+    </g>
+    <rect x="120" y="80" width="40" height="40" fill="#4f46e5" opacity=".9"/>
+    <text x="140" y="106" text-anchor="middle" font-family="sans-serif" font-size="14" fill="white">3,2</text>
+    <g font-family="sans-serif" font-size="14" fill="#475569" text-anchor="middle">
+      <text x="20" y="-14">0</text><text x="60" y="-14">1</text><text x="100" y="-14">2</text><text x="140" y="-14">3</text>
+      <text x="-18" y="26">0</text><text x="-18" y="66">1</text><text x="-18" y="106">2</text><text x="-18" y="146">3</text>
+    </g>
+  </g>
+  <g font-family="sans-serif" fill="#1e293b">
+    <text x="515" y="95" font-size="24" font-weight="700">座標從 0 開始</text>
+    <text x="515" y="140" font-size="18">x 向右增加 →</text>
+    <text x="515" y="180" font-size="18">y 向下增加 ↓</text>
+    <text x="515" y="235" font-size="16" fill="#475569">藍色格位於</text>
+    <text x="515" y="270" font-size="28" font-weight="700" fill="#4f46e5">(3, 2)</text>
+  </g>
+</svg>

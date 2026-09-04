@@ -8,7 +8,7 @@
 
 Engine 必須先知道世界與視窗的大小，才能把網格座標轉成實際畫面。建構子的三個參數依序是欄數、列數與單格像素大小，建立後還可以設定背景顏色與是否顯示參考格線：
 
-```cpp
+```cpp title="main() 節錄：建立並設定世界"
 gridpp::GridEngine game(8, 8, 64);
 game.set_background_color(BEIGE);
 game.set_show_grid(true);
@@ -18,7 +18,7 @@ game.set_show_grid(true);
 
 這些設定只建立了世界的範圍與外觀，還沒有加入任何遊戲內容。一般程式只需要一個 Engine，接著在 `Run()` 前生成初始物件；以下範例加入一隻靜止的地鼠後，才讓世界開始運行：
 
-```cpp
+```cpp title="完整 main()：生成物件後啟動 Engine"
 int main() {
     gridpp::GridEngine game(8, 8, 64);
     game.set_show_grid(true);
@@ -47,7 +47,7 @@ Engine 知道要檢查兩個物件是否同格，卻不知道同格代表得分�
 
 上述分工也形成 `Run()` 前後的明確界線。桌面程式在呼叫前建立世界、載入素材，並加入一開始就要存在的物件與 Overlay；呼叫之後，Engine 便持續執行遊戲幀，直到使用者關閉視窗。典型的初始化順序如下：
 
-```cpp
+```cpp title="main() 節錄：Run() 前完成初始化"
 gridpp::GridEngine game(8, 8, 64);
 game.Spawn("mole", 0, 0, UpdateMole);
 game.AddOverlay(new gridpp::Label("Score: 0", 12, 12));
@@ -60,7 +60,7 @@ game.Run();
 
 Engine 取得所有加入內容的所有權。當 `main()` 結束、區域變數 `game` 離開作用域時，Engine 會釋放物件、Overlay 和素材，再關閉視窗。
 
-```cpp
+```cpp title="完整 main()：離開作用域時清理"
 int main() {
     gridpp::GridEngine game(8, 8, 64);
     game.Run();

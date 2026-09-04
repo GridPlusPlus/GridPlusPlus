@@ -1,6 +1,6 @@
 # 開始使用
 
-Grid++ 是一個 C++17 的 header-only 網格遊戲函式庫。它建立在 raylib 之上，負責視窗、遊戲迴圈、網格座標、遊戲物件、同格碰撞與繪製順序。你只需要把 Grid++ 的 header 放在專案中，並在編譯時連結 raylib。
+Grid++ 是一個 C++17 網格遊戲函式庫。它建立在 raylib 之上，負責視窗、遊戲迴圈、網格座標、遊戲物件、同格碰撞與繪製順序；使用時只要把 Grid++ 標頭檔放在專案中，並在編譯時連結 raylib。
 
 直接使用 raylib 時，程式需要自行建立視窗、撰寫主迴圈、換算座標並管理遊戲物件。Grid++ 保留 raylib 的輸入與繪圖能力，替網格遊戲整理好這些重複工作，讓程式先描述「世界裡有什麼」以及「它們如何行動」。
 
@@ -12,12 +12,12 @@ Grid++ 是一個 C++17 的 header-only 網格遊戲函式庫。它建立在 rayl
 
 ## Grid++ 專案包含什麼
 
-一般遊戲只需要引入 `GridPlusPlus.h`。這個主 header 會帶入三個核心部分：
+一般遊戲只需要引入 `GridPlusPlus.h`。這個主標頭檔會帶入三個核心部分：
 
 - `GridEngine` 建立並管理遊戲世界。
 - `GridObject` 表示存在網格中的玩家、敵人與道具。
 - `Overlay` 表示以像素定位的文字、按鈕與其他畫面資訊。
 
-迷宮和基本圖形是選用模組，使用時才額外引入 `GridMaze.h` 或 `GridShapes.h`。我們會先使用核心 header 完成打地鼠，再在後面的章節加入這些模組。
+迷宮和基本圖形是選用模組，使用時才額外引入 `GridMaze.h` 或 `GridShapes.h`。我們會先使用核心標頭檔完成打地鼠，再在後面的章節加入這些模組。
 
 [安裝 raylib](01-installation.md){ .md-button .md-button--primary }
