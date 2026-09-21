@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "GridEngine.h"
+#include "GridMaze.h"
 #include "GridShapes.h"
 
 namespace gridpp {
@@ -28,6 +29,7 @@ class MazeHandler;
 using ObjectFunction = void (*)(Game game, ObjectHandler self);
 using CollisionFunction = void (*)(Game game, ObjectHandler self, ObjectHandler other);
 using OverlayFunction = void (*)(Game game, OverlayHandler self);
+using MazeFunction = void (*)(Game game, MazeHandler self);
 
 namespace detail {
 class GameState;
@@ -141,6 +143,37 @@ private:
     std::uint64_t id_ = 0;
 };
 
+/** Engine 內一座迷宮的存取憑證。 */
+class MazeHandler {
+public:
+    MazeHandler() = default;
+
+    bool exists() const;
+    void remove();
+    MazeHandler deepCopy() const;
+
+    void setWall(int x, int y, bool wall = true);
+    bool isWall(int x, int y) const;
+    void setWallImage(const std::string& image);
+    void setWallImages(const std::string& isolated, const std::string& end, const std::string& straight,
+                       const std::string& corner, const std::string& tee, const std::string& cross);
+
+    int width() const;
+    int height() const;
+
+    void setInitFunction(MazeFunction function);
+    void setUpdateFunction(MazeFunction function);
+
+private:
+    friend class detail::GameState;
+
+    MazeHandler(std::weak_ptr<detail::GameState> state, std::uint64_t id);
+    std::shared_ptr<detail::GameState> lockState() const;
+
+    std::weak_ptr<detail::GameState> state_;
+    std::uint64_t id_ = 0;
+};
+
 /** 遊戲的 value-like 公開入口；複本會操作同一個內部 Engine。 */
 class Game {
 public:
@@ -166,6 +199,7 @@ public:
                               ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
     ObjectHandler addStar(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
                           ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    MazeHandler addMaze(int cols, int rows, MazeFunction init = nullptr, MazeFunction update = nullptr);
     void clearObjects();
 
     OverlayHandler addOverlay(const std::string& image, OverlayFunction init = nullptr,
@@ -250,6 +284,18 @@ private:
     std::uint64_t id_;
 };
 
+class HandlerMaze : public GridMaze {
+public:
+    HandlerMaze(GameState* state, std::uint64_t id, int cols, int rows);
+    HandlerMaze(GameState* state, std::uint64_t id, const GridMaze& other);
+
+    void OnUpdate() override;
+
+private:
+    GameState* state_;
+    std::uint64_t id_;
+};
+
 enum class ObjectType {
     kImage,
     kSquare,
@@ -294,6 +340,13 @@ struct OverlayRecord {
     bool initialized = false;
 };
 
+struct MazeRecord {
+    GridMaze* maze = nullptr;
+    MazeFunction init = nullptr;
+    MazeFunction update = nullptr;
+    bool initialized = false;
+};
+
 class GameState : public std::enable_shared_from_this<GameState> {
 public:
     GameState(int cols, int rows, int grid_size);
@@ -302,8 +355,11 @@ public:
                             CollisionFunction collide);
     ObjectHandler AddShape(ObjectType type, int x, int y, int size, Color color, ObjectFunction init,
                            ObjectFunction update, CollisionFunction collide);
+    MazeHandler AddMaze(int cols, int rows, MazeFunction init, MazeFunction update);
     ObjectHandler CloneObject(std::uint64_t id);
+    MazeHandler CloneMaze(std::uint64_t id);
     void RemoveObject(std::uint64_t id);
+    void RemoveMaze(std::uint64_t id);
     void ClearObjects();
 
     OverlayHandler AddImageOverlay(const std::string& image, OverlayFunction init, OverlayFunction update);
@@ -317,11 +373,15 @@ public:
     bool HasObject(std::uint64_t id) const;
     ObjectRecord& RequireObject(std::uint64_t id);
     const ObjectRecord& RequireObject(std::uint64_t id) const;
+    bool HasMaze(std::uint64_t id) const;
+    MazeRecord& RequireMaze(std::uint64_t id);
+    const MazeRecord& RequireMaze(std::uint64_t id) const;
     bool HasOverlay(std::uint64_t id) const;
     OverlayRecord& RequireOverlay(std::uint64_t id);
     const OverlayRecord& RequireOverlay(std::uint64_t id) const;
 
     void UpdateObject(std::uint64_t id);
+    void UpdateMaze(std::uint64_t id);
     void CollideObject(std::uint64_t id, GridObject* other);
     void UpdateOverlay(std::uint64_t id);
     void DrawOverlay(std::uint64_t id);
@@ -329,6 +389,7 @@ public:
 
     Game PublicGame();
     ObjectHandler PublicObject(std::uint64_t id);
+    MazeHandler PublicMaze(std::uint64_t id);
     OverlayHandler PublicOverlay(std::uint64_t id);
 
     GridEngine engine;
@@ -340,16 +401,20 @@ private:
     ObjectHandler RegisterObject(std::uint64_t id, GridObject* object, ObjectFunction init, ObjectFunction update,
                                  CollisionFunction collide, bool initialized, ObjectType type = ObjectType::kImage,
                                  std::unordered_map<std::string, StoredValue> values = {});
+    MazeHandler RegisterMaze(std::uint64_t id, GridMaze* maze, MazeFunction init, MazeFunction update,
+                             bool initialized);
     GridObject* CreateShape(ObjectType type, std::uint64_t id, int x, int y, int size, Color color);
     GridObject* CloneShape(ObjectType type, std::uint64_t id, const GridObject& source);
     OverlayHandler RegisterOverlay(std::uint64_t id, Overlay* overlay, OverlayRecord record);
     void InitializeObject(std::uint64_t id);
+    void InitializeMaze(std::uint64_t id);
     void InitializeOverlay(std::uint64_t id);
     void RemovePending(ElementType type, std::uint64_t id);
 
     std::uint64_t next_id_ = 1;
     std::unordered_map<std::uint64_t, ObjectRecord> objects_;
     std::unordered_map<GridObject*, std::uint64_t> object_ids_;
+    std::unordered_map<std::uint64_t, MazeRecord> mazes_;
     std::unordered_map<std::uint64_t, OverlayRecord> overlays_;
     std::vector<ElementId> pending_init_;
     bool initializing_ = false;
@@ -420,6 +485,16 @@ inline void HandlerOverlay::OnUpdate() { state_->UpdateOverlay(id_); }
 
 inline void HandlerOverlay::Draw() { state_->DrawOverlay(id_); }
 
+// HandlerMaze
+
+inline HandlerMaze::HandlerMaze(GameState* state, std::uint64_t id, int cols, int rows)
+    : GridMaze(cols, rows), state_(state), id_(id) {}
+
+inline HandlerMaze::HandlerMaze(GameState* state, std::uint64_t id, const GridMaze& other)
+    : GridMaze(other), state_(state), id_(id) {}
+
+inline void HandlerMaze::OnUpdate() { state_->UpdateMaze(id_); }
+
 // GameState
 
 inline GameState::GameState(int cols, int rows, int grid_size) : engine(cols, rows, grid_size) {
@@ -438,6 +513,11 @@ inline ObjectHandler GameState::AddShape(ObjectType type, int x, int y, int size
     return RegisterObject(id, CreateShape(type, id, x, y, size, color), init, update, collide, false, type);
 }
 
+inline MazeHandler GameState::AddMaze(int cols, int rows, MazeFunction init, MazeFunction update) {
+    const std::uint64_t id = AllocateId();
+    return RegisterMaze(id, new HandlerMaze(this, id, cols, rows), init, update, false);
+}
+
 inline ObjectHandler GameState::CloneObject(std::uint64_t id) {
     const ObjectRecord& source = RequireObject(id);
     const std::uint64_t copy_id = AllocateId();
@@ -446,6 +526,13 @@ inline ObjectHandler GameState::CloneObject(std::uint64_t id) {
                            : CloneShape(source.type, copy_id, *source.object);
     return RegisterObject(copy_id, copy, source.init, source.update, source.collide, source.initialized, source.type,
                           source.values);
+}
+
+inline MazeHandler GameState::CloneMaze(std::uint64_t id) {
+    const MazeRecord& source = RequireMaze(id);
+    const std::uint64_t copy_id = AllocateId();
+    return RegisterMaze(copy_id, new HandlerMaze(this, copy_id, *source.maze), source.init, source.update,
+                        source.initialized);
 }
 
 inline void GameState::RemoveObject(std::uint64_t id) {
@@ -458,9 +545,19 @@ inline void GameState::RemoveObject(std::uint64_t id) {
     engine.Destroy(object);
 }
 
+inline void GameState::RemoveMaze(std::uint64_t id) {
+    const auto it = mazes_.find(id);
+    if (it == mazes_.end()) return;
+
+    GridMaze* maze = it->second.maze;
+    mazes_.erase(it);
+    engine.Destroy(maze);
+}
+
 inline void GameState::ClearObjects() {
     objects_.clear();
     object_ids_.clear();
+    mazes_.clear();
     engine.ClearObjects();
 }
 
@@ -547,6 +644,20 @@ inline const ObjectRecord& GameState::RequireObject(std::uint64_t id) const {
     return it->second;
 }
 
+inline bool GameState::HasMaze(std::uint64_t id) const { return mazes_.count(id) != 0; }
+
+inline MazeRecord& GameState::RequireMaze(std::uint64_t id) {
+    const auto it = mazes_.find(id);
+    if (it == mazes_.end()) throw std::runtime_error("Grid++ Error: MazeHandler no longer refers to a maze");
+    return it->second;
+}
+
+inline const MazeRecord& GameState::RequireMaze(std::uint64_t id) const {
+    const auto it = mazes_.find(id);
+    if (it == mazes_.end()) throw std::runtime_error("Grid++ Error: MazeHandler no longer refers to a maze");
+    return it->second;
+}
+
 inline bool GameState::HasOverlay(std::uint64_t id) const { return overlays_.count(id) != 0; }
 
 inline OverlayRecord& GameState::RequireOverlay(std::uint64_t id) {
@@ -565,6 +676,12 @@ inline void GameState::UpdateObject(std::uint64_t id) {
     const auto it = objects_.find(id);
     if (it == objects_.end() || it->second.update == nullptr) return;
     it->second.update(PublicGame(), PublicObject(id));
+}
+
+inline void GameState::UpdateMaze(std::uint64_t id) {
+    const auto it = mazes_.find(id);
+    if (it == mazes_.end() || it->second.update == nullptr) return;
+    it->second.update(PublicGame(), PublicMaze(id));
 }
 
 inline void GameState::CollideObject(std::uint64_t id, GridObject* other) {
@@ -626,6 +743,8 @@ inline void GameState::InitializePendingElements() {
                 InitializeObject(element.id);
             else if (element.type == ElementType::kOverlay)
                 InitializeOverlay(element.id);
+            else if (element.type == ElementType::kMaze)
+                InitializeMaze(element.id);
         }
         pending_init_.clear();
         initializing_ = false;
@@ -639,6 +758,8 @@ inline void GameState::InitializePendingElements() {
 inline Game GameState::PublicGame() { return Game(shared_from_this()); }
 
 inline ObjectHandler GameState::PublicObject(std::uint64_t id) { return ObjectHandler(shared_from_this(), id); }
+
+inline MazeHandler GameState::PublicMaze(std::uint64_t id) { return MazeHandler(shared_from_this(), id); }
 
 inline OverlayHandler GameState::PublicOverlay(std::uint64_t id) { return OverlayHandler(shared_from_this(), id); }
 
@@ -708,6 +829,23 @@ inline ObjectHandler GameState::RegisterObject(std::uint64_t id, GridObject* obj
     return PublicObject(id);
 }
 
+inline MazeHandler GameState::RegisterMaze(std::uint64_t id, GridMaze* maze, MazeFunction init, MazeFunction update,
+                                           bool initialized) {
+    engine.Spawn(maze);
+
+    try {
+        mazes_.emplace(id, MazeRecord{maze, init, update, initialized});
+        if (!initialized) pending_init_.push_back({ElementType::kMaze, id});
+    } catch (...) {
+        mazes_.erase(id);
+        RemovePending(ElementType::kMaze, id);
+        engine.Destroy(maze);
+        throw;
+    }
+
+    return PublicMaze(id);
+}
+
 inline OverlayHandler GameState::RegisterOverlay(std::uint64_t id, Overlay* overlay, OverlayRecord record) {
     engine.AddOverlay(overlay);
 
@@ -737,6 +875,21 @@ inline void GameState::InitializeObject(std::uint64_t id) {
         it->second.init(PublicGame(), PublicObject(id));
     } catch (...) {
         RemoveObject(id);
+        throw;
+    }
+}
+
+inline void GameState::InitializeMaze(std::uint64_t id) {
+    const auto it = mazes_.find(id);
+    if (it == mazes_.end() || it->second.initialized) return;
+
+    it->second.initialized = true;
+    if (it->second.init == nullptr) return;
+
+    try {
+        it->second.init(PublicGame(), PublicMaze(id));
+    } catch (...) {
+        RemoveMaze(id);
         throw;
     }
 }
@@ -1019,6 +1172,52 @@ inline void OverlayHandler::setClickFunction(OverlayFunction function) {
     overlay.click = function;
 }
 
+// MazeHandler
+
+inline MazeHandler::MazeHandler(std::weak_ptr<detail::GameState> state, std::uint64_t id)
+    : state_(std::move(state)), id_(id) {}
+
+inline std::shared_ptr<detail::GameState> MazeHandler::lockState() const {
+    std::shared_ptr<detail::GameState> state = state_.lock();
+    if (state == nullptr) throw std::runtime_error("Grid++ Error: MazeHandler's Game no longer exists");
+    return state;
+}
+
+inline bool MazeHandler::exists() const {
+    const std::shared_ptr<detail::GameState> state = state_.lock();
+    return state != nullptr && state->HasMaze(id_);
+}
+
+inline void MazeHandler::remove() {
+    const std::shared_ptr<detail::GameState> state = lockState();
+    state->RequireMaze(id_);
+    state->RemoveMaze(id_);
+}
+
+inline MazeHandler MazeHandler::deepCopy() const { return lockState()->CloneMaze(id_); }
+
+inline void MazeHandler::setWall(int x, int y, bool wall) { lockState()->RequireMaze(id_).maze->SetWall(x, y, wall); }
+
+inline bool MazeHandler::isWall(int x, int y) const { return lockState()->RequireMaze(id_).maze->IsWall(x, y); }
+
+inline void MazeHandler::setWallImage(const std::string& image) {
+    lockState()->RequireMaze(id_).maze->SetWallAsset(image);
+}
+
+inline void MazeHandler::setWallImages(const std::string& isolated, const std::string& end,
+                                       const std::string& straight, const std::string& corner,
+                                       const std::string& tee, const std::string& cross) {
+    lockState()->RequireMaze(id_).maze->SetWallTiles(isolated, end, straight, corner, tee, cross);
+}
+
+inline int MazeHandler::width() const { return lockState()->RequireMaze(id_).maze->width(); }
+
+inline int MazeHandler::height() const { return lockState()->RequireMaze(id_).maze->height(); }
+
+inline void MazeHandler::setInitFunction(MazeFunction function) { lockState()->RequireMaze(id_).init = function; }
+
+inline void MazeHandler::setUpdateFunction(MazeFunction function) { lockState()->RequireMaze(id_).update = function; }
+
 // Game
 
 inline Game::Game(int cols, int rows, int grid_size)
@@ -1066,6 +1265,10 @@ inline ObjectHandler Game::addPentagon(int x, int y, int size, Color color, Obje
 inline ObjectHandler Game::addStar(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
                                    CollisionFunction collide) {
     return state_->AddShape(detail::ObjectType::kStar, x, y, size, color, init, update, collide);
+}
+
+inline MazeHandler Game::addMaze(int cols, int rows, MazeFunction init, MazeFunction update) {
+    return state_->AddMaze(cols, rows, init, update);
 }
 
 inline void Game::clearObjects() { state_->ClearObjects(); }

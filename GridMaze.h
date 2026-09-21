@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-#include "GridPlusPlus.h"
+#include "GridEngine.h"
 
 namespace gridpp {
 
