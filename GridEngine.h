@@ -484,6 +484,10 @@ inline void GridEngine::DeleteAllOverlays() noexcept {
     overlays_to_destroy_.clear();
 }
 
+inline void GridObject::Render(GridEngine* engine) {
+    engine->DrawCell(asset_name_, grid_x_, grid_y_, direction_, tint_);
+}
+
 }  // namespace gridpp
 
 #endif  // GRID_PLUS_PLUS_GRID_ENGINE_H_
