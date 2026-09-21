@@ -7,11 +7,13 @@
 
 using gridpp::Game;
 using gridpp::ObjectHandler;
+using gridpp::OverlayHandler;
 
 namespace {
 
 std::vector<long long> init_order;
 int child_updates = 0;
+int overlay_updates = 0;
 bool child_spawned = false;
 
 void RecordInit(Game, ObjectHandler self) {
@@ -24,10 +26,18 @@ void UpdateChild(Game, ObjectHandler) { ++child_updates; }
 
 void InitChild(Game, ObjectHandler self) { self.set("ready", true); }
 
+void InitOverlay(Game, OverlayHandler self) {
+    long long order = 0;
+    if (self.get("order", order) == 1) init_order.push_back(order);
+}
+
+void UpdateOverlay(Game, OverlayHandler) { ++overlay_updates; }
+
 void SpawnChild(Game game, ObjectHandler) {
     if (child_spawned) return;
     child_spawned = true;
     game.addObject("", InitChild, UpdateChild);
+    game.addTextOverlay("runtime", 0, 0, 20, BLACK, InitOverlay, UpdateOverlay);
 }
 
 }  // namespace
@@ -39,6 +49,9 @@ int main() {
     first.set("order", 1);
     first.set("name", "first");
     first.setPosition(1, 1);
+
+    OverlayHandler label = game.addTextOverlay("Score: 0", 4, 8, 20, BLACK, InitOverlay, UpdateOverlay);
+    label.set("order", 9);
 
     ObjectHandler second = game.addObject("", RecordInit);
     second.set("order", 2LL);
@@ -74,13 +87,25 @@ int main() {
 
     game.run();
 
-    assert((init_order == std::vector<long long>{1, 2, 1}));
+    assert((init_order == std::vector<long long>{1, 9, 2, 1}));
     assert(child_updates == 1);
+    assert(overlay_updates == 3);
+
+    label.setText("Score: 1");
+    assert(label.text() == "Score: 1");
+    OverlayHandler label_copy = label.deepCopy();
+    label_copy.setText("Copy");
+    assert(label.text() == "Score: 1");
+    assert(label_copy.text() == "Copy");
 
     first.remove();
     assert(!first.exists());
     assert(alias.exists() == false);
     assert(copy.exists());
+
+    label.remove();
+    assert(!label.exists());
+    assert(label_copy.exists());
 
     bool removed_object_failed = false;
     try {
