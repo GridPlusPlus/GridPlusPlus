@@ -24,6 +24,10 @@
 
 namespace gridpp {
 
+namespace detail {
+class GameState;
+}
+
 /** 建立視窗並管理遊戲物件、碰撞、繪製與主迴圈。 */
 class GridEngine {
 public:
@@ -127,6 +131,11 @@ public:
     void DrawCell(const std::string& asset_name, int grid_x, int grid_y, int direction = 0, Color tint = WHITE);
 
 private:
+    friend class detail::GameState;
+
+    using AfterTickFunction = void (*)(void* context);
+
+    void SetAfterTickFunction(AfterTickFunction function, void* context);
     void Tick();
     bool IsPendingDestroy(GridObject* object) const;
     bool IsPendingDestroy(Overlay* overlay) const;
@@ -153,6 +162,9 @@ private:
     std::vector<Overlay*> overlays_;
     std::vector<Overlay*> overlays_to_add_;
     std::unordered_set<Overlay*> overlays_to_destroy_;
+
+    AfterTickFunction after_tick_function_ = nullptr;
+    void* after_tick_context_ = nullptr;
 };
 
 // Inline definitions
@@ -287,6 +299,11 @@ inline void GridEngine::ClearOverlays() {
     DeleteAllOverlays();
 }
 
+inline void GridEngine::SetAfterTickFunction(AfterTickFunction function, void* context) {
+    after_tick_function_ = function;
+    after_tick_context_ = context;
+}
+
 inline void GridEngine::Run() {
 #ifdef __EMSCRIPTEN__
     // WebAssembly 主迴圈由瀏覽器排程。
@@ -363,6 +380,7 @@ inline void GridEngine::Tick() {
 
     ticking_ = false;
     FlushLifecycleChanges();
+    if (after_tick_function_ != nullptr) after_tick_function_(after_tick_context_);
 }
 
 inline bool GridEngine::IsPendingDestroy(GridObject* object) const { return objects_to_destroy_.count(object) != 0; }
