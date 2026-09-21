@@ -18,6 +18,9 @@ class Overlay {
 public:
     virtual ~Overlay() = default;
 
+    /** Overlay 加入引擎後呼叫一次。 */
+    virtual void OnSpawn();
+
     /** 每幀更新時呼叫。 */
     virtual void OnUpdate();
 
@@ -66,6 +69,8 @@ private:
 };
 
 // Inline definitions
+
+inline void Overlay::OnSpawn() {}
 
 inline void Overlay::OnUpdate() {}
 

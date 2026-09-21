@@ -97,11 +97,21 @@ public:
 
     /**
      * 加入畫面覆蓋層並接管其所有權。
+     *
+     * 主迴圈外會立即呼叫 Overlay::OnSpawn()。主迴圈內加入的 Overlay 會在幀末呼叫
+     * OnSpawn()，並從下一幀開始更新與繪製。
+     *
      * @param overlay 使用 `new` 建立且尚未屬於任何引擎的 Overlay。
      * @throws std::invalid_argument 若 overlay 是 nullptr。
      * @throws std::logic_error 若 overlay 已屬於一個引擎。
      */
     void AddOverlay(Overlay* overlay);
+
+    /** 刪除引擎擁有的 Overlay；主迴圈內呼叫時延後至幀末釋放。 */
+    void DestroyOverlay(Overlay* overlay);
+
+    /** 刪除所有 Overlay；不影響遊戲物件與已載入的素材。 */
+    void ClearOverlays();
 
     /** 執行遊戲主迴圈，直到視窗關閉。 */
     void Run();
@@ -119,11 +129,13 @@ public:
 private:
     void Tick();
     bool IsPendingDestroy(GridObject* object) const;
+    bool IsPendingDestroy(Overlay* overlay) const;
     void InvokeOnSpawn(GridObject* object);
+    void InvokeOnSpawn(Overlay* overlay);
     void FlushLifecycleChanges();
     void DrawGrid();
     void DeleteAllObjects() noexcept;
-    void ClearOverlays() noexcept;
+    void DeleteAllOverlays() noexcept;
 
     int cols_;
     int rows_;
@@ -139,6 +151,8 @@ private:
     bool ticking_ = false;
 
     std::vector<Overlay*> overlays_;
+    std::vector<Overlay*> overlays_to_add_;
+    std::unordered_set<Overlay*> overlays_to_destroy_;
 };
 
 // Inline definitions
@@ -161,7 +175,7 @@ inline GridEngine::GridEngine(int cols, int rows, int grid_size) : cols_(cols), 
 
 inline GridEngine::~GridEngine() {
     DeleteAllObjects();
-    ClearOverlays();
+    DeleteAllOverlays();
     // raylib 的 Texture 必須在 OpenGL context 關閉前釋放。
     assets_.Clear();
     CloseWindow();
@@ -235,8 +249,42 @@ inline void GridEngine::ClearObjects() {
 inline void GridEngine::AddOverlay(Overlay* overlay) {
     if (overlay == nullptr) throw std::invalid_argument("Grid++ 錯誤：不能加入 nullptr Overlay");
     if (overlay->engine_ != nullptr) throw std::logic_error("Grid++ 錯誤：同一個 Overlay 不能加入兩次");
-    overlays_.push_back(overlay);
     overlay->engine_ = this;
+
+    try {
+        if (ticking_)
+            overlays_to_add_.push_back(overlay);
+        else
+            overlays_.push_back(overlay);
+    } catch (...) {
+        delete overlay;
+        throw;
+    }
+
+    if (!ticking_) InvokeOnSpawn(overlay);
+}
+
+inline void GridEngine::DestroyOverlay(Overlay* overlay) {
+    if (overlay == nullptr) return;
+    if (ticking_) {
+        overlays_to_destroy_.insert(overlay);
+        return;
+    }
+
+    const auto it = std::find(overlays_.begin(), overlays_.end(), overlay);
+    if (it != overlays_.end()) {
+        delete *it;
+        overlays_.erase(it);
+    }
+}
+
+inline void GridEngine::ClearOverlays() {
+    if (ticking_) {
+        overlays_to_destroy_.insert(overlays_.begin(), overlays_.end());
+        overlays_to_destroy_.insert(overlays_to_add_.begin(), overlays_to_add_.end());
+        return;
+    }
+    DeleteAllOverlays();
 }
 
 inline void GridEngine::Run() {
@@ -274,7 +322,9 @@ inline void GridEngine::Tick() {
     for (GridObject* object : objects_) {
         if (!IsPendingDestroy(object)) object->OnUpdate();
     }
-    for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->OnUpdate();
+    for (std::size_t i = 0; i < overlay_count; ++i) {
+        if (!IsPendingDestroy(overlays_[i])) overlays_[i]->OnUpdate();
+    }
 
     // 碰撞
     const auto can_collide = [&](GridObject* object) {
@@ -306,7 +356,9 @@ inline void GridEngine::Tick() {
     for (GridObject* object : draw_order) {
         if (!IsPendingDestroy(object) && object->visible()) object->Render(this);
     }
-    for (std::size_t i = 0; i < overlay_count; ++i) overlays_[i]->Draw();
+    for (std::size_t i = 0; i < overlay_count; ++i) {
+        if (!IsPendingDestroy(overlays_[i])) overlays_[i]->Draw();
+    }
     EndDrawing();
 
     ticking_ = false;
@@ -314,6 +366,8 @@ inline void GridEngine::Tick() {
 }
 
 inline bool GridEngine::IsPendingDestroy(GridObject* object) const { return objects_to_destroy_.count(object) != 0; }
+
+inline bool GridEngine::IsPendingDestroy(Overlay* overlay) const { return overlays_to_destroy_.count(overlay) != 0; }
 
 inline void GridEngine::InvokeOnSpawn(GridObject* object) {
     try {
@@ -323,6 +377,19 @@ inline void GridEngine::InvokeOnSpawn(GridObject* object) {
         if (it != objects_.end()) {
             delete *it;
             objects_.erase(it);
+        }
+        throw;
+    }
+}
+
+inline void GridEngine::InvokeOnSpawn(Overlay* overlay) {
+    try {
+        overlay->OnSpawn();
+    } catch (...) {
+        const auto it = std::find(overlays_.begin(), overlays_.end(), overlay);
+        if (it != overlays_.end()) {
+            delete *it;
+            overlays_.erase(it);
         }
         throw;
     }
@@ -352,6 +419,30 @@ inline void GridEngine::FlushLifecycleChanges() {
         objects_to_spawn_.erase(objects_to_spawn_.begin());
         InvokeOnSpawn(object);
     }
+
+    overlays_.erase(std::remove_if(overlays_.begin(), overlays_.end(),
+                                   [&](Overlay* overlay) {
+                                       if (!IsPendingDestroy(overlay)) return false;
+                                       delete overlay;
+                                       return true;
+                                   }),
+                    overlays_.end());
+
+    overlays_to_add_.erase(std::remove_if(overlays_to_add_.begin(), overlays_to_add_.end(),
+                                          [&](Overlay* overlay) {
+                                              if (!IsPendingDestroy(overlay)) return false;
+                                              delete overlay;
+                                              return true;
+                                          }),
+                           overlays_to_add_.end());
+    overlays_to_destroy_.clear();
+
+    while (!overlays_to_add_.empty()) {
+        Overlay* overlay = overlays_to_add_.front();
+        overlays_.push_back(overlay);
+        overlays_to_add_.erase(overlays_to_add_.begin());
+        InvokeOnSpawn(overlay);
+    }
 }
 
 inline void GridEngine::DrawGrid() {
@@ -367,9 +458,12 @@ inline void GridEngine::DeleteAllObjects() noexcept {
     objects_to_destroy_.clear();
 }
 
-inline void GridEngine::ClearOverlays() noexcept {
+inline void GridEngine::DeleteAllOverlays() noexcept {
     for (Overlay* overlay : overlays_) delete overlay;
+    for (Overlay* overlay : overlays_to_add_) delete overlay;
     overlays_.clear();
+    overlays_to_add_.clear();
+    overlays_to_destroy_.clear();
 }
 
 }  // namespace gridpp
