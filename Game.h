@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "GridEngine.h"
+#include "GridShapes.h"
 
 namespace gridpp {
 
@@ -155,6 +156,16 @@ public:
 
     ObjectHandler addObject(const std::string& image, ObjectFunction init = nullptr,
                             ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addSquare(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
+                            ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addCircle(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
+                            ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addTriangle(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
+                              ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addPentagon(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
+                              ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addStar(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
+                          ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
     void clearObjects();
 
     OverlayHandler addOverlay(const std::string& image, OverlayFunction init = nullptr,
@@ -213,6 +224,20 @@ private:
     std::uint64_t id_;
 };
 
+template <typename ShapeType>
+class HandlerShape : public ShapeType {
+public:
+    HandlerShape(GameState* state, std::uint64_t id, int x, int y, int size, Color color);
+    HandlerShape(GameState* state, std::uint64_t id, const ShapeType& other);
+
+    void OnUpdate() override;
+    void OnCollide(GridObject* other) override;
+
+private:
+    GameState* state_;
+    std::uint64_t id_;
+};
+
 class HandlerOverlay : public Overlay {
 public:
     HandlerOverlay(GameState* state, std::uint64_t id);
@@ -225,8 +250,18 @@ private:
     std::uint64_t id_;
 };
 
+enum class ObjectType {
+    kImage,
+    kSquare,
+    kCircle,
+    kTriangle,
+    kPentagon,
+    kStar,
+};
+
 struct ObjectRecord {
     GridObject* object = nullptr;
+    ObjectType type = ObjectType::kImage;
     ObjectFunction init = nullptr;
     ObjectFunction update = nullptr;
     CollisionFunction collide = nullptr;
@@ -265,6 +300,8 @@ public:
 
     ObjectHandler AddObject(const std::string& image, ObjectFunction init, ObjectFunction update,
                             CollisionFunction collide);
+    ObjectHandler AddShape(ObjectType type, int x, int y, int size, Color color, ObjectFunction init,
+                           ObjectFunction update, CollisionFunction collide);
     ObjectHandler CloneObject(std::uint64_t id);
     void RemoveObject(std::uint64_t id);
     void ClearObjects();
@@ -301,8 +338,10 @@ private:
 
     std::uint64_t AllocateId();
     ObjectHandler RegisterObject(std::uint64_t id, GridObject* object, ObjectFunction init, ObjectFunction update,
-                                 CollisionFunction collide, bool initialized,
+                                 CollisionFunction collide, bool initialized, ObjectType type = ObjectType::kImage,
                                  std::unordered_map<std::string, StoredValue> values = {});
+    GridObject* CreateShape(ObjectType type, std::uint64_t id, int x, int y, int size, Color color);
+    GridObject* CloneShape(ObjectType type, std::uint64_t id, const GridObject& source);
     OverlayHandler RegisterOverlay(std::uint64_t id, Overlay* overlay, OverlayRecord record);
     void InitializeObject(std::uint64_t id);
     void InitializeOverlay(std::uint64_t id);
@@ -353,6 +392,26 @@ inline void HandlerGridObject::OnUpdate() { state_->UpdateObject(id_); }
 
 inline void HandlerGridObject::OnCollide(GridObject* other) { state_->CollideObject(id_, other); }
 
+// HandlerShape
+
+template <typename ShapeType>
+inline HandlerShape<ShapeType>::HandlerShape(GameState* state, std::uint64_t id, int x, int y, int size, Color color)
+    : ShapeType(x, y, size, color), state_(state), id_(id) {}
+
+template <typename ShapeType>
+inline HandlerShape<ShapeType>::HandlerShape(GameState* state, std::uint64_t id, const ShapeType& other)
+    : ShapeType(other), state_(state), id_(id) {}
+
+template <typename ShapeType>
+inline void HandlerShape<ShapeType>::OnUpdate() {
+    state_->UpdateObject(id_);
+}
+
+template <typename ShapeType>
+inline void HandlerShape<ShapeType>::OnCollide(GridObject* other) {
+    state_->CollideObject(id_, other);
+}
+
 // HandlerOverlay
 
 inline HandlerOverlay::HandlerOverlay(GameState* state, std::uint64_t id) : state_(state), id_(id) {}
@@ -373,11 +432,20 @@ inline ObjectHandler GameState::AddObject(const std::string& image, ObjectFuncti
     return RegisterObject(id, new HandlerGridObject(this, id, image), init, update, collide, false);
 }
 
+inline ObjectHandler GameState::AddShape(ObjectType type, int x, int y, int size, Color color, ObjectFunction init,
+                                         ObjectFunction update, CollisionFunction collide) {
+    const std::uint64_t id = AllocateId();
+    return RegisterObject(id, CreateShape(type, id, x, y, size, color), init, update, collide, false, type);
+}
+
 inline ObjectHandler GameState::CloneObject(std::uint64_t id) {
     const ObjectRecord& source = RequireObject(id);
     const std::uint64_t copy_id = AllocateId();
-    return RegisterObject(copy_id, new HandlerGridObject(this, copy_id, *source.object), source.init, source.update,
-                          source.collide, source.initialized, source.values);
+    GridObject* copy = source.type == ObjectType::kImage
+                           ? static_cast<GridObject*>(new HandlerGridObject(this, copy_id, *source.object))
+                           : CloneShape(source.type, copy_id, *source.object);
+    return RegisterObject(copy_id, copy, source.init, source.update, source.collide, source.initialized, source.type,
+                          source.values);
 }
 
 inline void GameState::RemoveObject(std::uint64_t id) {
@@ -583,14 +651,50 @@ inline std::uint64_t GameState::AllocateId() {
     return next_id_++;
 }
 
+inline GridObject* GameState::CreateShape(ObjectType type, std::uint64_t id, int x, int y, int size, Color color) {
+    switch (type) {
+        case ObjectType::kSquare:
+            return new HandlerShape<shapes::Square>(this, id, x, y, size, color);
+        case ObjectType::kCircle:
+            return new HandlerShape<shapes::Circle>(this, id, x, y, size, color);
+        case ObjectType::kTriangle:
+            return new HandlerShape<shapes::Triangle>(this, id, x, y, size, color);
+        case ObjectType::kPentagon:
+            return new HandlerShape<shapes::Pentagon>(this, id, x, y, size, color);
+        case ObjectType::kStar:
+            return new HandlerShape<shapes::Star>(this, id, x, y, size, color);
+        case ObjectType::kImage:
+            throw std::logic_error("Grid++ Error: Image objects are not shapes");
+    }
+    throw std::logic_error("Grid++ Error: Unknown shape type");
+}
+
+inline GridObject* GameState::CloneShape(ObjectType type, std::uint64_t id, const GridObject& source) {
+    switch (type) {
+        case ObjectType::kSquare:
+            return new HandlerShape<shapes::Square>(this, id, static_cast<const shapes::Square&>(source));
+        case ObjectType::kCircle:
+            return new HandlerShape<shapes::Circle>(this, id, static_cast<const shapes::Circle&>(source));
+        case ObjectType::kTriangle:
+            return new HandlerShape<shapes::Triangle>(this, id, static_cast<const shapes::Triangle&>(source));
+        case ObjectType::kPentagon:
+            return new HandlerShape<shapes::Pentagon>(this, id, static_cast<const shapes::Pentagon&>(source));
+        case ObjectType::kStar:
+            return new HandlerShape<shapes::Star>(this, id, static_cast<const shapes::Star&>(source));
+        case ObjectType::kImage:
+            throw std::logic_error("Grid++ Error: Image objects are not shapes");
+    }
+    throw std::logic_error("Grid++ Error: Unknown shape type");
+}
+
 inline ObjectHandler GameState::RegisterObject(std::uint64_t id, GridObject* object, ObjectFunction init,
                                                ObjectFunction update,
-                                               CollisionFunction collide, bool initialized,
+                                               CollisionFunction collide, bool initialized, ObjectType type,
                                                std::unordered_map<std::string, StoredValue> values) {
     engine.Spawn(object);
 
     try {
-        objects_.emplace(id, ObjectRecord{object, init, update, collide, std::move(values), initialized});
+        objects_.emplace(id, ObjectRecord{object, type, init, update, collide, std::move(values), initialized});
         object_ids_.emplace(object, id);
         if (!initialized) pending_init_.push_back({ElementType::kObject, id});
     } catch (...) {
@@ -699,10 +803,20 @@ inline void ObjectHandler::setPosition(int x, int y) {
 
 inline void ObjectHandler::move(int dx, int dy) { lockState()->RequireObject(id_).object->Move(dx, dy); }
 
-inline std::string ObjectHandler::image() const { return lockState()->RequireObject(id_).object->asset_name(); }
+inline std::string ObjectHandler::image() const {
+    const detail::ObjectRecord& record = lockState()->RequireObject(id_);
+    if (record.type != detail::ObjectType::kImage) {
+        throw std::runtime_error("Grid++ Error: image() requires an image object");
+    }
+    return record.object->asset_name();
+}
 
 inline void ObjectHandler::setImage(const std::string& image) {
-    lockState()->RequireObject(id_).object->set_asset_name(image);
+    detail::ObjectRecord& record = lockState()->RequireObject(id_);
+    if (record.type != detail::ObjectType::kImage) {
+        throw std::runtime_error("Grid++ Error: setImage() requires an image object");
+    }
+    record.object->set_asset_name(image);
 }
 
 inline int ObjectHandler::direction() const { return lockState()->RequireObject(id_).object->direction(); }
@@ -927,6 +1041,31 @@ inline int Game::gridSize() const { return state_->engine.grid_size(); }
 inline ObjectHandler Game::addObject(const std::string& image, ObjectFunction init, ObjectFunction update,
                                      CollisionFunction collide) {
     return state_->AddObject(image, init, update, collide);
+}
+
+inline ObjectHandler Game::addSquare(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
+                                     CollisionFunction collide) {
+    return state_->AddShape(detail::ObjectType::kSquare, x, y, size, color, init, update, collide);
+}
+
+inline ObjectHandler Game::addCircle(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
+                                     CollisionFunction collide) {
+    return state_->AddShape(detail::ObjectType::kCircle, x, y, size, color, init, update, collide);
+}
+
+inline ObjectHandler Game::addTriangle(int x, int y, int size, Color color, ObjectFunction init,
+                                       ObjectFunction update, CollisionFunction collide) {
+    return state_->AddShape(detail::ObjectType::kTriangle, x, y, size, color, init, update, collide);
+}
+
+inline ObjectHandler Game::addPentagon(int x, int y, int size, Color color, ObjectFunction init,
+                                       ObjectFunction update, CollisionFunction collide) {
+    return state_->AddShape(detail::ObjectType::kPentagon, x, y, size, color, init, update, collide);
+}
+
+inline ObjectHandler Game::addStar(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
+                                   CollisionFunction collide) {
+    return state_->AddShape(detail::ObjectType::kStar, x, y, size, color, init, update, collide);
 }
 
 inline void Game::clearObjects() { state_->ClearObjects(); }

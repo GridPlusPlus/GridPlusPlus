@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include "GridPlusPlus.h"
+#include "GridEngine.h"
 
 namespace gridpp::shapes {
 
