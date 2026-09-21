@@ -26,6 +26,7 @@ class MazeHandler;
 
 using ObjectFunction = void (*)(Game game, ObjectHandler self);
 using CollisionFunction = void (*)(Game game, ObjectHandler self, ObjectHandler other);
+using OverlayFunction = void (*)(Game game, OverlayHandler self);
 
 namespace detail {
 class GameState;
@@ -88,6 +89,57 @@ private:
     std::uint64_t id_ = 0;
 };
 
+/** Engine 內一個畫面覆蓋元素的存取憑證。 */
+class OverlayHandler {
+public:
+    OverlayHandler() = default;
+
+    bool exists() const;
+    void remove();
+    OverlayHandler deepCopy() const;
+
+    int x() const;
+    int y() const;
+    void setPosition(int x, int y);
+    void move(int dx, int dy);
+
+    bool visible() const;
+    void show();
+    void hide();
+
+    std::string image() const;
+    void setImage(const std::string& image);
+    std::string text() const;
+    void setText(const std::string& text);
+    void setColor(Color color);
+
+    void set(const std::string& key, int value);
+    void set(const std::string& key, long long value);
+    void set(const std::string& key, double value);
+    void set(const std::string& key, bool value);
+    void set(const std::string& key, const std::string& value);
+    void set(const std::string& key, const char* value);
+
+    int get(const std::string& key, long long& value) const;
+    int get(const std::string& key, double& value) const;
+    int get(const std::string& key, bool& value) const;
+    int get(const std::string& key, std::string& value) const;
+
+    void setInitFunction(OverlayFunction function);
+    void setUpdateFunction(OverlayFunction function);
+    void setClickFunction(OverlayFunction function);
+
+private:
+    friend class Game;
+    friend class detail::GameState;
+
+    OverlayHandler(std::weak_ptr<detail::GameState> state, std::uint64_t id);
+    std::shared_ptr<detail::GameState> lockState() const;
+
+    std::weak_ptr<detail::GameState> state_;
+    std::uint64_t id_ = 0;
+};
+
 /** 遊戲的 value-like 公開入口；複本會操作同一個內部 Engine。 */
 class Game {
 public:
@@ -104,6 +156,15 @@ public:
     ObjectHandler addObject(const std::string& image, ObjectFunction init = nullptr,
                             ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
     void clearObjects();
+
+    OverlayHandler addOverlay(const std::string& image, OverlayFunction init = nullptr,
+                              OverlayFunction update = nullptr);
+    OverlayHandler addTextOverlay(const std::string& text, int x, int y, int font_size = 20,
+                                  Color color = BLACK, OverlayFunction init = nullptr,
+                                  OverlayFunction update = nullptr);
+    OverlayHandler addButton(const std::string& text, int x, int y, int width, int height,
+                             OverlayFunction click = nullptr);
+    void clearOverlays();
 
     bool keyPressed(int key) const;
     bool keyDown(int key) const;
@@ -152,12 +213,49 @@ private:
     std::uint64_t id_;
 };
 
+class HandlerOverlay : public Overlay {
+public:
+    HandlerOverlay(GameState* state, std::uint64_t id);
+
+    void OnUpdate() override;
+    void Draw() override;
+
+private:
+    GameState* state_;
+    std::uint64_t id_;
+};
+
 struct ObjectRecord {
     GridObject* object = nullptr;
     ObjectFunction init = nullptr;
     ObjectFunction update = nullptr;
     CollisionFunction collide = nullptr;
     std::unordered_map<std::string, StoredValue> values;
+    bool initialized = false;
+};
+
+enum class OverlayType {
+    kImage,
+    kText,
+    kButton,
+};
+
+struct OverlayRecord {
+    Overlay* overlay = nullptr;
+    OverlayType type = OverlayType::kImage;
+    OverlayFunction init = nullptr;
+    OverlayFunction update = nullptr;
+    OverlayFunction click = nullptr;
+    std::unordered_map<std::string, StoredValue> values;
+    std::string content;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    int font_size = 20;
+    Color color = BLACK;
+    bool visible = true;
+    bool hover = false;
     bool initialized = false;
 };
 
@@ -171,16 +269,30 @@ public:
     void RemoveObject(std::uint64_t id);
     void ClearObjects();
 
+    OverlayHandler AddImageOverlay(const std::string& image, OverlayFunction init, OverlayFunction update);
+    OverlayHandler AddTextOverlay(const std::string& text, int x, int y, int font_size, Color color,
+                                  OverlayFunction init, OverlayFunction update);
+    OverlayHandler AddButton(const std::string& text, int x, int y, int width, int height, OverlayFunction click);
+    OverlayHandler CloneOverlay(std::uint64_t id);
+    void RemoveOverlay(std::uint64_t id);
+    void ClearOverlays();
+
     bool HasObject(std::uint64_t id) const;
     ObjectRecord& RequireObject(std::uint64_t id);
     const ObjectRecord& RequireObject(std::uint64_t id) const;
+    bool HasOverlay(std::uint64_t id) const;
+    OverlayRecord& RequireOverlay(std::uint64_t id);
+    const OverlayRecord& RequireOverlay(std::uint64_t id) const;
 
     void UpdateObject(std::uint64_t id);
     void CollideObject(std::uint64_t id, GridObject* other);
+    void UpdateOverlay(std::uint64_t id);
+    void DrawOverlay(std::uint64_t id);
     void InitializePendingElements();
 
     Game PublicGame();
     ObjectHandler PublicObject(std::uint64_t id);
+    OverlayHandler PublicOverlay(std::uint64_t id);
 
     GridEngine engine;
 
@@ -191,18 +303,21 @@ private:
     ObjectHandler RegisterObject(std::uint64_t id, GridObject* object, ObjectFunction init, ObjectFunction update,
                                  CollisionFunction collide, bool initialized,
                                  std::unordered_map<std::string, StoredValue> values = {});
+    OverlayHandler RegisterOverlay(std::uint64_t id, Overlay* overlay, OverlayRecord record);
     void InitializeObject(std::uint64_t id);
+    void InitializeOverlay(std::uint64_t id);
     void RemovePending(ElementType type, std::uint64_t id);
 
     std::uint64_t next_id_ = 1;
     std::unordered_map<std::uint64_t, ObjectRecord> objects_;
     std::unordered_map<GridObject*, std::uint64_t> object_ids_;
+    std::unordered_map<std::uint64_t, OverlayRecord> overlays_;
     std::vector<ElementId> pending_init_;
     bool initializing_ = false;
 };
 
-template <typename T>
-inline void SetStoredValue(ObjectRecord& record, const std::string& key, T value) {
+template <typename Record, typename T>
+inline void SetStoredValue(Record& record, const std::string& key, T value) {
     const auto it = record.values.find(key);
     if (it != record.values.end() && !std::holds_alternative<T>(it->second)) {
         throw std::runtime_error("Grid++ Error: Value '" + key + "' was already stored with a different type");
@@ -210,8 +325,8 @@ inline void SetStoredValue(ObjectRecord& record, const std::string& key, T value
     record.values[key] = std::move(value);
 }
 
-template <typename T>
-inline int GetStoredValue(const ObjectRecord& record, const std::string& key, T& value) {
+template <typename Record, typename T>
+inline int GetStoredValue(const Record& record, const std::string& key, T& value) {
     const auto it = record.values.find(key);
     if (it == record.values.end()) {
         value = T{};
@@ -237,6 +352,14 @@ inline HandlerGridObject::HandlerGridObject(GameState* state, std::uint64_t id, 
 inline void HandlerGridObject::OnUpdate() { state_->UpdateObject(id_); }
 
 inline void HandlerGridObject::OnCollide(GridObject* other) { state_->CollideObject(id_, other); }
+
+// HandlerOverlay
+
+inline HandlerOverlay::HandlerOverlay(GameState* state, std::uint64_t id) : state_(state), id_(id) {}
+
+inline void HandlerOverlay::OnUpdate() { state_->UpdateOverlay(id_); }
+
+inline void HandlerOverlay::Draw() { state_->DrawOverlay(id_); }
 
 // GameState
 
@@ -273,6 +396,75 @@ inline void GameState::ClearObjects() {
     engine.ClearObjects();
 }
 
+inline OverlayHandler GameState::AddImageOverlay(const std::string& image, OverlayFunction init,
+                                                 OverlayFunction update) {
+    const std::uint64_t id = AllocateId();
+    OverlayRecord record;
+    record.type = OverlayType::kImage;
+    record.init = init;
+    record.update = update;
+    record.content = image;
+    record.color = WHITE;
+    return RegisterOverlay(id, new HandlerOverlay(this, id), std::move(record));
+}
+
+inline OverlayHandler GameState::AddTextOverlay(const std::string& text, int x, int y, int font_size, Color color,
+                                                OverlayFunction init, OverlayFunction update) {
+    if (font_size < 1) throw std::invalid_argument("Grid++ Error: Text size must be greater than 0");
+
+    const std::uint64_t id = AllocateId();
+    OverlayRecord record;
+    record.type = OverlayType::kText;
+    record.init = init;
+    record.update = update;
+    record.content = text;
+    record.x = x;
+    record.y = y;
+    record.font_size = font_size;
+    record.color = color;
+    return RegisterOverlay(id, new HandlerOverlay(this, id), std::move(record));
+}
+
+inline OverlayHandler GameState::AddButton(const std::string& text, int x, int y, int width, int height,
+                                           OverlayFunction click) {
+    if (width < 1 || height < 1) {
+        throw std::invalid_argument("Grid++ Error: Button width and height must be greater than 0");
+    }
+
+    const std::uint64_t id = AllocateId();
+    OverlayRecord record;
+    record.type = OverlayType::kButton;
+    record.click = click;
+    record.content = text;
+    record.x = x;
+    record.y = y;
+    record.width = width;
+    record.height = height;
+    return RegisterOverlay(id, new HandlerOverlay(this, id), std::move(record));
+}
+
+inline OverlayHandler GameState::CloneOverlay(std::uint64_t id) {
+    const OverlayRecord& source = RequireOverlay(id);
+    const std::uint64_t copy_id = AllocateId();
+    OverlayRecord copy = source;
+    copy.overlay = nullptr;
+    return RegisterOverlay(copy_id, new HandlerOverlay(this, copy_id), std::move(copy));
+}
+
+inline void GameState::RemoveOverlay(std::uint64_t id) {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end()) return;
+
+    Overlay* overlay = it->second.overlay;
+    overlays_.erase(it);
+    engine.DestroyOverlay(overlay);
+}
+
+inline void GameState::ClearOverlays() {
+    overlays_.clear();
+    engine.ClearOverlays();
+}
+
 inline bool GameState::HasObject(std::uint64_t id) const { return objects_.count(id) != 0; }
 
 inline ObjectRecord& GameState::RequireObject(std::uint64_t id) {
@@ -284,6 +476,20 @@ inline ObjectRecord& GameState::RequireObject(std::uint64_t id) {
 inline const ObjectRecord& GameState::RequireObject(std::uint64_t id) const {
     const auto it = objects_.find(id);
     if (it == objects_.end()) throw std::runtime_error("Grid++ Error: ObjectHandler no longer refers to an object");
+    return it->second;
+}
+
+inline bool GameState::HasOverlay(std::uint64_t id) const { return overlays_.count(id) != 0; }
+
+inline OverlayRecord& GameState::RequireOverlay(std::uint64_t id) {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end()) throw std::runtime_error("Grid++ Error: OverlayHandler no longer refers to an overlay");
+    return it->second;
+}
+
+inline const OverlayRecord& GameState::RequireOverlay(std::uint64_t id) const {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end()) throw std::runtime_error("Grid++ Error: OverlayHandler no longer refers to an overlay");
     return it->second;
 }
 
@@ -300,6 +506,45 @@ inline void GameState::CollideObject(std::uint64_t id, GridObject* other) {
     source->second.collide(PublicGame(), PublicObject(id), PublicObject(target_id->second));
 }
 
+inline void GameState::UpdateOverlay(std::uint64_t id) {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end()) return;
+
+    if (it->second.update != nullptr) it->second.update(PublicGame(), PublicOverlay(id));
+
+    const auto current = overlays_.find(id);
+    if (current == overlays_.end() || current->second.type != OverlayType::kButton || !current->second.visible) return;
+
+    OverlayRecord& button = current->second;
+    const Vector2 mouse = GetMousePosition();
+    button.hover = mouse.x >= button.x && mouse.x <= button.x + button.width && mouse.y >= button.y &&
+                   mouse.y <= button.y + button.height;
+    if (button.hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && button.click != nullptr) {
+        button.click(PublicGame(), PublicOverlay(id));
+    }
+}
+
+inline void GameState::DrawOverlay(std::uint64_t id) {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end() || !it->second.visible) return;
+
+    const OverlayRecord& overlay = it->second;
+    if (overlay.type == OverlayType::kImage) {
+        engine.DrawOverlayAsset(overlay.content, overlay.x, overlay.y, overlay.color);
+        return;
+    }
+    if (overlay.type == OverlayType::kText) {
+        DrawText(overlay.content.c_str(), overlay.x, overlay.y, overlay.font_size, overlay.color);
+        return;
+    }
+
+    DrawRectangle(overlay.x, overlay.y, overlay.width, overlay.height, overlay.hover ? SKYBLUE : LIGHTGRAY);
+    DrawRectangleLines(overlay.x, overlay.y, overlay.width, overlay.height, DARKGRAY);
+    const int text_width = MeasureText(overlay.content.c_str(), overlay.font_size);
+    DrawText(overlay.content.c_str(), overlay.x + (overlay.width - text_width) / 2,
+             overlay.y + (overlay.height - overlay.font_size) / 2, overlay.font_size, overlay.color);
+}
+
 inline void GameState::InitializePendingElements() {
     if (initializing_) return;
     initializing_ = true;
@@ -309,7 +554,10 @@ inline void GameState::InitializePendingElements() {
         while (index < pending_init_.size()) {
             const ElementId element = pending_init_[index];
             ++index;
-            if (element.type == ElementType::kObject) InitializeObject(element.id);
+            if (element.type == ElementType::kObject)
+                InitializeObject(element.id);
+            else if (element.type == ElementType::kOverlay)
+                InitializeOverlay(element.id);
         }
         pending_init_.clear();
         initializing_ = false;
@@ -324,6 +572,8 @@ inline Game GameState::PublicGame() { return Game(shared_from_this()); }
 
 inline ObjectHandler GameState::PublicObject(std::uint64_t id) { return ObjectHandler(shared_from_this(), id); }
 
+inline OverlayHandler GameState::PublicOverlay(std::uint64_t id) { return OverlayHandler(shared_from_this(), id); }
+
 inline void GameState::AfterTick(void* context) { static_cast<GameState*>(context)->InitializePendingElements(); }
 
 inline std::uint64_t GameState::AllocateId() {
@@ -337,11 +587,7 @@ inline ObjectHandler GameState::RegisterObject(std::uint64_t id, GridObject* obj
                                                ObjectFunction update,
                                                CollisionFunction collide, bool initialized,
                                                std::unordered_map<std::string, StoredValue> values) {
-    try {
-        engine.Spawn(object);
-    } catch (...) {
-        throw;
-    }
+    engine.Spawn(object);
 
     try {
         objects_.emplace(id, ObjectRecord{object, init, update, collide, std::move(values), initialized});
@@ -358,6 +604,24 @@ inline ObjectHandler GameState::RegisterObject(std::uint64_t id, GridObject* obj
     return PublicObject(id);
 }
 
+inline OverlayHandler GameState::RegisterOverlay(std::uint64_t id, Overlay* overlay, OverlayRecord record) {
+    engine.AddOverlay(overlay);
+
+    record.overlay = overlay;
+    const bool initialized = record.initialized;
+    try {
+        overlays_.emplace(id, std::move(record));
+        if (!initialized) pending_init_.push_back({ElementType::kOverlay, id});
+    } catch (...) {
+        overlays_.erase(id);
+        RemovePending(ElementType::kOverlay, id);
+        engine.DestroyOverlay(overlay);
+        throw;
+    }
+
+    return PublicOverlay(id);
+}
+
 inline void GameState::InitializeObject(std::uint64_t id) {
     const auto it = objects_.find(id);
     if (it == objects_.end() || it->second.initialized) return;
@@ -369,6 +633,21 @@ inline void GameState::InitializeObject(std::uint64_t id) {
         it->second.init(PublicGame(), PublicObject(id));
     } catch (...) {
         RemoveObject(id);
+        throw;
+    }
+}
+
+inline void GameState::InitializeOverlay(std::uint64_t id) {
+    const auto it = overlays_.find(id);
+    if (it == overlays_.end() || it->second.initialized) return;
+
+    it->second.initialized = true;
+    if (it->second.init == nullptr) return;
+
+    try {
+        it->second.init(PublicGame(), PublicOverlay(id));
+    } catch (...) {
+        RemoveOverlay(id);
         throw;
     }
 }
@@ -494,6 +773,138 @@ inline void ObjectHandler::setCollideFunction(CollisionFunction function) {
     lockState()->RequireObject(id_).collide = function;
 }
 
+// OverlayHandler
+
+inline OverlayHandler::OverlayHandler(std::weak_ptr<detail::GameState> state, std::uint64_t id)
+    : state_(std::move(state)), id_(id) {}
+
+inline std::shared_ptr<detail::GameState> OverlayHandler::lockState() const {
+    std::shared_ptr<detail::GameState> state = state_.lock();
+    if (state == nullptr) throw std::runtime_error("Grid++ Error: OverlayHandler's Game no longer exists");
+    return state;
+}
+
+inline bool OverlayHandler::exists() const {
+    const std::shared_ptr<detail::GameState> state = state_.lock();
+    return state != nullptr && state->HasOverlay(id_);
+}
+
+inline void OverlayHandler::remove() {
+    const std::shared_ptr<detail::GameState> state = lockState();
+    state->RequireOverlay(id_);
+    state->RemoveOverlay(id_);
+}
+
+inline OverlayHandler OverlayHandler::deepCopy() const { return lockState()->CloneOverlay(id_); }
+
+inline int OverlayHandler::x() const { return lockState()->RequireOverlay(id_).x; }
+
+inline int OverlayHandler::y() const { return lockState()->RequireOverlay(id_).y; }
+
+inline void OverlayHandler::setPosition(int x, int y) {
+    detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    overlay.x = x;
+    overlay.y = y;
+}
+
+inline void OverlayHandler::move(int dx, int dy) {
+    detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    overlay.x += dx;
+    overlay.y += dy;
+}
+
+inline bool OverlayHandler::visible() const { return lockState()->RequireOverlay(id_).visible; }
+
+inline void OverlayHandler::show() { lockState()->RequireOverlay(id_).visible = true; }
+
+inline void OverlayHandler::hide() { lockState()->RequireOverlay(id_).visible = false; }
+
+inline std::string OverlayHandler::image() const {
+    const detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    if (overlay.type != detail::OverlayType::kImage) {
+        throw std::runtime_error("Grid++ Error: image() requires an image overlay");
+    }
+    return overlay.content;
+}
+
+inline void OverlayHandler::setImage(const std::string& image) {
+    detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    if (overlay.type != detail::OverlayType::kImage) {
+        throw std::runtime_error("Grid++ Error: setImage() requires an image overlay");
+    }
+    overlay.content = image;
+}
+
+inline std::string OverlayHandler::text() const {
+    const detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    if (overlay.type == detail::OverlayType::kImage) {
+        throw std::runtime_error("Grid++ Error: text() requires a text overlay or button");
+    }
+    return overlay.content;
+}
+
+inline void OverlayHandler::setText(const std::string& text) {
+    detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    if (overlay.type == detail::OverlayType::kImage) {
+        throw std::runtime_error("Grid++ Error: setText() requires a text overlay or button");
+    }
+    overlay.content = text;
+}
+
+inline void OverlayHandler::setColor(Color color) { lockState()->RequireOverlay(id_).color = color; }
+
+inline void OverlayHandler::set(const std::string& key, int value) { set(key, static_cast<long long>(value)); }
+
+inline void OverlayHandler::set(const std::string& key, long long value) {
+    detail::SetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline void OverlayHandler::set(const std::string& key, double value) {
+    detail::SetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline void OverlayHandler::set(const std::string& key, bool value) {
+    detail::SetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline void OverlayHandler::set(const std::string& key, const std::string& value) {
+    detail::SetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline void OverlayHandler::set(const std::string& key, const char* value) { set(key, std::string(value)); }
+
+inline int OverlayHandler::get(const std::string& key, long long& value) const {
+    return detail::GetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline int OverlayHandler::get(const std::string& key, double& value) const {
+    return detail::GetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline int OverlayHandler::get(const std::string& key, bool& value) const {
+    return detail::GetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline int OverlayHandler::get(const std::string& key, std::string& value) const {
+    return detail::GetStoredValue(lockState()->RequireOverlay(id_), key, value);
+}
+
+inline void OverlayHandler::setInitFunction(OverlayFunction function) {
+    lockState()->RequireOverlay(id_).init = function;
+}
+
+inline void OverlayHandler::setUpdateFunction(OverlayFunction function) {
+    lockState()->RequireOverlay(id_).update = function;
+}
+
+inline void OverlayHandler::setClickFunction(OverlayFunction function) {
+    detail::OverlayRecord& overlay = lockState()->RequireOverlay(id_);
+    if (overlay.type != detail::OverlayType::kButton) {
+        throw std::runtime_error("Grid++ Error: setClickFunction() requires a button");
+    }
+    overlay.click = function;
+}
+
 // Game
 
 inline Game::Game(int cols, int rows, int grid_size)
@@ -519,6 +930,22 @@ inline ObjectHandler Game::addObject(const std::string& image, ObjectFunction in
 }
 
 inline void Game::clearObjects() { state_->ClearObjects(); }
+
+inline OverlayHandler Game::addOverlay(const std::string& image, OverlayFunction init, OverlayFunction update) {
+    return state_->AddImageOverlay(image, init, update);
+}
+
+inline OverlayHandler Game::addTextOverlay(const std::string& text, int x, int y, int font_size, Color color,
+                                           OverlayFunction init, OverlayFunction update) {
+    return state_->AddTextOverlay(text, x, y, font_size, color, init, update);
+}
+
+inline OverlayHandler Game::addButton(const std::string& text, int x, int y, int width, int height,
+                                      OverlayFunction click) {
+    return state_->AddButton(text, x, y, width, height, click);
+}
+
+inline void Game::clearOverlays() { state_->ClearOverlays(); }
 
 inline bool Game::keyPressed(int key) const { return IsKeyPressed(key); }
 

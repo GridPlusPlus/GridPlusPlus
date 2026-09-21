@@ -143,6 +143,7 @@ private:
     void InvokeOnSpawn(Overlay* overlay);
     void FlushLifecycleChanges();
     void DrawGrid();
+    void DrawOverlayAsset(const std::string& asset_name, int pixel_x, int pixel_y, Color tint = WHITE);
     void DeleteAllObjects() noexcept;
     void DeleteAllOverlays() noexcept;
 
@@ -327,6 +328,19 @@ inline void GridEngine::DrawCell(const std::string& asset_name, int grid_x, int 
         DrawTexturePro(texture, source, destination, origin, -90.0f * direction, tint);
     } else {
         DrawRectangle(pixel_x, pixel_y, grid_size_, grid_size_, RED);
+    }
+}
+
+inline void GridEngine::DrawOverlayAsset(const std::string& asset_name, int pixel_x, int pixel_y, Color tint) {
+    constexpr int kAssetSize = 32;
+    if (!asset_name.empty() && assets_.Has(asset_name)) {
+        const Texture2D texture = assets_.Get(asset_name);
+        const Rectangle source = {0, 0, static_cast<float>(texture.width), static_cast<float>(texture.height)};
+        const Rectangle destination = {static_cast<float>(pixel_x), static_cast<float>(pixel_y),
+                                       static_cast<float>(kAssetSize), static_cast<float>(kAssetSize)};
+        DrawTexturePro(texture, source, destination, {0, 0}, 0, tint);
+    } else {
+        DrawRectangle(pixel_x, pixel_y, kAssetSize, kAssetSize, RED);
     }
 }
 
