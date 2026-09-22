@@ -5,8 +5,5 @@
 #define GRID_PLUS_PLUS_GRID_PLUS_PLUS_H_
 
 #include "GridEngine.h"
-#include "Game.h"
-#include "GridObject.h"
-#include "Overlay.h"
 
 #endif  // GRID_PLUS_PLUS_GRID_PLUS_PLUS_H_
