@@ -4,7 +4,7 @@
 全域變數，適合在完整版之前閱讀。
 
 角色以 `game.addObject()` 建立，迷宮以 `game.addMaze()` 建立；碰撞函式收到兩個
-`ObjectHandler`，不會出現指標或 `->`。
+`GridObject`，不會出現指標或 `->`。
 
 ```bash
 g++ -std=c++17 main.cpp -I../.. -o game $(pkg-config --cflags --libs raylib)

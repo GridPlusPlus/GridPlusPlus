@@ -1,6 +1,6 @@
 # Pac-Man 完整範例
 
-這個範例示範只用 `Game`、`ObjectHandler`、`MazeHandler`、`OverlayHandler` 與普通函式完成 Pac-Man。
+這個範例示範只用 `GameEngine`、`GridObject`、`Maze`、`Overlay` 與普通函式完成 Pac-Man。
 沒有自訂角色 class、繼承、指標或 `new`。
 
 功能包含外部 `map.txt`、自動拼接牆面、四隻各有獨立狀態的鬼、方向緩衝、豆子碰撞、開始、暫停、
