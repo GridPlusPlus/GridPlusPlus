@@ -1,8 +1,8 @@
-/** @file GridEngine.h
+/** @file GameEngine.h
  *  @brief 定義 Grid++ 的公開 GameEngine handler 與實際引擎。
  */
-#ifndef GRID_PLUS_PLUS_GRID_ENGINE_H_
-#define GRID_PLUS_PLUS_GRID_ENGINE_H_
+#ifndef GRID_PLUS_PLUS_GAME_ENGINE_H_
+#define GRID_PLUS_PLUS_GAME_ENGINE_H_
 
 #include <algorithm>
 #include <array>
@@ -1072,4 +1072,4 @@ inline void GameEngine::run() { impl_->run(); }
 
 }  // namespace gridpp
 
-#endif  // GRID_PLUS_PLUS_GRID_ENGINE_H_
+#endif  // GRID_PLUS_PLUS_GAME_ENGINE_H_

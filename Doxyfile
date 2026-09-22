@@ -4,7 +4,7 @@ OUTPUT_DIRECTORY       = site
 OUTPUT_LANGUAGE        = Chinese-Traditional
 
 INPUT                  = GridPlusPlus.h \
-                         GridEngine.h \
+                         GameEngine.h \
                          GridObject.h \
                          Overlay.h \
                          GridMaze.h \

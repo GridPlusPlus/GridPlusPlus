@@ -38,7 +38,7 @@ int main() {
 | 檔案 | 用途 |
 |---|---|
 | `GridPlusPlus.h` | 學生程式唯一需要引入的標頭。 |
-| `GridEngine.h` | `GameEngine`、遊戲迴圈與實體管理。 |
+| `GameEngine.h` | `GameEngine`、遊戲迴圈與實體管理。 |
 | `GridObject.h`、`Overlay.h`、`GridMaze.h` | 三種 Handler 與對應的實體資料。 |
 | `GridValue.h` | `set()`、`get()` 使用的型別安全儲存。 |
 | `GridAssetManager.h`、`GridSQLite.h` | 素材包載入與 texture 管理。 |

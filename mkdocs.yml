@@ -7,7 +7,7 @@ plugins:
   - mkdoxy:
       projects:
         gridpp:
-          src-dirs: GridPlusPlus.h GridEngine.h GridObject.h Overlay.h GridMaze.h GridValue.h
+          src-dirs: GridPlusPlus.h GameEngine.h GridObject.h Overlay.h GridMaze.h GridValue.h
           api-path: api
           full-doc: true
           doxy-cfg-file: Doxyfile

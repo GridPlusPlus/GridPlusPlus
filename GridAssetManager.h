@@ -1,5 +1,5 @@
 /** @file GridAssetManager.h
- *  @brief 定義 GridEngine 內部使用的素材管理器。
+ *  @brief 定義 GameEngineImpl 使用的素材管理器。
  */
 #ifndef GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
 #define GRID_PLUS_PLUS_GRID_ASSET_MANAGER_H_
