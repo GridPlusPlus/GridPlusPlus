@@ -30,7 +30,9 @@
 
 namespace gridpp {
 
+/** @cond */
 class GameEngineImpl;
+/** @endcond */
 
 /** 學生使用的遊戲入口；複本仍操作同一個實際引擎。 */
 class GameEngine {
@@ -76,13 +78,16 @@ public:
 
     void run();
 
+    /** @cond */
 private:
     friend class GameEngineImpl;
 
     explicit GameEngine(std::shared_ptr<GameEngineImpl> impl);
     std::shared_ptr<GameEngineImpl> impl_;
+    /** @endcond */
 };
 
+/** @cond */
 class GameEngineImpl : public std::enable_shared_from_this<GameEngineImpl> {
 public:
     static constexpr int kMaxWindowSize = 8192;
@@ -720,9 +725,11 @@ inline std::pair<int, int> MazeImpl::shapeFor(int mask) {
     static constexpr int kDirections[16] = {0, 0, 3, 0, 2, 0, 3, 0, 1, 1, 1, 1, 2, 2, 3, 0};
     return {kShapes[mask], kDirections[mask]};
 }
+/** @endcond */
 
 // GridObject handler
 
+/** @cond */
 inline GridObject::GridObject(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id)
     : engine_(std::move(engine)), id_(id) {}
 
@@ -731,6 +738,7 @@ inline std::shared_ptr<GameEngineImpl> GridObject::lockEngine() const {
     if (engine == nullptr) throw std::runtime_error("Grid++ Error: GridObject's GameEngine no longer exists");
     return engine;
 }
+/** @endcond */
 
 inline bool GridObject::exists() const {
     const std::shared_ptr<GameEngineImpl> engine = engine_.lock();
@@ -842,6 +850,7 @@ inline void GridObject::setCollideFunction(CollisionCallback function) {
 
 // Overlay handler
 
+/** @cond */
 inline Overlay::Overlay(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id) : engine_(std::move(engine)), id_(id) {}
 
 inline std::shared_ptr<GameEngineImpl> Overlay::lockEngine() const {
@@ -849,6 +858,7 @@ inline std::shared_ptr<GameEngineImpl> Overlay::lockEngine() const {
     if (engine == nullptr) throw std::runtime_error("Grid++ Error: Overlay's GameEngine no longer exists");
     return engine;
 }
+/** @endcond */
 
 inline bool Overlay::exists() const {
     const std::shared_ptr<GameEngineImpl> engine = engine_.lock();
@@ -962,12 +972,14 @@ inline void Overlay::setClickFunction(OverlayCallback function) {
 
 // Maze handler
 
+/** @cond */
 inline Maze::Maze(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id) : engine_(std::move(engine)), id_(id) {}
 inline std::shared_ptr<GameEngineImpl> Maze::lockEngine() const {
     std::shared_ptr<GameEngineImpl> engine = engine_.lock();
     if (engine == nullptr) throw std::runtime_error("Grid++ Error: Maze's GameEngine no longer exists");
     return engine;
 }
+/** @endcond */
 inline bool Maze::exists() const {
     const std::shared_ptr<GameEngineImpl> engine = engine_.lock();
     return engine != nullptr && engine->hasMaze(id_);
@@ -1014,7 +1026,9 @@ inline void Maze::setUpdateFunction(MazeCallback function) { lockEngine()->requi
 
 inline GameEngine::GameEngine(int cols, int rows, int grid_size)
     : impl_(std::shared_ptr<GameEngineImpl>(new GameEngineImpl(cols, rows, grid_size))) {}
+/** @cond */
 inline GameEngine::GameEngine(std::shared_ptr<GameEngineImpl> impl) : impl_(std::move(impl)) {}
+/** @endcond */
 inline void GameEngine::loadAssets(const std::string& database_path) { impl_->assets_.Load(database_path); }
 inline void GameEngine::setBackgroundColor(Color color) { impl_->background_color_ = color; }
 inline void GameEngine::showGrid(bool show) { impl_->show_grid_ = show; }

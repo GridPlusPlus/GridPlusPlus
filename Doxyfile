@@ -7,10 +7,21 @@ INPUT                  = GridPlusPlus.h \
                          GameEngine.h \
                          GridObject.h \
                          Overlay.h \
-                         GridMaze.h \
-                         GridValue.h
+                         GridMaze.h
 FILE_PATTERNS          = *.h
 RECURSIVE              = NO
+
+EXCLUDE_SYMBOLS        = gridpp::GameEngineImpl \
+                         gridpp::GridObjectImpl \
+                         gridpp::OverlayImpl \
+                         gridpp::MazeImpl \
+                         gridpp::GridValueStore \
+                         gridpp::GridObjectType \
+                         gridpp::OverlayType \
+                         gridpp::GridObjectCallback \
+                         gridpp::CollisionCallback \
+                         gridpp::OverlayCallback \
+                         gridpp::MazeCallback
 
 EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO

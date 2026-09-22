@@ -16,8 +16,10 @@
 namespace gridpp {
 
 class GameEngine;
-class GameEngineImpl;
 class GridObject;
+
+/** @cond */
+class GameEngineImpl;
 
 using GridObjectCallback = void (*)(GameEngine engine, GridObject self);
 using CollisionCallback = void (*)(GameEngine engine, GridObject self, GridObject other);
@@ -59,6 +61,7 @@ private:
     CollisionCallback collide_ = nullptr;
     GridValueStore values_;
 };
+/** @endcond */
 
 /** 可複製的網格物件 handler；複本仍指向同一個遊戲實體。 */
 class GridObject {
@@ -113,6 +116,7 @@ public:
     void setUpdateFunction(GridObjectCallback function);
     void setCollideFunction(CollisionCallback function);
 
+    /** @cond */
 private:
     friend class GameEngineImpl;
 
@@ -121,12 +125,15 @@ private:
 
     std::weak_ptr<GameEngineImpl> engine_;
     std::uint64_t id_ = 0;
+    /** @endcond */
 };
 
+/** @cond */
 inline GridObjectImpl::GridObjectImpl(std::string image) : image_(std::move(image)) {}
 
 inline GridObjectImpl::GridObjectImpl(GridObjectType type, int x, int y, int size, Color color)
     : type_(type), x_(x), y_(y), size_(size), color_(color) {}
+/** @endcond */
 
 }  // namespace gridpp
 

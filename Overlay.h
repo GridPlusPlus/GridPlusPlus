@@ -15,8 +15,10 @@
 namespace gridpp {
 
 class GameEngine;
-class GameEngineImpl;
 class Overlay;
+
+/** @cond */
+class GameEngineImpl;
 
 using OverlayCallback = void (*)(GameEngine engine, Overlay self);
 
@@ -54,6 +56,7 @@ private:
     OverlayCallback click_ = nullptr;
     GridValueStore values_;
 };
+/** @endcond */
 
 /** 可複製的畫面覆蓋元素 handler。 */
 class Overlay {
@@ -102,6 +105,7 @@ public:
     void setUpdateFunction(OverlayCallback function);
     void setClickFunction(OverlayCallback function);
 
+    /** @cond */
 private:
     friend class GameEngineImpl;
 
@@ -110,9 +114,12 @@ private:
 
     std::weak_ptr<GameEngineImpl> engine_;
     std::uint64_t id_ = 0;
+    /** @endcond */
 };
 
+/** @cond */
 inline OverlayImpl::OverlayImpl(OverlayType type) : type_(type) {}
+/** @endcond */
 
 }  // namespace gridpp
 

@@ -12,8 +12,10 @@
 namespace gridpp {
 
 class GameEngine;
-class GameEngineImpl;
 class Maze;
+
+/** @cond */
+class GameEngineImpl;
 
 using MazeCallback = void (*)(GameEngine engine, Maze self);
 
@@ -44,6 +46,7 @@ private:
     MazeCallback init_ = nullptr;
     MazeCallback update_ = nullptr;
 };
+/** @endcond */
 
 /** 可複製的迷宮 handler。 */
 class Maze {
@@ -66,6 +69,7 @@ public:
     void setInitFunction(MazeCallback function);
     void setUpdateFunction(MazeCallback function);
 
+    /** @cond */
 private:
     friend class GameEngineImpl;
 
@@ -74,6 +78,7 @@ private:
 
     std::weak_ptr<GameEngineImpl> engine_;
     std::uint64_t id_ = 0;
+    /** @endcond */
 };
 
 }  // namespace gridpp
