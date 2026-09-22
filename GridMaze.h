@@ -48,25 +48,60 @@ private:
 };
 /** @endcond */
 
-/** 可複製的迷宮 handler。 */
+/**
+ * 操作固定尺寸的迷宮牆面網格。
+ *
+ * 複製 handler 不會複製迷宮；所有複本仍操作同一個實體。迷宮被移除或 GameEngine 銷毀後，
+ * 可以用 exists() 檢查 handler 是否仍有效。除 exists() 之外，對失效 handler 呼叫其他函式
+ * 會拋出 std::runtime_error。
+ */
 class Maze {
 public:
+    /** 建立不指向任何迷宮的 handler。 */
     Maze() = default;
 
+    /** @return handler 是否仍指向存在的迷宮。 */
     bool exists() const;
+    /** 從引擎移除迷宮；呼叫後所有指向它的 handler 都會失效。 */
     void remove();
+    /** @return 一個擁有獨立牆面、素材設定、callback 與新 handler 的迷宮複本。 */
     Maze deepCopy() const;
 
+    /**
+     * 設定一格是否為牆。
+     * @param x 迷宮內的網格 x 座標。
+     * @param y 迷宮內的網格 y 座標。
+     * @param wall true 表示牆，false 表示通道。
+     * @throws std::out_of_range 若座標位於迷宮外。
+     */
     void setWall(int x, int y, bool wall = true);
+
+    /** @return 指定位置是否為牆；迷宮外一律回傳 true。 */
     bool isWall(int x, int y) const;
+
+    /** 設定所有牆共用的素材，並切換至單一素材模式。 */
     void setWallImage(const std::string& image);
+
+    /**
+     * 設定自動拼接牆面使用的六種素材，並切換至自動拼接模式。
+     * @param isolated 孤立牆素材。
+     * @param end 端點素材。
+     * @param straight 直線素材。
+     * @param corner 轉角素材。
+     * @param tee T 形素材。
+     * @param cross 十字素材。
+     */
     void setWallImages(const std::string& isolated, const std::string& end, const std::string& straight,
                        const std::string& corner, const std::string& tee, const std::string& cross);
 
+    /** @return 迷宮欄數。 */
     int width() const;
+    /** @return 迷宮列數。 */
     int height() const;
 
+    /** 取代初始化 callback；若迷宮已初始化，新函式不會自動補呼叫。 */
     void setInitFunction(MazeCallback function);
+    /** 取代每幀更新 callback。 */
     void setUpdateFunction(MazeCallback function);
 
     /** @cond */

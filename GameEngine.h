@@ -34,48 +34,152 @@ namespace gridpp {
 class GameEngineImpl;
 /** @endcond */
 
-/** 學生使用的遊戲入口；複本仍操作同一個實際引擎。 */
+/**
+ * 建立視窗並管理遊戲物件、迷宮、覆蓋元件與主迴圈。
+ *
+ * GameEngine 是可複製的 handler。將它傳入 callback 或複製給其他變數時，
+ * 所有複本都會操作同一個引擎。
+ */
 class GameEngine {
 public:
+    /**
+     * 建立遊戲視窗。
+     * @param cols 網格欄數。
+     * @param rows 網格列數。
+     * @param grid_size 每格的像素寬度與高度。
+     * @throws std::invalid_argument 若任一尺寸小於 1，或視窗寬、高超過 8192 像素。
+     */
     GameEngine(int cols, int rows, int grid_size = 32);
 
+    /**
+     * 載入 SQLite 素材包並取代目前素材。
+     * @param database_path 素材包路徑。
+     * @throws std::runtime_error 若檔案無法讀取、格式無效或找不到 `sprites` 資料表。
+     */
     void loadAssets(const std::string& database_path);
+
+    /** 設定每幀開始繪製的背景顏色。 */
     void setBackgroundColor(Color color);
+
+    /** @param show true 會在背景上繪製網格線。 */
     void showGrid(bool show);
 
+    /** @return 遊戲網格欄數。 */
     int cols() const;
+
+    /** @return 遊戲網格列數。 */
     int rows() const;
+
+    /** @return 每格的像素寬度與高度。 */
     int gridSize() const;
 
+    /**
+     * 建立圖片物件。物件初始位置為 (0, 0)。
+     * @param image 繪製時使用的素材名稱。
+     * @param init 物件啟用前呼叫一次的函式；可以是 nullptr。
+     * @param update 每幀更新時呼叫的函式；可以是 nullptr。
+     * @param collide 與另一個可見物件位於同一格時呼叫的函式；可以是 nullptr。
+     * @return 操作新物件的 handler。
+     */
     GridObject addObject(const std::string& image, GridObjectCallback init = nullptr,
                          GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /** 建立以網格座標為中心的實心正方形；size 是像素邊長且必須大於 0。 */
     GridObject addSquare(int x, int y, int size, Color color = BLACK, GridObjectCallback init = nullptr,
                          GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /** 建立以網格座標為中心的實心圓形；size 是像素直徑且必須大於 0。 */
     GridObject addCircle(int x, int y, int size, Color color = BLACK, GridObjectCallback init = nullptr,
                          GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /** 建立以網格座標為中心的實心三角形；size 是像素外徑且必須大於 0。 */
     GridObject addTriangle(int x, int y, int size, Color color = BLACK, GridObjectCallback init = nullptr,
                            GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /** 建立以網格座標為中心的實心五角形；size 是像素外徑且必須大於 0。 */
     GridObject addPentagon(int x, int y, int size, Color color = BLACK, GridObjectCallback init = nullptr,
                            GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /** 建立以網格座標為中心的實心五角星；size 是像素外徑且必須大於 0。 */
     GridObject addStar(int x, int y, int size, Color color = BLACK, GridObjectCallback init = nullptr,
                        GridObjectCallback update = nullptr, CollisionCallback collide = nullptr);
+
+    /**
+     * 建立空白迷宮。
+     * @param cols 迷宮欄數，範圍為 1 到 64。
+     * @param rows 迷宮列數，範圍為 1 到 64。
+     * @param init 迷宮啟用前呼叫一次的函式；可以是 nullptr。
+     * @param update 每幀更新時呼叫的函式；可以是 nullptr。
+     * @return 操作新迷宮的 handler。
+     * @throws std::invalid_argument 若尺寸超出範圍。
+     */
     Maze addMaze(int cols, int rows, MazeCallback init = nullptr, MazeCallback update = nullptr);
+
+    /** 移除全部 GridObject 與 Maze；不影響 Overlay 或已載入的素材。 */
     void clearObjects();
 
+    /**
+     * 建立以像素座標繪製的 32×32 圖片覆蓋元件。
+     * @param image 素材名稱。
+     * @param init 元件啟用前呼叫一次的函式；可以是 nullptr。
+     * @param update 每幀更新時呼叫的函式；可以是 nullptr。
+     * @return 操作新圖片元件的 handler。
+     */
     Overlay addOverlay(const std::string& image, OverlayCallback init = nullptr, OverlayCallback update = nullptr);
+
+    /**
+     * 建立以像素座標繪製的單行文字。
+     * @param text 顯示文字。
+     * @param x 左上角的視窗像素 x 座標。
+     * @param y 左上角的視窗像素 y 座標。
+     * @param font_size 字型大小，必須大於 0。
+     * @param color 文字顏色。
+     * @param init 元件啟用前呼叫一次的函式；可以是 nullptr。
+     * @param update 每幀更新時呼叫的函式；可以是 nullptr。
+     * @return 操作新文字元件的 handler。
+     * @throws std::invalid_argument 若 font_size 小於 1。
+     */
     Overlay addTextOverlay(const std::string& text, int x, int y, int font_size = 20, Color color = BLACK,
                            OverlayCallback init = nullptr, OverlayCallback update = nullptr);
+
+    /**
+     * 建立可使用滑鼠點擊的文字按鈕。
+     * @param text 按鈕文字。
+     * @param x 左上角的視窗像素 x 座標。
+     * @param y 左上角的視窗像素 y 座標。
+     * @param width 按鈕像素寬度，必須大於 0。
+     * @param height 按鈕像素高度，必須大於 0。
+     * @param click 點擊按鈕時呼叫的函式；可以是 nullptr。
+     * @return 操作新按鈕的 handler。
+     * @throws std::invalid_argument 若 width 或 height 小於 1。
+     */
     Overlay addButton(const std::string& text, int x, int y, int width, int height, OverlayCallback click = nullptr);
+
+    /** 移除全部 Overlay；不影響遊戲物件、迷宮或已載入的素材。 */
     void clearOverlays();
 
+    /** @return 指定鍵是否在目前幀剛被按下。 */
     bool keyPressed(int key) const;
+
+    /** @return 指定鍵目前是否持續被按住。 */
     bool keyDown(int key) const;
+
+    /** @return 指定滑鼠按鍵是否在目前幀剛被按下。 */
     bool mousePressed(int button) const;
+
+    /** @return 滑鼠的視窗像素 x 座標。 */
     int mouseX() const;
+
+    /** @return 滑鼠的視窗像素 y 座標。 */
     int mouseY() const;
+
+    /** @return 視窗初始化後經過的秒數。 */
     double time() const;
+
+    /** @return min 到 max 之間的隨機整數，包含兩端。 */
     int random(int min, int max) const;
 
+    /** 執行遊戲主迴圈，直到視窗關閉。 */
     void run();
 
     /** @cond */
@@ -180,7 +284,7 @@ private:
     std::vector<std::uint64_t> pending_overlays_;
 };
 
-// GameEngineImpl construction and lookup
+// 引擎建立與實體查找 -----------------------------------------------------
 
 inline GameEngineImpl::GameEngineImpl(int cols, int rows, int grid_size)
     : cols_(cols), rows_(rows), grid_size_(grid_size) {
@@ -253,7 +357,7 @@ inline const MazeImpl& GameEngineImpl::requireMaze(std::uint64_t id) const {
     return found->second;
 }
 
-// Creation and ownership
+// 建立、複製與移除 -------------------------------------------------------
 
 inline GridObject GameEngineImpl::addObject(const std::string& image, GridObjectCallback init,
                                             GridObjectCallback update, CollisionCallback collide) {
@@ -415,7 +519,7 @@ inline void GameEngineImpl::clearOverlays() {
     pending_overlays_.clear();
 }
 
-// Lifecycle
+// 生命週期 -------------------------------------------------------------------
 
 inline void GameEngineImpl::initializeWorld(WorldId item) {
     if (item.type == WorldType::Object) {
@@ -566,7 +670,8 @@ inline void GameEngineImpl::tick() {
 }
 
 inline void GameEngineImpl::run() {
-    initializePending();  // tick 0
+    // 第一幀更新前先讓所有預先建立的實體完成初始化。
+    initializePending();
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop_arg([](void* self) { static_cast<GameEngineImpl*>(self)->tick(); }, this, 0, 1);
 #else
@@ -574,7 +679,7 @@ inline void GameEngineImpl::run() {
 #endif
 }
 
-// Drawing
+// 繪製 -----------------------------------------------------------------------
 
 inline void GameEngineImpl::draw(const std::vector<WorldId>& frame_world,
                                  const std::vector<std::uint64_t>& frame_overlays) {
@@ -700,7 +805,7 @@ inline void GameEngineImpl::drawGrid() {
     for (int y = 0; y <= rows_; ++y) DrawLine(0, y * grid_size_, cols_ * grid_size_, y * grid_size_, color);
 }
 
-// MazeImpl
+// MazeImpl ---------------------------------------------------------------------
 
 inline MazeImpl::MazeImpl(int cols, int rows) : width_(cols), height_(rows) {
     if (cols < 1 || rows < 1 || cols > kMaxWidth || rows > kMaxHeight) {
@@ -727,7 +832,7 @@ inline std::pair<int, int> MazeImpl::shapeFor(int mask) {
 }
 /** @endcond */
 
-// GridObject handler
+// GridObject handler -----------------------------------------------------------
 
 /** @cond */
 inline GridObject::GridObject(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id)
@@ -848,7 +953,7 @@ inline void GridObject::setCollideFunction(CollisionCallback function) {
     lockEngine()->requireObject(id_).collide_ = function;
 }
 
-// Overlay handler
+// Overlay handler --------------------------------------------------------------
 
 /** @cond */
 inline Overlay::Overlay(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id) : engine_(std::move(engine)), id_(id) {}
@@ -970,7 +1075,7 @@ inline void Overlay::setClickFunction(OverlayCallback function) {
     overlay.click_ = function;
 }
 
-// Maze handler
+// Maze handler -----------------------------------------------------------------
 
 /** @cond */
 inline Maze::Maze(std::weak_ptr<GameEngineImpl> engine, std::uint64_t id) : engine_(std::move(engine)), id_(id) {}
@@ -1022,7 +1127,7 @@ inline int Maze::height() const { return lockEngine()->requireMaze(id_).height_;
 inline void Maze::setInitFunction(MazeCallback function) { lockEngine()->requireMaze(id_).init_ = function; }
 inline void Maze::setUpdateFunction(MazeCallback function) { lockEngine()->requireMaze(id_).update_ = function; }
 
-// GameEngine handler
+// GameEngine handler -----------------------------------------------------------
 
 inline GameEngine::GameEngine(int cols, int rows, int grid_size)
     : impl_(std::shared_ptr<GameEngineImpl>(new GameEngineImpl(cols, rows, grid_size))) {}

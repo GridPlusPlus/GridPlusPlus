@@ -13,8 +13,13 @@
 
 namespace gridpp {
 
+/** 以字串 key 儲存類型固定的物件自訂狀態。 */
 class GridValueStore {
 public:
+    /**
+     * 儲存或取代一筆值。
+     * @throws std::runtime_error 若同一 key 已使用不同類型。
+     */
     template <typename T>
     void set(const std::string& key, T value) {
         const auto found = values_.find(key);
@@ -24,6 +29,11 @@ public:
         values_[key] = std::move(value);
     }
 
+    /**
+     * 讀取一筆值。
+     * @return 找到 key 時為 0；找不到時將 value 清為預設值並回傳 1。
+     * @throws std::runtime_error 若取值類型與儲存類型不同。
+     */
     template <typename T>
     int get(const std::string& key, T& value) const {
         const auto found = values_.find(key);

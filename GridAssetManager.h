@@ -20,7 +20,7 @@
 
 namespace gridpp {
 
-// 從素材資料庫建立 raylib 材質。
+/** 從 Grid++ SQLite 素材包建立並管理 raylib texture。 */
 class GridAssetManager {
 public:
     GridAssetManager() = default;
@@ -29,23 +29,34 @@ public:
     GridAssetManager(const GridAssetManager&) = delete;
     GridAssetManager& operator=(const GridAssetManager&) = delete;
 
+    /**
+     * 載入新素材包；全部素材成功後才取代目前內容。
+     * @throws std::runtime_error 若檔案無法讀取、SQLite 格式無效或缺少 `sprites` 資料表。
+     */
     void Load(const std::filesystem::path& path);
 
+    /**
+     * @return 名稱唯一的 texture。
+     * @throws std::runtime_error 若名稱不存在或有重複記錄。
+     */
     Texture2D Get(const std::string& name) const;
+
+    /** @return 是否至少有一筆指定名稱的素材。 */
     bool Has(const std::string& name) const;
 
+    /** 釋放全部 GPU texture；可重複呼叫。 */
     void Clear() noexcept;
 
 private:
     static void Unload(std::multimap<std::string, Texture2D>& source) noexcept;
 
-    // 將 32×32 RGBA 資料上傳為 raylib texture。
+    /** 將 32×32 RGBA 資料上傳為 raylib texture。 */
     static Texture2D MakeTexture(const std::vector<unsigned char>& rgba);
 
     std::multimap<std::string, Texture2D> textures_;
 };
 
-// Inline definitions
+// Inline definitions ---------------------------------------------------------
 
 inline GridAssetManager::~GridAssetManager() { Clear(); }
 
@@ -90,13 +101,13 @@ inline void GridAssetManager::Load(const std::filesystem::path& path) {
             }
         });
 
-        // 載入後檢查重複名稱。
+        // 延後檢查可以在離開 SQLite reader 後一次列出每個重複名稱。
         for (auto it = loaded_textures.begin(); it != loaded_textures.end();) {
             const std::string& key = it->first;
             const std::size_t count = loaded_textures.count(key);
             if (count > 1) {
-                std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << count << " 次！之後呼叫 Get(\"" << key
-                          << "\") 會直接報錯。\n";
+                std::cout << "Grid++ 警告：素材名稱 '" << key << "' 重複了 " << count
+                          << " 次！之後呼叫 Get(\"" << key << "\") 會直接報錯。\n";
             }
             it = loaded_textures.upper_bound(key);
         }

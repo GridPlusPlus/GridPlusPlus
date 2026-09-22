@@ -17,20 +17,29 @@
 
 namespace gridpp::internal {
 
-// 解碼後的 record 欄位。
+/** SQLite record 解碼後的單一欄位。 */
 struct Column {
-    int kind = 2;  // 0 整數，1 文字或 BLOB，2 NULL，3 浮點數
+    /** 欄位類型：0 整數、1 文字或 BLOB、2 NULL、3 浮點數。 */
+    int kind = 2;
     std::int64_t integer = 0;
     std::vector<unsigned char> bytes;
 };
 
+/**
+ * 直接從記憶體中讀取 SQLite 3 table B-tree 的最小化唯讀 reader。
+ *
+ * 此 reader 只實作 Grid++ 素材包所需的頁面與 record 格式，不是通用 SQL 引擎。
+ */
 class SqliteReader {
 public:
-    // data 的生命週期必須長於 reader。
+    /** @param data SQLite 檔案內容；其生命週期必須長於 reader。 */
     explicit SqliteReader(const std::vector<unsigned char>& data);
     SqliteReader(std::vector<unsigned char>&&) = delete;
 
-    // 從 root page 走訪 table B-tree。
+    /**
+     * 以 rowid 順序走訪 table B-tree，並將每筆解碼後的 record 傳給 callback。
+     * @param root_page table B-tree 的根頁編號；SQLite 頁碼從 1 開始。
+     */
     void WalkTable(std::uint32_t root_page,
                    const std::function<void(std::int64_t, const std::vector<Column>&)>& callback) const;
 
@@ -58,7 +67,7 @@ private:
     std::size_t usable_size_ = 0;
 };
 
-// Inline definitions
+// Inline definitions ---------------------------------------------------------
 
 inline SqliteReader::SqliteReader(const std::vector<unsigned char>& data) : data_(data) {
     static constexpr unsigned char kMagic[] = "SQLite format 3";
@@ -224,7 +233,7 @@ inline void SqliteReader::WalkTablePage(std::uint32_t page_number,
 
     const std::size_t start = PageOffset(page_number);
     const std::size_t end = start + usable_size_;
-    // 第 1 頁包含 100-byte database header。
+    // 第 1 頁的 B-tree header 位於 100-byte database header 之後。
     const std::size_t header = start + (page_number == 1 ? 100 : 0);
     RequireRange(header, 8, end, "B-tree header");
 
@@ -237,7 +246,7 @@ inline void SqliteReader::WalkTablePage(std::uint32_t page_number,
     const std::size_t cell_pointers = header + header_size;
     RequireRange(cell_pointers, static_cast<std::size_t>(cell_count) * 2, end, "cell pointer array");
 
-    // Interior page 先走 cell children，再走 right-most child。
+    // Interior page 先依 cell 順序走訪左側 children，最後才走訪 right-most child。
     if (type == 0x05) {
         for (std::uint16_t i = 0; i < cell_count; ++i) {
             const std::size_t cell = start + ReadBigEndianUint16(cell_pointers + i * 2);
@@ -251,7 +260,7 @@ inline void SqliteReader::WalkTablePage(std::uint32_t page_number,
         return;
     }
 
-    // Leaf page 包含 rowid 與 record payload。
+    // Leaf page 的每個 cell 依序儲存 payload length、rowid 與 record payload。
     for (std::uint16_t i = 0; i < cell_count; ++i) {
         std::size_t cell = start + ReadBigEndianUint16(cell_pointers + i * 2);
         if (cell < cell_pointers + static_cast<std::size_t>(cell_count) * 2) Fail("leaf table cell 與 header 重疊");
@@ -261,7 +270,7 @@ inline void SqliteReader::WalkTablePage(std::uint32_t page_number,
         if (payload_length_64 > data_.size()) Fail("payload length 無效");
         const std::size_t payload_length = static_cast<std::size_t>(payload_length_64);
 
-        // 依 SQLite 規格計算 leaf page 的 local payload。
+        // 依 SQLite file format 的 table leaf 公式計算留在本頁的 payload 大小。
         const std::size_t max_local = usable_size_ - 35;
         std::size_t local = payload_length;
         if (payload_length > max_local) {
@@ -276,7 +285,7 @@ inline void SqliteReader::WalkTablePage(std::uint32_t page_number,
 
         std::uint32_t overflow_page = overflow_pointer != 0 ? ReadBigEndianUint32(cell + local) : 0;
         std::size_t remaining = payload_length - local;
-        // Overflow page 前 4 bytes 是 next page number。
+        // 每個 overflow page 的前 4 bytes 指向下一頁，其餘空間才是 payload。
         while (remaining > 0) {
             if (overflow_page == 0) Fail("overflow chain 提早結束");
             MarkPage(overflow_page, visited);

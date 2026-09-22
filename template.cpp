@@ -1,4 +1,6 @@
-// Grid++ minimal project. See docs/01-getting-started/02-hello-gridpp.md.
+/** @file template.cpp
+ *  @brief Grid++ 最小專案範本；完整教學見 docs/01-getting-started/02-hello-gridpp.md。
+ */
 #include "GridPlusPlus.h"
 
 using gridpp::GameEngine;
