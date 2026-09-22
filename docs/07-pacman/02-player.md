@@ -1,77 +1,25 @@
 # 玩家移動
 
-Pacman 會持續沿目前方向移動。玩家可以在抵達路口前先按下方向鍵；程式記住這個輸入，等目標方向不再是牆時完成轉向。這需要保存目前方向、玩家希望前往的方向，以及控制移動速度的計時器。
+玩家把計時器、目前方向與希望方向放在自己的狀態區：
 
-`Pacman` 繼承 `GridObject`，三項資料都成為每個實例的成員變數。四個方向以 0～3 表示，並使用兩個陣列取得 x、y 位移。以下是完整程式中的類別節錄；方向常數與共享狀態位於它前面，`BuildLevel()` 則在後面建立實例。
-
-```cpp title="main.cpp 節錄：方向常數與 Pacman 類別"
-constexpr int kDirectionX[4] = {1, 0, -1, 0};
-constexpr int kDirectionY[4] = {0, -1, 0, 1};
-
-class Pacman : public GridObject {
-public:
-    Pacman(int x, int y) : GridObject("pacman", x, y) {
-        set_tag("pacman");
-    }
-
-    void OnUpdate() override {
-        if (g_state != GameState::kPlaying || g_paused) return;
-
-        if (IsKeyDown(KEY_RIGHT)) wanted_direction_ = 0;
-        if (IsKeyDown(KEY_UP)) wanted_direction_ = 1;
-        if (IsKeyDown(KEY_LEFT)) wanted_direction_ = 2;
-        if (IsKeyDown(KEY_DOWN)) wanted_direction_ = 3;
-
-        if (++timer_ < 8) return;
-        timer_ = 0;
-
-        if (wanted_direction_ >= 0 &&
-            !g_maze->IsWall(x() + kDirectionX[wanted_direction_],
-                            y() + kDirectionY[wanted_direction_])) {
-            direction_ = wanted_direction_;
-        }
-
-        if (direction_ >= 0 &&
-            !g_maze->IsWall(x() + kDirectionX[direction_],
-                            y() + kDirectionY[direction_])) {
-            Move(kDirectionX[direction_], kDirectionY[direction_]);
-            set_direction(direction_);
-        }
-    }
-
-private:
-    int timer_ = 0;
-    int direction_ = -1;
-    int wanted_direction_ = -1;
-};
+```cpp
+player.set("timer", 0);
+player.set("direction", -1);
+player.set("wantedDirection", -1);
 ```
 
-每幀都讀取按鍵，讓短暫輸入能先更新 `wanted_direction_`，而實際移動只在計數累積到 8 幀時發生；到達移動時機後，程式先嘗試採用希望的方向，再檢查目前方向能否前進。這是為了讓範例保持簡單而採用的幀數計時，因此實際速度會隨畫面更新率改變；如果遊戲需要在不同電腦上維持相同的每秒速度，便應改用 `GetFrameTime()` 累積經過時間，或像打地鼠一樣以 `GetTime()` 比較下一次行動時刻。`GridMaze::IsWall()` 對地圖外座標回傳 `true`，所以同一段判斷也一併處理邊界。
+Update 每幀先記住按鍵方向，到了移動時機再檢查牆：
 
-`set_direction(direction_)` 只旋轉素材，不會移動物件。方向編號和素材旋轉規則使用相同的右、上、左、下順序，因此一張朝右的 Pacman 圖片可以顯示四個方向。
+```cpp
+if (game.keyDown(KEY_RIGHT)) wanted_direction = 0;
+if (game.keyDown(KEY_UP)) wanted_direction = 1;
+if (game.keyDown(KEY_LEFT)) wanted_direction = 2;
+if (game.keyDown(KEY_DOWN)) wanted_direction = 3;
 
-玩家在掃描地圖時先以 `Pacman*` 暫存，最後才生成：
-
-```cpp title="main.cpp 節錄：BuildLevel() 暫存並最後生成玩家"
-Pacman* player = nullptr;
-
-// 放在逐格掃描地圖的迴圈內。
-if (tile == 2) {
-    player = new Pacman(x, y);
-}
-
-// 放在逐格掃描完成之後。
-if (player != nullptr) {
-    g_player = player;
-    game.Spawn(player);
+if (!maze.isWall(self.x() + dx[direction], self.y() + dy[direction])) {
+    self.move(dx[direction], dy[direction]);
+    self.setDirection(direction);
 }
 ```
 
-`LevelMap` 已保證恰好有一個玩家，因此有效地圖會建立 `player`。把玩家留到最後生成，也讓預設 z-index 相同時的玩家顯示在豆子和鬼上方。`g_player` 是 Ghost 查詢位置的借用指標，重新建立關卡前必須清除。
-
-## 本節小結
-
-- `wanted_direction_` 保存尚未能執行的轉向輸入。
-- `direction_` 保存目前移動方向，`timer_` 控制移動間隔。
-- 角色在移動前使用 `GridMaze::IsWall()` 查詢目標格。
-- `set_direction()` 旋轉素材，`Move()` 修改網格座標。
+把希望方向先保存起來，玩家可以在到達路口前先按鍵，轉彎手感會比只在移動當幀讀鍵自然。
