@@ -6,10 +6,10 @@
 #include "GridPlusPlus.h"
 #include "LevelMap.h"
 
-using gridpp::Game;
-using gridpp::MazeHandler;
-using gridpp::ObjectHandler;
-using gridpp::OverlayHandler;
+using gridpp::GameEngine;
+using gridpp::GridObject;
+using gridpp::Maze;
+using gridpp::Overlay;
 using pacman_example::LevelMap;
 using pacman_example::LoadLevelMap;
 
@@ -28,28 +28,28 @@ enum class GameState {
 GameState game_state = GameState::kStart;
 int pellets_left = 0;
 bool paused = false;
-MazeHandler maze;
-ObjectHandler player;
+Maze maze;
+GridObject player;
 LevelMap level;
 
 int ManhattanDistance(int from_x, int from_y, int to_x, int to_y) {
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
 }
 
-std::string TypeOf(ObjectHandler object) {
+std::string TypeOf(GridObject object) {
     std::string type;
     object.get("type", type);
     return type;
 }
 
-void EatPellet(Game, ObjectHandler self, ObjectHandler other) {
+void EatPellet(GameEngine, GridObject self, GridObject other) {
     if (TypeOf(other) != "pacman") return;
 
     self.remove();
     if (--pellets_left <= 0) game_state = GameState::kWon;
 }
 
-void MoveGhost(Game game, ObjectHandler self) {
+void MoveGhost(GameEngine game, GridObject self) {
     if (game_state != GameState::kPlaying || paused || !player.exists()) return;
 
     long long timer = 0;
@@ -98,7 +98,7 @@ void MoveGhost(Game game, ObjectHandler self) {
     self.move(kDirectionX[picked], kDirectionY[picked]);
 }
 
-void MovePlayer(Game game, ObjectHandler self) {
+void MovePlayer(GameEngine game, GridObject self) {
     if (game_state != GameState::kPlaying || paused) return;
 
     long long wanted_direction = -1;
@@ -130,11 +130,11 @@ void MovePlayer(Game game, ObjectHandler self) {
     }
 }
 
-void HitPlayer(Game, ObjectHandler, ObjectHandler other) {
+void HitPlayer(GameEngine, GridObject, GridObject other) {
     if (TypeOf(other) == "ghost") game_state = GameState::kLost;
 }
 
-void BuildLevel(Game game) {
+void BuildLevel(GameEngine game) {
     game.clearObjects();
     pellets_left = 0;
     paused = false;
@@ -152,7 +152,7 @@ void BuildLevel(Game game) {
             if (tile == 1) {
                 maze.setWall(x, y);
             } else if (tile == 0) {
-                ObjectHandler pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
+                GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
                 pellet.setPosition(x, y);
                 pellet.set("type", "pellet");
                 ++pellets_left;
@@ -160,7 +160,7 @@ void BuildLevel(Game game) {
                 player_x = x;
                 player_y = y;
             } else if (tile == 3) {
-                ObjectHandler ghost = game.addObject("ghost", nullptr, MoveGhost);
+                GridObject ghost = game.addObject("ghost", nullptr, MoveGhost);
                 ghost.setPosition(x, y);
                 ghost.setColor(ghost_colors[ghost_count % 4]);
                 ghost.set("type", "ghost");
@@ -180,7 +180,7 @@ void BuildLevel(Game game) {
     player.set("wantedDirection", -1);
 }
 
-void UpdateScore(Game, OverlayHandler self) {
+void UpdateScore(GameEngine, Overlay self) {
     if (game_state != GameState::kPlaying) {
         self.hide();
         return;
@@ -189,7 +189,7 @@ void UpdateScore(Game, OverlayHandler self) {
     self.show();
 }
 
-void UpdateStatus(Game, OverlayHandler self) {
+void UpdateStatus(GameEngine, Overlay self) {
     if (game_state == GameState::kPlaying) {
         self.hide();
         return;
@@ -204,30 +204,30 @@ void UpdateStatus(Game, OverlayHandler self) {
     self.show();
 }
 
-void StartGame(Game, OverlayHandler) { game_state = GameState::kPlaying; }
+void StartGame(GameEngine, Overlay) { game_state = GameState::kPlaying; }
 
-void RestartGame(Game game, OverlayHandler) {
+void RestartGame(GameEngine game, Overlay) {
     BuildLevel(game);
     game_state = GameState::kPlaying;
 }
 
-void TogglePause(Game, OverlayHandler) { paused = !paused; }
+void TogglePause(GameEngine, Overlay) { paused = !paused; }
 
-void UpdateStartButton(Game, OverlayHandler self) {
+void UpdateStartButton(GameEngine, Overlay self) {
     if (game_state == GameState::kStart)
         self.show();
     else
         self.hide();
 }
 
-void UpdateRestartButton(Game, OverlayHandler self) {
+void UpdateRestartButton(GameEngine, Overlay self) {
     if (game_state == GameState::kWon || game_state == GameState::kLost)
         self.show();
     else
         self.hide();
 }
 
-void UpdatePauseButton(Game, OverlayHandler self) {
+void UpdatePauseButton(GameEngine, Overlay self) {
     if (game_state != GameState::kPlaying) {
         self.hide();
         return;
@@ -242,7 +242,7 @@ int main() {
     try {
         level = LoadLevelMap("map.txt");
 
-        Game game(level.cols, level.rows, 32);
+        GameEngine game(level.cols, level.rows, 32);
         game.loadAssets("pacman.db");
         game.setBackgroundColor(BLACK);
         BuildLevel(game);
@@ -256,12 +256,11 @@ int main() {
         game.addTextOverlay("Pellets: 0", 8, 8, 20, YELLOW, nullptr, UpdateScore);
         game.addTextOverlay("PAC-MAN", button_x, button_y - 70, 40, YELLOW, nullptr, UpdateStatus);
 
-        OverlayHandler start = game.addButton("Start", button_x, button_y, kButtonWidth, kButtonHeight, StartGame);
+        Overlay start = game.addButton("Start", button_x, button_y, kButtonWidth, kButtonHeight, StartGame);
         start.setUpdateFunction(UpdateStartButton);
-        OverlayHandler restart =
-            game.addButton("Restart", button_x, button_y, kButtonWidth, kButtonHeight, RestartGame);
+        Overlay restart = game.addButton("Restart", button_x, button_y, kButtonWidth, kButtonHeight, RestartGame);
         restart.setUpdateFunction(UpdateRestartButton);
-        OverlayHandler pause = game.addButton("Pause", level.cols * 32 - 88, 6, 82, 24, TogglePause);
+        Overlay pause = game.addButton("Pause", level.cols * 32 - 88, 6, 82, 24, TogglePause);
         pause.setUpdateFunction(UpdatePauseButton);
 
         game.run();

@@ -1,12 +1,12 @@
-// Pac-Man 入門版：只使用 Game、Handler、全域變數與普通函式。
+// Pac-Man 入門版：只使用 GameEngine、Handler、全域變數與普通函式。
 #include <cstdio>
 #include <string>
 
 #include "GridPlusPlus.h"
 
-using gridpp::Game;
-using gridpp::MazeHandler;
-using gridpp::ObjectHandler;
+using gridpp::GameEngine;
+using gridpp::GridObject;
+using gridpp::Maze;
 
 namespace {
 
@@ -23,12 +23,12 @@ constexpr int kMap[kHeight][kWidth] = {
 int game_state = 0;  // 0=遊戲中  1=獲勝  2=失敗
 int pellets_left = 0;
 int ghost_timer = 0;
-MazeHandler maze;
-ObjectHandler player;
+Maze maze;
+GridObject player;
 
 bool IsWall(int x, int y) { return maze.isWall(x, y); }
 
-void MovePlayer(Game game, ObjectHandler self) {
+void MovePlayer(GameEngine game, GridObject self) {
     if (game_state != 0) return;
 
     const int x = self.x();
@@ -39,7 +39,7 @@ void MovePlayer(Game game, ObjectHandler self) {
     if (game.keyPressed(KEY_UP) && !IsWall(x, y - 1)) self.move(0, -1);
 }
 
-void HitPlayer(Game, ObjectHandler, ObjectHandler other) {
+void HitPlayer(GameEngine, GridObject, GridObject other) {
     std::string type;
     other.get("type", type);
     if (type != "ghost") return;
@@ -48,7 +48,7 @@ void HitPlayer(Game, ObjectHandler, ObjectHandler other) {
     std::printf("被鬼抓到了，失敗！\n");
 }
 
-void EatPellet(Game, ObjectHandler self, ObjectHandler other) {
+void EatPellet(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
     if (type != "player") return;
@@ -61,7 +61,7 @@ void EatPellet(Game, ObjectHandler self, ObjectHandler other) {
     }
 }
 
-void MoveGhost(Game, ObjectHandler self) {
+void MoveGhost(GameEngine, GridObject self) {
     if (game_state != 0 || !player.exists()) return;
     if (++ghost_timer < 15) return;
     ghost_timer = 0;
@@ -81,7 +81,7 @@ void MoveGhost(Game, ObjectHandler self) {
 }  // namespace
 
 int main() {
-    Game game(kWidth, kHeight, 40);
+    GameEngine game(kWidth, kHeight, 40);
     game.loadAssets("pacman.db");
     game.setBackgroundColor(BLACK);
 
@@ -94,7 +94,7 @@ int main() {
             if (tile == 1) {
                 maze.setWall(x, y);
             } else if (tile == 0) {
-                ObjectHandler pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
+                GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
                 pellet.setPosition(x, y);
                 pellet.set("type", "pellet");
                 ++pellets_left;
@@ -103,7 +103,7 @@ int main() {
                 player.setPosition(x, y);
                 player.set("type", "player");
             } else if (tile == 3) {
-                ObjectHandler ghost = game.addObject("ghost", nullptr, MoveGhost);
+                GridObject ghost = game.addObject("ghost", nullptr, MoveGhost);
                 ghost.setPosition(x, y);
                 ghost.setColor(RED);
                 ghost.set("type", "ghost");

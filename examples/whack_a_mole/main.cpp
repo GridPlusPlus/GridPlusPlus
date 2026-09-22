@@ -4,17 +4,17 @@
 
 #include "GridPlusPlus.h"
 
-using gridpp::Game;
-using gridpp::ObjectHandler;
-using gridpp::OverlayHandler;
+using gridpp::GameEngine;
+using gridpp::GridObject;
+using gridpp::Overlay;
 
 int score = 0;
 double end_time = 0.0;
 double next_move = 0.0;
-OverlayHandler score_label;
-OverlayHandler time_label;
+Overlay score_label;
+Overlay time_label;
 
-void ResetGame(Game game, ObjectHandler mole) {
+void ResetGame(GameEngine game, GridObject mole) {
     score = 0;
     end_time = game.time() + 30.0;
     next_move = 0.0;
@@ -23,9 +23,9 @@ void ResetGame(Game game, ObjectHandler mole) {
     time_label.setText("Time: 30");
 }
 
-void InitMole(Game game, ObjectHandler mole) { ResetGame(game, mole); }
+void InitMole(GameEngine game, GridObject mole) { ResetGame(game, mole); }
 
-void UpdateMole(Game game, ObjectHandler mole) {
+void UpdateMole(GameEngine game, GridObject mole) {
     const double remaining = std::max(0.0, end_time - game.time());
     const int seconds = static_cast<int>(std::ceil(remaining));
     time_label.setText("Time: " + std::to_string(seconds));
@@ -51,7 +51,7 @@ void UpdateMole(Game game, ObjectHandler mole) {
 }
 
 int main() {
-    Game game(8, 8, 64);
+    GameEngine game(8, 8, 64);
     game.showGrid(true);
 
     score_label = game.addTextOverlay("Score: 0", 12, 12, 24);
