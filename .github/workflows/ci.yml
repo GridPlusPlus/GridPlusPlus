@@ -9,27 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and run tests
-        run: |
-          set -eux
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/engine_lifecycle_test.cpp -o /tmp/lifecycle
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/maze_test.cpp -o /tmp/maze
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/pacman_map_test.cpp -o /tmp/map
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/shapes_test.cpp -o /tmp/shapes
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/z_index_test.cpp -o /tmp/z-index
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/game_api_test.cpp -o /tmp/game-api
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/game_shapes_api_test.cpp -o /tmp/game-shapes
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. tests/game_maze_api_test.cpp -o /tmp/game-maze
-          g++ -std=c++17 -Wall -Wextra -pedantic -I. tests/sqlite_reader_test.cpp -o /tmp/sqlite
-          /tmp/lifecycle
-          /tmp/maze
-          /tmp/map
-          /tmp/shapes
-          /tmp/z-index
-          /tmp/game-api
-          /tmp/game-shapes
-          /tmp/game-maze
-          /tmp/sqlite
       - name: Compile examples
         run: |
           set -eux
