@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "GridPlusPlus.h"
+      - "Game.h"
       - "GridEngine.h"
       - "GridObject.h"
       - "Overlay.h"
@@ -36,7 +37,7 @@ jobs:
 
       - name: Copy template files
         run: |
-          cp source/GridPlusPlus.h source/GridEngine.h source/GridObject.h \
+          cp source/GridPlusPlus.h source/Game.h source/GridEngine.h source/GridObject.h \
             source/Overlay.h source/GridMaze.h source/GridShapes.h \
             source/GridAssetManager.h source/GridSQLite.h source/LICENSE template/
 
@@ -51,7 +52,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add GridPlusPlus.h GridEngine.h GridObject.h Overlay.h GridMaze.h \
+          git add GridPlusPlus.h Game.h GridEngine.h GridObject.h Overlay.h GridMaze.h \
             GridShapes.h GridAssetManager.h GridSQLite.h LICENSE
           git commit -m "Sync Grid++ files"
           git push
