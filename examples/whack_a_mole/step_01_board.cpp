@@ -1,10 +1,10 @@
 #include "GridPlusPlus.h"
 
-using gridpp::GridEngine;
+using gridpp::Game;
 
 int main() {
-    GridEngine game(8, 8, 64);
-    game.set_show_grid(true);
-    game.Run();
+    Game game(8, 8, 64);
+    game.showGrid(true);
+    game.run();
     return 0;
 }

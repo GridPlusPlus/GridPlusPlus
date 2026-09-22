@@ -4,65 +4,60 @@
 #include <cmath>
 #include <string>
 
-using gridpp::GridEngine;
-using gridpp::GridObject;
-using gridpp::Label;
+using gridpp::Game;
+using gridpp::ObjectHandler;
+using gridpp::OverlayHandler;
 
 int score = 0;
 double end_time = 0.0;
 double next_move = 0.0;
-Label* score_label = nullptr;
-Label* time_label = nullptr;
+OverlayHandler score_label;
+OverlayHandler time_label;
 
-void ResetGame(GridObject* mole) {
+void ResetGame(Game game, ObjectHandler mole) {
     score = 0;
-    end_time = GetTime() + 30.0;
+    end_time = game.time() + 30.0;
     next_move = 0.0;
-    mole->set_visible(true);
-    score_label->set_text("Score: 0");
-    time_label->set_text("Time: 30");
+    mole.show();
+    score_label.setText("Score: 0");
+    time_label.setText("Time: 30");
 }
 
-void UpdateMole(GridObject* mole) {
-    const double remaining = std::max(0.0, end_time - GetTime());
+void InitMole(Game game, ObjectHandler mole) { ResetGame(game, mole); }
+
+void UpdateMole(Game game, ObjectHandler mole) {
+    const double remaining = std::max(0.0, end_time - game.time());
     const int seconds = static_cast<int>(std::ceil(remaining));
-    time_label->set_text("Time: " + std::to_string(seconds));
+    time_label.setText("Time: " + std::to_string(seconds));
 
     if (remaining <= 0.0) {
-        mole->set_visible(false);
-        if (IsKeyPressed(KEY_R)) ResetGame(mole);
+        mole.hide();
+        if (game.keyPressed(KEY_R)) ResetGame(game, mole);
         return;
     }
 
-    const Vector2 mouse = GetMousePosition();
-    const int grid_size = mole->engine()->grid_size();
-    const int mouse_x = static_cast<int>(mouse.x) / grid_size;
-    const int mouse_y = static_cast<int>(mouse.y) / grid_size;
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mouse_x == mole->x() && mouse_y == mole->y()) {
+    const int mouse_x = game.mouseX() / game.gridSize();
+    const int mouse_y = game.mouseY() / game.gridSize();
+    if (game.mousePressed(MOUSE_BUTTON_LEFT) && mouse_x == mole.x() && mouse_y == mole.y()) {
         ++score;
-        score_label->set_text("Score: " + std::to_string(score));
+        score_label.setText("Score: " + std::to_string(score));
         next_move = 0.0;
     }
 
-    if (GetTime() >= next_move) {
-        mole->set_x(GetRandomValue(0, mole->engine()->cols() - 1));
-        mole->set_y(GetRandomValue(0, mole->engine()->rows() - 1));
-        next_move = GetTime() + 1.0;
+    if (game.time() >= next_move) {
+        mole.setPosition(game.random(0, game.cols() - 1), game.random(0, game.rows() - 1));
+        next_move = game.time() + 1.0;
     }
 }
 
 int main() {
-    GridEngine game(8, 8, 64);
-    game.set_show_grid(true);
+    Game game(8, 8, 64);
+    game.showGrid(true);
 
-    score_label = new Label("Score: 0", 12, 12, 24, BLACK);
-    time_label = new Label("Time: 30", 12, 44, 24, BLACK);
-    game.AddOverlay(score_label);
-    game.AddOverlay(time_label);
+    score_label = game.addTextOverlay("Score: 0", 12, 12, 24);
+    time_label = game.addTextOverlay("Time: 30", 12, 44, 24);
+    game.addObject("mole", InitMole, UpdateMole);
 
-    GridObject* mole = game.Spawn("mole", 0, 0, UpdateMole);
-    ResetGame(mole);
-    game.Run();
+    game.run();
     return 0;
 }
