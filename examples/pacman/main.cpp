@@ -85,8 +85,8 @@ void MoveGhost(Game game, ObjectHandler self) {
         int best_distance = 1 << 30;
         for (int i = 0; i < choice_count; ++i) {
             const int direction = choices[i];
-            const int distance = ManhattanDistance(self.x() + kDirectionX[direction],
-                                                   self.y() + kDirectionY[direction], player.x(), player.y());
+            const int distance = ManhattanDistance(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction],
+                                                   player.x(), player.y());
             if (distance < best_distance) {
                 best_distance = distance;
                 picked = direction;
@@ -124,8 +124,7 @@ void MovePlayer(Game game, ObjectHandler self) {
         direction = wanted_direction;
         self.set("direction", direction);
     }
-    if (direction >= 0 &&
-        !maze.isWall(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction])) {
+    if (direction >= 0 && !maze.isWall(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction])) {
         self.move(kDirectionX[direction], kDirectionY[direction]);
         self.setDirection(static_cast<int>(direction));
     }

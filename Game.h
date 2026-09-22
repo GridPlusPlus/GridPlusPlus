@@ -187,8 +187,8 @@ public:
     int rows() const;
     int gridSize() const;
 
-    ObjectHandler addObject(const std::string& image, ObjectFunction init = nullptr,
-                            ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
+    ObjectHandler addObject(const std::string& image, ObjectFunction init = nullptr, ObjectFunction update = nullptr,
+                            CollisionFunction collide = nullptr);
     ObjectHandler addSquare(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
                             ObjectFunction update = nullptr, CollisionFunction collide = nullptr);
     ObjectHandler addCircle(int x, int y, int size, Color color = BLACK, ObjectFunction init = nullptr,
@@ -204,9 +204,8 @@ public:
 
     OverlayHandler addOverlay(const std::string& image, OverlayFunction init = nullptr,
                               OverlayFunction update = nullptr);
-    OverlayHandler addTextOverlay(const std::string& text, int x, int y, int font_size = 20,
-                                  Color color = BLACK, OverlayFunction init = nullptr,
-                                  OverlayFunction update = nullptr);
+    OverlayHandler addTextOverlay(const std::string& text, int x, int y, int font_size = 20, Color color = BLACK,
+                                  OverlayFunction init = nullptr, OverlayFunction update = nullptr);
     OverlayHandler addButton(const std::string& text, int x, int y, int width, int height,
                              OverlayFunction click = nullptr);
     void clearOverlays();
@@ -809,9 +808,8 @@ inline GridObject* GameState::CloneShape(ObjectType type, std::uint64_t id, cons
 }
 
 inline ObjectHandler GameState::RegisterObject(std::uint64_t id, GridObject* object, ObjectFunction init,
-                                               ObjectFunction update,
-                                               CollisionFunction collide, bool initialized, ObjectType type,
-                                               std::unordered_map<std::string, StoredValue> values) {
+                                               ObjectFunction update, CollisionFunction collide, bool initialized,
+                                               ObjectType type, std::unordered_map<std::string, StoredValue> values) {
     engine.Spawn(object);
 
     try {
@@ -910,11 +908,10 @@ inline void GameState::InitializeOverlay(std::uint64_t id) {
 }
 
 inline void GameState::RemovePending(ElementType type, std::uint64_t id) {
-    pending_init_.erase(std::remove_if(pending_init_.begin(), pending_init_.end(),
-                                      [&](const ElementId& element) {
-                                          return element.type == type && element.id == id;
-                                      }),
-                       pending_init_.end());
+    pending_init_.erase(
+        std::remove_if(pending_init_.begin(), pending_init_.end(),
+                       [&](const ElementId& element) { return element.type == type && element.id == id; }),
+        pending_init_.end());
 }
 
 }  // namespace detail
@@ -1028,9 +1025,7 @@ inline int ObjectHandler::get(const std::string& key, std::string& value) const 
     return detail::GetStoredValue(lockState()->RequireObject(id_), key, value);
 }
 
-inline void ObjectHandler::setInitFunction(ObjectFunction function) {
-    lockState()->RequireObject(id_).init = function;
-}
+inline void ObjectHandler::setInitFunction(ObjectFunction function) { lockState()->RequireObject(id_).init = function; }
 
 inline void ObjectHandler::setUpdateFunction(ObjectFunction function) {
     lockState()->RequireObject(id_).update = function;
@@ -1204,9 +1199,8 @@ inline void MazeHandler::setWallImage(const std::string& image) {
     lockState()->RequireMaze(id_).maze->SetWallAsset(image);
 }
 
-inline void MazeHandler::setWallImages(const std::string& isolated, const std::string& end,
-                                       const std::string& straight, const std::string& corner,
-                                       const std::string& tee, const std::string& cross) {
+inline void MazeHandler::setWallImages(const std::string& isolated, const std::string& end, const std::string& straight,
+                                       const std::string& corner, const std::string& tee, const std::string& cross) {
     lockState()->RequireMaze(id_).maze->SetWallTiles(isolated, end, straight, corner, tee, cross);
 }
 
@@ -1252,13 +1246,13 @@ inline ObjectHandler Game::addCircle(int x, int y, int size, Color color, Object
     return state_->AddShape(detail::ObjectType::kCircle, x, y, size, color, init, update, collide);
 }
 
-inline ObjectHandler Game::addTriangle(int x, int y, int size, Color color, ObjectFunction init,
-                                       ObjectFunction update, CollisionFunction collide) {
+inline ObjectHandler Game::addTriangle(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
+                                       CollisionFunction collide) {
     return state_->AddShape(detail::ObjectType::kTriangle, x, y, size, color, init, update, collide);
 }
 
-inline ObjectHandler Game::addPentagon(int x, int y, int size, Color color, ObjectFunction init,
-                                       ObjectFunction update, CollisionFunction collide) {
+inline ObjectHandler Game::addPentagon(int x, int y, int size, Color color, ObjectFunction init, ObjectFunction update,
+                                       CollisionFunction collide) {
     return state_->AddShape(detail::ObjectType::kPentagon, x, y, size, color, init, update, collide);
 }
 

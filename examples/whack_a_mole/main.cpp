@@ -1,8 +1,8 @@
-#include "GridPlusPlus.h"
-
 #include <algorithm>
 #include <cmath>
 #include <string>
+
+#include "GridPlusPlus.h"
 
 using gridpp::Game;
 using gridpp::ObjectHandler;
