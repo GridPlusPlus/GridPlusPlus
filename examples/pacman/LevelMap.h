@@ -7,15 +7,16 @@
 #include <stdexcept>
 #include <string>
 
-#include "GridMaze.h"
-
 namespace pacman_example {
+
+constexpr int kMaxMapWidth = 64;
+constexpr int kMaxMapHeight = 64;
 
 // Pacman map tiles: 0=pellet, 1=wall, 2=player, 3=ghost.
 struct LevelMap {
     int rows = 0;
     int cols = 0;
-    int tiles[gridpp::GridMaze::kMaxHeight][gridpp::GridMaze::kMaxWidth] = {};
+    int tiles[kMaxMapHeight][kMaxMapWidth] = {};
 };
 
 inline LevelMap LoadLevelMap(std::istream& input) {
@@ -23,8 +24,7 @@ inline LevelMap LoadLevelMap(std::istream& input) {
     if (!(input >> level.rows >> level.cols)) {
         throw std::runtime_error("Map Error: first line must contain rows and columns");
     }
-    if (level.rows < 1 || level.cols < 1 || level.rows > gridpp::GridMaze::kMaxHeight ||
-        level.cols > gridpp::GridMaze::kMaxWidth) {
+    if (level.rows < 1 || level.cols < 1 || level.rows > kMaxMapHeight || level.cols > kMaxMapWidth) {
         throw std::runtime_error("Map Error: dimensions must be between 1x1 and 64x64");
     }
 
