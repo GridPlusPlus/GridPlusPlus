@@ -1,82 +1,43 @@
 # Grid++
 
-Grid++ 是供程式設計入門課程使用的 C++17 網格遊戲函式庫。它處理視窗、遊戲迴圈、繪圖與碰撞，讓課程先使用函式與指標建立遊戲，再以 class、繼承與物件狀態處理更複雜的行為。
+Grid++ 是給 C++ 初學者使用的網格遊戲函式庫。學生只需要建立 `Game`、加入內容、註冊普通函式，
+不需要自行使用指標、`new`、`delete`、繼承或 template。
 
-![Pacman 範例畫面](docs/images/preview.png)
+```cpp
+#include "GridPlusPlus.h"
 
-## 主要內容
+using gridpp::Game;
+using gridpp::ObjectHandler;
 
-- `GridEngine`：管理視窗、遊戲迴圈、物件與碰撞。
-- `GridObject`：存在網格中的玩家、敵人與道具。
-- `Overlay`：使用像素座標，顯示在遊戲物件上方。
-- `GridMaze`：選用的迷宮與牆面模組。
-- `gridpp::shapes`：不需素材包的基本圖形。
+void Move(Game game, ObjectHandler self) {
+    if (game.keyPressed(KEY_RIGHT)) self.move(1, 0);
+}
 
-Grid++ 是只需引入標頭檔的函式庫，唯一的外部相依是 [raylib](https://www.raylib.com/)。
-
-## 快速執行
-
-Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w64。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再 Fork [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template) 並 clone 自己的 fork。以下指令都在專案根目錄執行。
-
-### WSL / Linux
-
-```bash
-g++ -std=c++17 main.cpp -o game \
-    -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-./game
+int main() {
+    Game game(8, 8, 64);
+    game.showGrid(true);
+    game.addObject("player", nullptr, Move);
+    game.run();
+}
 ```
 
-### Windows / MinGW-w64
+主要公開類別：
 
-```bash
-g++ -std=c++17 main.cpp -o game.exe \
-    -Iraylib/include -Lraylib/lib -lraylib -lgdi32 -lwinmm
-./game.exe
-```
+- `Game`：建立遊戲、加入內容、讀取輸入並啟動主迴圈。
+- `ObjectHandler`：操作網格物件與基本圖形。
+- `OverlayHandler`：操作圖片、文字與按鈕。
+- `MazeHandler`：設定及查詢迷宮牆面。
 
-### macOS
+複製 Handler 只會取得同一個實體的另一張存取憑證；需要獨立副本時使用 `deepCopy()`。
+物件由 `Game` 管理，學生不需要也不應自行釋放。
 
-```bash
-g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
-./game
-```
+安裝、教學與完整範例請見 [`docs/`](docs/index.md) 與 [`examples/`](examples/)。
 
-## 文件
+## 專案檔案
 
-文件先建立核心模型，再以普通函式完成打地鼠，接著說明 `UpdateFn`、`CollideFn`、碰撞、物件狀態與繪製。Pacman 專案組合迷宮、自訂物件、素材與遊戲狀態；最後整理生命週期、所有權、每幀順序與可重現的發布流程。
-
-章節使用編號資料夾，節使用資料夾內的編號檔名。API 參考由公開標頭檔中的 Doxygen 註解自動產生，與操作教學分開維護。
-
-## 專案結構
-
-| 路徑 | 用途 |
+| 檔案 | 用途 |
 |---|---|
-| `GridPlusPlus.h` | 一般遊戲使用的主標頭檔。 |
-| `GridEngine.h` | `GridEngine`。 |
-| `GridObject.h` | `GridObject` 與 `CallbackGridObject`。 |
-| `Overlay.h` | `Overlay`、`Label` 與 `Button`。 |
-| `GridMaze.h` | 選用的迷宮模組。 |
-| `GridShapes.h` | 選用的基本圖形。 |
-| `template.cpp` | 可直接編譯的起始程式。 |
-| `examples/` | 打地鼠、Pacman 函式式版本與完整 Pacman。 |
-| `tests/` | 引擎、生命週期、迷宮、圖形與素材測試。 |
-| `docs/` | MkDocs 教學文件。 |
-
-## 預覽文件
-
-需要 Python、Doxygen 與以下指令：
-
-```bash
-pip install -r docs/requirements.txt
-mkdocs serve
-```
-
-瀏覽器開啟 `http://127.0.0.1:8000/`。MkDoxy 會在建置時一併更新 API 文件。
-
-## 測試
-
-CI 使用 raylib stub 編譯並執行 `tests/`，也會確認 template、打地鼠里程碑與兩個 Pacman 範例能以 C++17 編譯。實際圖形顯示仍應使用已安裝的 raylib 測試。
-
-## 授權
-
-Grid++ 採用 [MIT License](LICENSE)。raylib 使用 zlib/libpng License。
+| `GridPlusPlus.h` | 學生程式唯一需要引入的標頭。 |
+| `Game.h` | `Game` 與三種 Handler 的公開介面。 |
+| `GridEngine.h`、`GridObject.h`、`Overlay.h` | 相容舊程式及內部實作。新教材不直接使用。 |
+| `GridMaze.h`、`GridShapes.h` | 迷宮與圖形的內部實作及舊介面。 |

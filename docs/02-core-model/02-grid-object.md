@@ -1,58 +1,25 @@
-# GridObject
+# ObjectHandler
 
-上一節先將遊戲內容分成 GridObject 與 Overlay，現在從真正存在於網格世界中的物件開始。玩家、敵人、道具和地鼠的規則雖然不同，卻都必須保存位置、決定外觀，並在輪到自己時執行行為。`GridObject` 將這些共同能力整理成一致的介面，使 Engine 不必知道每個角色的具體規則，也能以相同流程更新、碰撞和繪製它們。
+`addObject()` 建立網格物件並回傳 `ObjectHandler`：
 
-## 從一個靜態物件開始
-
-理解 GridObject 是什麼之後，還要區分「在 C++ 中存在」與「已經進入遊戲」兩種狀態。只建立一個物件，並不會讓 Engine 自動知道它；物件必須透過 `Spawn()` 加入，才會參與每一幀的更新與繪製。以下呼叫同時建立地鼠、把它加入 Engine，並回傳一個可用來修改它的借用指標：
-
-```cpp title="main() 節錄：生成靜態物件"
-gridpp::GridObject* mole = game.Spawn("mole", 3, 2, nullptr);
+```cpp
+gridpp::ObjectHandler mole = game.addObject("mole");
+mole.setPosition(3, 2);
+mole.move(-1, 1);
 ```
 
-四個參數依序是素材名稱、x 座標、y 座標與更新函式。`nullptr` 表示地鼠目前沒有更新行為，因此它加入世界後只會停在 `(3, 2)`。若 Engine 尚未載入名為 `mole` 的素材，畫面會先以紅色方塊代替；這個結果仍足以驗證物件確實已被加入，而且網格位置符合預期。
+常用操作包括 `x()`、`y()`、`setPosition()`、`move()`、`setImage()`、`setDirection()`、
+`setColor()`、`setLayer()`、`show()` 與 `hide()`。隱藏物件仍會更新，但不繪製也不碰撞。
 
-`Spawn()` 回傳的 `mole` 讓程式日後可以修改這隻地鼠，但這個指標不代表所有權仍在呼叫端。物件成功加入後便由 Engine 接管，程式只能在它仍存在時透過指標讀寫內容，不可自行 `delete`。這項關係將在 Engine 小節接著說明，現在只要先記住：`mole` 是找到物件的方式，不是負責釋放物件的角色。
+物件行為是普通函式：
 
-## 位置與移動
-
-加入 Engine 後，最直接的操作就是改變物件的位置。`x()` 和 `y()` 讀取目前座標，適合判斷物件位於哪一格；`set_x()` 與 `set_y()` 指定新的絕對位置，而 `Move(dx, dy)` 則從現有位置做相對移動。下面的程式先把地鼠放到 `(4, 5)`，再向左移動一格，因此最後讀到的位置是 `(3, 5)`。
-
-```cpp title="物件操作節錄：讀寫位置"
-mole->set_x(4);
-mole->set_y(5);
-mole->Move(-1, 0);  // 現在位於 (3, 5)
-
-int column = mole->x();
-int row = mole->y();
-```
-
-Grid++ 不會自動阻止物件離開地圖。遊戲規則應先根據 `engine()->cols()`、`engine()->rows()` 或迷宮判斷目標位置是否合法。暫時不想顯示或碰撞時，使用 `set_visible(false)`；隱藏的物件仍會更新，因此之後可以自行重新出現。
-
-## 把行為交給物件
-
-直接修改座標只能讓物件在初始化時出現在指定位置；若要讓它在遊戲執行期間持續行動，就必須把移動規則交給每幀流程。目前還不需要為地鼠建立自訂類別，因此先用普通函式描述更新行為，再由 `Spawn()` 將函式交給物件。這個函式會收到目前正在更新之物件的借用指標：
-
-```cpp title="main.cpp 節錄：更新函式放在 main() 前，生成程式放在 main() 內"
-void UpdateMole(gridpp::GridObject* mole) {
-    mole->Move(1, 0);
+```cpp
+void UpdateMole(gridpp::Game game, gridpp::ObjectHandler self) {
+    if (game.keyPressed(KEY_RIGHT)) self.move(1, 0);
 }
 
-gridpp::GridObject* mole = game.Spawn("mole", 0, 0, UpdateMole);
+auto mole = game.addObject("mole", nullptr, UpdateMole);
 ```
 
-這個函式不是由 `main()` 直接呼叫，而是透過 `Spawn()` 交給 Engine。這裡交給 `Spawn()` 的其實是 `UpdateMole` 的函數指標，Grid++ 將這個位置稱為 `UpdateFn`。當每一幀輪到地鼠更新時，Engine 才透過它呼叫 `UpdateMole(mole)`。因此閱讀程式時，可以直接把 `UpdateFn` 理解成「這個物件本幀要執行的更新函式」；它只描述物件的行為，並不負責維持整個遊戲迴圈。
-
-由於上述 `UpdateFn` 每次被呼叫都向右移動一格，而 Engine 一秒可能更新約 60 次，畫面中的地鼠會移動得快到難以操作。真正的打地鼠不能把「每幀執行更新函式」直接等同於「每幀都要移動」，而要另外保存下一次允許移動的時間。這個需求也引出了另一個問題：除了 GridObject 已有的座標之外，遊戲新增的狀態究竟應該放在哪裡？
-
-## 先辨認狀態描述誰
-
-判斷狀態的歸屬，可以先問「這份資料描述誰」。座標、素材、方向與顯示狀態描述單一物件，因此已經存於 GridObject；分數和整局倒數描述整場遊戲，應由遊戲流程共同管理。第三章會先以一隻地鼠練習這項區分，第 5 章再處理多個物件需要各自保存額外資料的情況。
-
-## 其他外觀設定
-
-`set_asset_name()` 可切換素材；`set_direction()`、`set_tint()` 與 `set_z_index()` 分別控制旋轉、顏色與繪製層級。這些設定不改變物件的座標或遊戲規則，將在第 6 章搭配素材與繪製順序完整說明。
-
-[接著理解 GridEngine](01-grid-engine.md){ .md-button .md-button--primary }
-
-完整成員列表見 [GridObject API](../api/classgridpp_1_1_grid_object.md)。
+第一個可選函式是 Init，第二個是 Update，第三個是 Collide。不想在建立時指定時可傳 `nullptr`，
+之後再用 `setInitFunction()`、`setUpdateFunction()` 或 `setCollideFunction()` 設定。
