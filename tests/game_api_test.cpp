@@ -112,6 +112,8 @@ int main() {
     label.remove();
     assert(!label.exists());
     assert(label_copy.exists());
+    game.clearOverlays();
+    assert(!label_copy.exists());
 
     bool removed_object_failed = false;
     try {
