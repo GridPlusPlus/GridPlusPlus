@@ -1,12 +1,12 @@
 # Grid++ 教學
 
-Grid++ 讓初學者用少量 C++ 語法完成網格遊戲。公開操作集中在 `Game` 與 Handler：
+Grid++ 讓初學者用少量 C++ 語法完成網格遊戲。公開操作集中在 `GameEngine` 與 Handler：
 
 ```text
-Game
-├── ObjectHandler：角色、道具、基本圖形
-├── MazeHandler：迷宮牆面
-└── OverlayHandler：圖片、文字、按鈕
+GameEngine
+├── GridObject：角色、道具、基本圖形
+├── Maze：迷宮牆面
+└── Overlay：圖片、文字、按鈕
 ```
 
 學生不需要建立或保存指標，也不需要理解所有權、繼承與虛擬函式。遊戲行為寫成普通函式，

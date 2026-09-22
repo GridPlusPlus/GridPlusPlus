@@ -3,7 +3,7 @@
 callback 中可以直接加入新內容：
 
 ```cpp
-void SpawnEnemy(Game game, ObjectHandler) {
+void SpawnEnemy(GameEngine game, GridObject) {
     game.addObject("enemy", InitEnemy, MoveEnemy);
 }
 ```
@@ -11,8 +11,8 @@ void SpawnEnemy(Game game, ObjectHandler) {
 本幀中加入的元素先進入待加入佇列；幀末依實際加入順序執行 Init，下一幀才 Update、碰撞與繪製。
 Init 又加入的內容會接在同一份順序後方完成 Init。
 
-`self.remove()` 讓實體立即停止參與本幀後續碰撞與繪製，實際釋放延後到安全的幀末。呼叫後應立即
-return，不再操作這個 Handler。
+`self.remove()` 會立即讓實體失效並停止參與本幀後續階段。呼叫後應立即 return，不再操作這個
+Handler。
 
 `hide()` 適合暫時隱藏：實體保留並繼續 Update，但不繪製或碰撞。`remove()` 適合永久移除。
 

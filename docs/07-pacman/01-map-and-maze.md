@@ -1,11 +1,11 @@
 # 地圖與迷宮
 
 地圖檔先寫列數與欄數，後方每格使用 `0` 豆子、`1` 牆、`2` 玩家、`3` 鬼。讀取並完整驗證後，
-用相同尺寸建立 `Game` 與迷宮：
+用相同尺寸建立 `GameEngine` 與迷宮：
 
 ```cpp
-Game game(level.cols, level.rows, 32);
-MazeHandler maze = game.addMaze(level.cols, level.rows);
+GameEngine game(level.cols, level.rows, 32);
+Maze maze = game.addMaze(level.cols, level.rows);
 maze.setWallImages(
     "wall_iso", "wall_end", "wall_straight",
     "wall_corner", "wall_tee", "wall_cross"

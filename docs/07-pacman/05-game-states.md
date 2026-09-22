@@ -10,7 +10,7 @@ GameState game_state = GameState::kStart;
 分數文字的 Update 依階段更新內容或隱藏：
 
 ```cpp
-void UpdateScore(Game, OverlayHandler self) {
+void UpdateScore(GameEngine, Overlay self) {
     if (game_state != GameState::kPlaying) {
         self.hide();
         return;

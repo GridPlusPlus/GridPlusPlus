@@ -1,6 +1,6 @@
 # 基本圖形
 
-五種圖形都由 `Game` 建立並回傳 `ObjectHandler`：
+五種圖形都由 `GameEngine` 建立並回傳 `GridObject`：
 
 ```cpp
 auto square = game.addSquare(0, 1, 32, RED);
@@ -18,5 +18,5 @@ target.setColor(PINK);
 target.move(1, 0);
 ```
 
-圖形沒有圖片，因此對它呼叫 `image()` 或 `setImage()` 會報錯。其餘 ObjectHandler 操作與圖片物件
+圖形沒有圖片，因此對它呼叫 `image()` 或 `setImage()` 會報錯。其餘 GridObject 操作與圖片物件
 完全相同；`clearObjects()` 也會一起清除。

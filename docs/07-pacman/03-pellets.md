@@ -10,7 +10,7 @@ player.set("type", "pacman");
 碰撞時讀取對方種類，吃到後直接移除自己：
 
 ```cpp
-void EatPellet(Game, ObjectHandler self, ObjectHandler other) {
+void EatPellet(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
     if (type != "pacman") return;
@@ -20,4 +20,4 @@ void EatPellet(Game, ObjectHandler self, ObjectHandler other) {
 }
 ```
 
-`remove()` 會使豆子立即停止後續碰撞與繪製，實際記憶體釋放由 Game 安排，學生不需處理。
+`remove()` 會使豆子立即停止後續碰撞與繪製，實際記憶體釋放由 GameEngine 安排，學生不需處理。

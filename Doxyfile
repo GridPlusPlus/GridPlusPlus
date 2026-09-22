@@ -8,7 +8,7 @@ INPUT                  = GridPlusPlus.h \
                          GridObject.h \
                          Overlay.h \
                          GridMaze.h \
-                         GridShapes.h
+                         GridValue.h
 FILE_PATTERNS          = *.h
 RECURSIVE              = NO
 

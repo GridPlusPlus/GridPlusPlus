@@ -11,7 +11,7 @@ ghost.set("direction", 0);
 Init 則處理必須等 `run()` 才有意義的工作：
 
 ```cpp
-void InitGhost(gridpp::Game game, gridpp::ObjectHandler self) {
+void InitGhost(gridpp::GameEngine game, gridpp::GridObject self) {
     self.set("nextMove", game.time() + 0.5);
 }
 ```

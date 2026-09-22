@@ -1,6 +1,6 @@
 # 生命週期
 
-學生不負責配置或釋放實體；`Game` 保存它建立的所有物件、迷宮與 Overlay。程式只保留 Handler，
+學生不負責配置或釋放實體；`GameEngine` 保存它建立的所有物件、迷宮與 Overlay。程式只保留 Handler，
 並透過 `exists()` 判斷實體是否仍在遊戲中。
 
 ```text
@@ -10,7 +10,7 @@ game.addObject / addMaze / addOverlay
                 ↓
        Init → 每幀 Update
                 ↓
-      remove / clear / Game 結束
+      remove / clear / GameEngine 結束
                 ↓
         Handler 的 exists() 為 false
 ```

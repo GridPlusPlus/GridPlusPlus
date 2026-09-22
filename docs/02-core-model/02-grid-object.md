@@ -1,9 +1,9 @@
-# ObjectHandler
+# GridObject
 
-`addObject()` 建立網格物件並回傳 `ObjectHandler`：
+`addObject()` 建立網格物件並回傳 `GridObject`：
 
 ```cpp
-gridpp::ObjectHandler mole = game.addObject("mole");
+gridpp::GridObject mole = game.addObject("mole");
 mole.setPosition(3, 2);
 mole.move(-1, 1);
 ```
@@ -14,7 +14,7 @@ mole.move(-1, 1);
 物件行為是普通函式：
 
 ```cpp
-void UpdateMole(gridpp::Game game, gridpp::ObjectHandler self) {
+void UpdateMole(gridpp::GameEngine game, gridpp::GridObject self) {
     if (game.keyPressed(KEY_RIGHT)) self.move(1, 0);
 }
 

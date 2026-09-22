@@ -3,7 +3,7 @@
 兩個可見物件位於同一個有效格子時，雙方的 Collide 函式都會收到對方 Handler：
 
 ```cpp
-void EatPellet(gridpp::Game, gridpp::ObjectHandler self, gridpp::ObjectHandler other) {
+void EatPellet(gridpp::GameEngine, gridpp::GridObject self, gridpp::GridObject other) {
     std::string type;
     other.get("type", type);
     if (type == "player") self.remove();

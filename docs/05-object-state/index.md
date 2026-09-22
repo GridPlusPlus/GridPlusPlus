@@ -9,5 +9,5 @@ ghost.set("random", true);
 ghost.set("name", "Blinky");
 ```
 
-目前支援 `long long`（也接受 `int`）、`double`、`bool` 與 `string`。這讓多隻鬼可以共用同一個
-Update 函式，同時各自保存計時器和方向，不必建立自訂 class。
+支援 `int`、`long long`、`double`、`bool`、`string`，以及任意可複製型別的 `vector<T>`。這讓多隻鬼
+可以共用同一個 Update 函式，同時各自保存計時器和方向，不必建立 GridObject 子類別。

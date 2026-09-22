@@ -1,6 +1,6 @@
-# OverlayHandler
+# Overlay
 
-Overlay 使用像素座標，永遠畫在網格內容上方。圖片、文字與按鈕都回傳同一種 `OverlayHandler`：
+Overlay 使用像素座標，永遠畫在網格內容上方。圖片、文字與按鈕都回傳同一種 `Overlay`：
 
 ```cpp
 auto logo = game.addOverlay("logo");

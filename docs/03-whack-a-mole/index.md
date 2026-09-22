@@ -7,7 +7,7 @@
 ```cpp
 double next_move = 0.0;
 
-void UpdateMole(gridpp::Game game, gridpp::ObjectHandler mole) {
+void UpdateMole(gridpp::GameEngine game, gridpp::GridObject mole) {
     if (game.time() < next_move) return;
 
     mole.setPosition(
@@ -21,7 +21,7 @@ void UpdateMole(gridpp::Game game, gridpp::ObjectHandler mole) {
 在 `main()` 註冊這個函式：
 
 ```cpp
-gridpp::Game game(8, 8, 64);
+gridpp::GameEngine game(8, 8, 64);
 game.showGrid(true);
 game.addObject("mole", nullptr, UpdateMole);
 ```
@@ -30,7 +30,7 @@ game.addObject("mole", nullptr, UpdateMole);
 
 ```cpp
 int score = 0;
-gridpp::OverlayHandler score_label;
+gridpp::Overlay score_label;
 
 score_label = game.addTextOverlay("Score: 0", 12, 12, 24);
 ```
@@ -52,7 +52,7 @@ if (game.mousePressed(MOUSE_BUTTON_LEFT) && mouse_x == mole.x() && mouse_y == mo
 Init 在 `run()` 之後、第一幀之前執行，適合設定依賴遊戲時間的初值：
 
 ```cpp
-void InitMole(gridpp::Game game, gridpp::ObjectHandler mole) {
+void InitMole(gridpp::GameEngine game, gridpp::GridObject mole) {
     score = 0;
     end_time = game.time() + 30.0;
     mole.show();
@@ -63,4 +63,4 @@ game.run();
 ```
 
 時間歸零時呼叫 `mole.hide()`；按 R 時可直接呼叫重設函式並 `show()`。整個流程沒有指標，
-所有實體都由 `Game` 管理。
+所有實體都由 `GameEngine` 管理。

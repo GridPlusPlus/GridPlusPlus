@@ -1,6 +1,6 @@
 # 輸入、時間與亂數
 
-遊戲規則透過 `Game` 讀取常用輸入：
+遊戲規則透過 `GameEngine` 讀取常用輸入：
 
 ```cpp
 if (game.keyPressed(KEY_SPACE)) { /* 只在按下當幀成立 */ }

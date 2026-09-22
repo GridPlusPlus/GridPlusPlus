@@ -3,7 +3,7 @@
 物件函式的固定形式是：
 
 ```cpp
-void FunctionName(gridpp::Game game, gridpp::ObjectHandler self);
+void FunctionName(gridpp::GameEngine game, gridpp::GridObject self);
 ```
 
 建立時依序傳入 Init、Update 與 Collide：
