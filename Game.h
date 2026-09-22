@@ -72,6 +72,7 @@ public:
     void set(const std::string& key, const std::string& value);
     void set(const std::string& key, const char* value);
 
+    int get(const std::string& key, int& value) const;
     int get(const std::string& key, long long& value) const;
     int get(const std::string& key, double& value) const;
     int get(const std::string& key, bool& value) const;
@@ -123,6 +124,7 @@ public:
     void set(const std::string& key, const std::string& value);
     void set(const std::string& key, const char* value);
 
+    int get(const std::string& key, int& value) const;
     int get(const std::string& key, long long& value) const;
     int get(const std::string& key, double& value) const;
     int get(const std::string& key, bool& value) const;
@@ -1009,6 +1011,16 @@ inline void ObjectHandler::set(const std::string& key, const std::string& value)
 
 inline void ObjectHandler::set(const std::string& key, const char* value) { set(key, std::string(value)); }
 
+inline int ObjectHandler::get(const std::string& key, int& value) const {
+    long long stored = 0;
+    const int result = get(key, stored);
+    if (stored < std::numeric_limits<int>::min() || stored > std::numeric_limits<int>::max()) {
+        throw std::runtime_error("Grid++ Error: Value '" + key + "' does not fit in int");
+    }
+    value = static_cast<int>(stored);
+    return result;
+}
+
 inline int ObjectHandler::get(const std::string& key, long long& value) const {
     return detail::GetStoredValue(lockState()->RequireObject(id_), key, value);
 }
@@ -1134,6 +1146,16 @@ inline void OverlayHandler::set(const std::string& key, const std::string& value
 }
 
 inline void OverlayHandler::set(const std::string& key, const char* value) { set(key, std::string(value)); }
+
+inline int OverlayHandler::get(const std::string& key, int& value) const {
+    long long stored = 0;
+    const int result = get(key, stored);
+    if (stored < std::numeric_limits<int>::min() || stored > std::numeric_limits<int>::max()) {
+        throw std::runtime_error("Grid++ Error: Value '" + key + "' does not fit in int");
+    }
+    value = static_cast<int>(stored);
+    return result;
+}
 
 inline int OverlayHandler::get(const std::string& key, long long& value) const {
     return detail::GetStoredValue(lockState()->RequireOverlay(id_), key, value);

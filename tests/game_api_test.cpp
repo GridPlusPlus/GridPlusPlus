@@ -50,8 +50,14 @@ int main() {
     first.set("name", "first");
     first.setPosition(1, 1);
 
+    int integer_order = 0;
+    assert(first.get("order", integer_order) == 1);
+    assert(integer_order == 1);
+
     OverlayHandler label = game.addTextOverlay("Score: 0", 4, 8, 20, BLACK, InitOverlay, UpdateOverlay);
     label.set("order", 9);
+    assert(label.get("order", integer_order) == 1);
+    assert(integer_order == 9);
 
     ObjectHandler second = game.addObject("", RecordInit);
     second.set("order", 2LL);
