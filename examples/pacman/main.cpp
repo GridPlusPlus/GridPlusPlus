@@ -52,14 +52,14 @@ void EatPellet(GameEngine, GridObject self, GridObject other) {
 void MoveGhost(GameEngine game, GridObject self) {
     if (game_state != GameState::kPlaying || paused || !player.exists()) return;
 
-    long long timer = 0;
+    int timer = 0;
     self.get("timer", timer);
     ++timer;
     self.set("timer", timer);
     if (timer < 12) return;
     self.set("timer", 0);
 
-    long long current_direction = 0;
+    int current_direction = 0;
     bool random_ghost = false;
     self.get("direction", current_direction);
     self.get("random", random_ghost);
@@ -101,9 +101,9 @@ void MoveGhost(GameEngine game, GridObject self) {
 void MovePlayer(GameEngine game, GridObject self) {
     if (game_state != GameState::kPlaying || paused) return;
 
-    long long wanted_direction = -1;
-    long long direction = -1;
-    long long timer = 0;
+    int wanted_direction = -1;
+    int direction = -1;
+    int timer = 0;
     self.get("wantedDirection", wanted_direction);
     self.get("direction", direction);
     self.get("timer", timer);
@@ -126,7 +126,7 @@ void MovePlayer(GameEngine game, GridObject self) {
     }
     if (direction >= 0 && !maze.isWall(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction])) {
         self.move(kDirectionX[direction], kDirectionY[direction]);
-        self.setDirection(static_cast<int>(direction));
+        self.setDirection(direction);
     }
 }
 
