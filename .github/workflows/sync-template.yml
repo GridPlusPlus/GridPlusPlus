@@ -5,14 +5,14 @@ on:
     branches: [main]
     paths:
       - "GridPlusPlus.h"
-      - "Game.h"
-      - "GridEngine.h"
+      - "GameEngine.h"
       - "GridObject.h"
       - "Overlay.h"
       - "GridMaze.h"
-      - "GridShapes.h"
+      - "GridValue.h"
       - "GridAssetManager.h"
       - "GridSQLite.h"
+      - "template.cpp"
       - "LICENSE"
   workflow_dispatch:
 
@@ -35,24 +35,28 @@ jobs:
           token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
           path: template
 
+      # 範本只保留學生需要的標頭檔；template.cpp 同步為範本的 main.cpp。
+      # 先移除已不存在於 Grid++ 的舊標頭，避免學生 fork 到過時檔案。
       - name: Copy template files
         run: |
-          cp source/GridPlusPlus.h source/Game.h source/GridEngine.h source/GridObject.h \
-            source/Overlay.h source/GridMaze.h source/GridShapes.h \
-            source/GridAssetManager.h source/GridSQLite.h source/LICENSE template/
+          git -C template rm -q --ignore-unmatch Game.h GridEngine.h GridShapes.h
+          cp source/GridPlusPlus.h source/GameEngine.h source/GridObject.h source/Overlay.h \
+            source/GridMaze.h source/GridValue.h source/GridAssetManager.h source/GridSQLite.h \
+            source/LICENSE template/
+          cp source/template.cpp template/main.cpp
 
       - name: Compile template
-        run: g++ -std=c++17 -Wall -Wextra -pedantic -Isource/tests/stubs -Itemplate template/main.cpp -o /tmp/gridpp-template
+        run: g++ -std=c++17 -Wall -Wextra -pedantic -Isource/.github/ci -Itemplate template/main.cpp -o /tmp/gridpp-template
 
       - name: Push changes
         working-directory: template
         run: |
-          if git diff --quiet; then
+          git add -A GridPlusPlus.h GameEngine.h GridObject.h Overlay.h GridMaze.h GridValue.h \
+            GridAssetManager.h GridSQLite.h LICENSE main.cpp
+          if git diff --cached --quiet; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add GridPlusPlus.h Game.h GridEngine.h GridObject.h Overlay.h GridMaze.h \
-            GridShapes.h GridAssetManager.h GridSQLite.h LICENSE
           git commit -m "Sync Grid++ files"
           git push

@@ -9,12 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # .github/ci/raylib.h 是只供編譯檢查的 raylib 替身，CI 因此不必安裝 raylib。
       - name: Compile examples
         run: |
           set -eux
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. template.cpp -o /tmp/template
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/step_01_board.cpp -o /tmp/whack-board
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/step_02_mole.cpp -o /tmp/whack-mole
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/whack_a_mole/main.cpp -o /tmp/whack-a-mole
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman/main.cpp -o /tmp/pacman
-          g++ -std=c++17 -Wall -Wextra -pedantic -Itests/stubs -I. examples/pacman_easy/main.cpp -o /tmp/pacman-easy
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. template.cpp -o /tmp/template
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/whack_a_mole/step_01_board.cpp -o /tmp/whack-board
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/whack_a_mole/step_02_mole.cpp -o /tmp/whack-mole
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/whack_a_mole/main.cpp -o /tmp/whack-a-mole
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/pacman/main.cpp -o /tmp/pacman
+          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/pacman_easy/main.cpp -o /tmp/pacman-easy
