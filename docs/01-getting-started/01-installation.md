@@ -2,12 +2,12 @@
 
 Grid++ 使用 raylib 來建立遊戲視窗、接收鍵盤與滑鼠輸入，以及繪製畫面，因此在開始寫 Grid++ 程式以前，需要先在電腦上準備好 raylib。
 
-請選擇自己使用的開發環境，按照對應的步驟完成安裝即可。不同平台的安裝方式彼此獨立，不需要全部閱讀。
+請選擇自己使用的開發環境，按照對應的步驟完成安裝即可。不同平台的安裝方式彼此獨立，不需要全部閱讀。Windows 使用者請一律使用 WSL。
 
 === "Windows（WSL）"
 
 ````
-如果你在 Windows 上使用 WSL，請在 Ubuntu 終端機中執行以下指令。後面的 Grid++ 教學也可以在同一個環境中完成。
+請在 WSL 的 Ubuntu 終端機中執行以下指令。後面的 Grid++ 教學也都在同一個環境中完成。
 
 先安裝編譯 raylib 所需的工具與系統套件：
 
@@ -112,26 +112,6 @@ g++ --version
 ```
 
 確認系統中有可用的 C++ 編譯器。macOS 上的 `g++` 通常實際使用 Apple Clang，這不影響後面的教學。
-````
-
-=== "Windows（MinGW-w64）"
-
-````
-如果你不使用 WSL，而是希望直接在 Windows 中編譯 `.exe`，可以使用 MinGW-w64。
-
-先確認終端機中的編譯器是 MinGW-w64：
-
-```bash
-g++ --version
-```
-
-接著從 [raylib 6.0 Releases](https://github.com/raysan5/raylib/releases/tag/6.0) 下載 Windows 的 MinGW-w64 版本，解壓縮後保留其中的 `include` 與 `lib` 資料夾。
-
-下一節建立 Grid++ 專案時，會把這兩個資料夾放進專案中，因此目前只需要完成下載與解壓縮。
-
-!!! warning "不要使用舊版 MinGW"
-
-    raylib 需要 MinGW-w64。如果你的環境使用的是早期的 mingw.org MinGW，請改用現代的 MinGW-w64 環境。
 ````
 
 ## 下一步

@@ -35,7 +35,7 @@ Grid++ 是只需引入標頭檔的函式庫，唯一的外部相依是 [raylib](
 
 ## 快速執行
 
-Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w64。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再 Fork [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template) 並 clone 自己的 fork。以下指令都在專案根目錄執行。
+Windows 請使用 WSL，並依照下方 WSL / Linux 的指令操作。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再 Fork [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template) 並 clone 自己的 fork。以下指令都在專案根目錄執行。
 
 ### WSL / Linux
 
@@ -43,14 +43,6 @@ Windows 建議使用 WSL；想產生原生 Windows 執行檔時再使用 MinGW-w
 g++ -std=c++17 main.cpp -o game \
     -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 ./game
-```
-
-### Windows / MinGW-w64
-
-```bash
-g++ -std=c++17 main.cpp -o game.exe \
-    -Iraylib/include -Lraylib/lib -lraylib -lgdi32 -lwinmm
-./game.exe
 ```
 
 ### macOS

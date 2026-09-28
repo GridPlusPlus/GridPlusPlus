@@ -52,7 +52,7 @@ g++ -std=c++17 main.cpp -o game \
 ./game
 ```
 
-請先替換網址中的 `YOUR_ACCOUNT` 與 `YOUR_GAME`。`git rev-parse HEAD` 顯示的提交識別碼應與剛才推送的最新提交相同；macOS 與 MinGW-w64 使用第 1 章列出的對應連結參數。無論平台為何，都要從專案根目錄執行，讓 `loadAssets()` 與地圖檔的相對路徑能找到 `assets.db` 與 `map.txt`。
+請先替換網址中的 `YOUR_ACCOUNT` 與 `YOUR_GAME`。`git rev-parse HEAD` 顯示的提交識別碼應與剛才推送的最新提交相同；macOS 使用第 1 章列出的對應連結參數。無論平台為何，都要從專案根目錄執行，讓 `loadAssets()` 與地圖檔的相對路徑能找到 `assets.db` 與 `map.txt`。
 
 驗收不能停在視窗開啟，還要確認素材不是紅色替代方塊，而且遊戲的主要操作都能運作，例如 Pac-Man 的開始、移動、吃豆、勝敗、暫停與重新開始。只有這些輸入都能由遠端儲存庫重建，專案才算真正可分享。
 

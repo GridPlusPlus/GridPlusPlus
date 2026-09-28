@@ -16,7 +16,7 @@ g++ -std=c++17 main.cpp -I../.. -o game \
 ./game
 ```
 
-以上是 WSL／Linux 的指令；macOS 與 Windows（MinGW-w64）請把連結參數換成
+以上是 WSL／Linux 的指令；macOS 請把連結參數換成
 [第一個 Grid++ 程式](../../docs/01-getting-started/02-hello-gridpp.md)列出的對應版本，並保留 `-I../..`。
 逐段解說見教學文件第 7 章〈解析 Pac-Man〉。
 

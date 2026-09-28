@@ -229,7 +229,7 @@ int main() {
 
 ## 編譯與驗收
 
-四個里程碑都是彼此獨立的完整程式，因此每完成一步，都應使用第一章中對應平台的方式重新編譯。WSL 與 Linux 可執行以下指令；macOS 和 Windows 則沿用[第一章](../01-getting-started/02-hello-gridpp.md)列出的連結參數：
+四個里程碑都是彼此獨立的完整程式，因此每完成一步，都應使用第一章中對應平台的方式重新編譯。WSL 與 Linux 可執行以下指令；macOS 則沿用[第一章](../01-getting-started/02-hello-gridpp.md)列出的連結參數：
 
 ```bash
 g++ -std=c++17 main.cpp -o game \
