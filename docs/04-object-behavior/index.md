@@ -1,15 +1,14 @@
-# 定義物件行為
+# 讓物件開始行動
 
-行為是一個具名普通函式，再把函式名稱註冊給物件：
+前一章已經完成第一個會接受輸入、更新分數並移動地鼠的遊戲，不過當時的重點是看見完整成果，因此只知道要把 `InitMole` 與 `UpdateMole` 交給 `addObject()`，還沒有進一步說明 Engine 為什麼能在正確時間執行它們。本章會把這項機制拆成 Init、Update 與 Collide 三個容易辨認的角色，先整理每個函式何時被呼叫，再加入同格碰撞，讓讀者能用普通函式為物件補上完整的行為。
 
-```cpp
-void UpdatePlayer(gridpp::GameEngine game, gridpp::GridObject self) {
-    if (game.keyPressed(KEY_RIGHT)) self.move(1, 0);
-}
-```
+只有一隻地鼠時，`UpdateMole` 可以暫時透過全域變數保存下一次移動時間，問題還不明顯；如果場上同時有三隻移動速度不同的地鼠，它們共用同一個 `next_move`，其中一隻更新時間後，另外兩隻便會跟著等待。Update 函式仍然能描述移動規則，卻沒有地方保存每隻地鼠各自擁有的資料，因此第 5 章會從這個限制出發，讓每個物件保存自己的狀態。
 
-`GameEngine` 讓行為讀取輸入及世界尺寸，`self` 代表這次正在執行的物件。學生不需要自己呼叫這個函式；
-Engine 會在每一幀透過已註冊的函式指標呼叫它。
+## 完成本章後
 
-Grid++ 提供 Init、Update、Collide 三個物件時機，Overlay 另有 Click。函式可在建立時傳入，也可用
-名稱以 `set...Function()` 開頭的 setter 隨時替換。
+- 能說明 Init、Update 與 Collide 各自在什麼時候被呼叫，以及它們收到哪些參數。
+- 能在建立物件時交出函式，也能在之後用 `set...Function()` 替換。
+- 能分辨碰撞中的 `self` 與 `other`，並利用物件保存的種類判斷對方身分。
+- 能看出共用函式何時因缺少個別資料而不再足夠，為下一章建立問題意識。
+
+[Init、Update 與 Collide](01-callbacks.md){ .md-button .md-button--primary }

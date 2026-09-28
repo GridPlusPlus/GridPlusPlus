@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="220" viewBox="0 0 820 220" role="img" aria-labelledby="title desc">
-  <title id="title">GridShapes 五種基本圖形</title>
-  <desc id="desc">紅色方形、橘色圓形、綠色三角形、藍色五邊形與紫色五芒星各自置中於格子。</desc>
+  <title id="title">Grid++ 五種基本圖形</title>
+  <desc id="desc">紅色方形、橘色圓形、綠色三角形、藍色五邊形與紫色五角星各自置中於格子。</desc>
   <rect width="820" height="220" rx="18" fill="#f7f8fc"/>
   <g transform="translate(35 35)" stroke="#cbd5e1" fill="white">
     <rect width="140" height="140"/><rect x="150" width="140" height="140"/><rect x="300" width="140" height="140"/><rect x="450" width="140" height="140"/><rect x="600" width="140" height="140"/>
@@ -11,6 +11,6 @@
   <polygon points="555,72 588,96 575,135 535,135 522,96" fill="#3b82f6"/>
   <polygon points="705,69 714,94 741,95 719,111 727,137 705,122 683,137 691,111 669,95 696,94" fill="#a855f7"/>
   <g font-family="sans-serif" font-size="15" fill="#334155" text-anchor="middle">
-    <text x="105" y="200">Square</text><text x="255" y="200">Circle</text><text x="405" y="200">Triangle</text><text x="555" y="200">Pentagon</text><text x="705" y="200">Star</text>
+    <text x="105" y="200">addSquare</text><text x="255" y="200">addCircle</text><text x="405" y="200">addTriangle</text><text x="555" y="200">addPentagon</text><text x="705" y="200">addStar</text>
   </g>
 </svg>

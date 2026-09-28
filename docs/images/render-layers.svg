@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="330" viewBox="0 0 760 330" role="img" aria-labelledby="title desc">
-  <title id="title">z-index 與 Overlay 的繪製層次</title>
-  <desc id="desc">背景先畫，接著是豆子和玩家，Overlay 最後畫在所有網格物件上方。</desc>
+  <title id="title">layer 與 Overlay 的繪製層次</title>
+  <desc id="desc">地板先畫，接著是豆子、迷宮和玩家，Overlay 最後畫在所有網格物件上方。</desc>
   <rect width="760" height="330" rx="18" fill="#f7f8fc"/>
   <g font-family="sans-serif">
     <text x="40" y="48" font-size="24" font-weight="700" fill="#1e293b">後畫的內容會覆蓋先畫的內容</text>
     <g transform="translate(60 80)">
       <rect x="0" y="150" width="520" height="54" rx="10" fill="#94a3b8"/>
-      <text x="20" y="184" font-size="18" fill="white">地板　z-index = -10</text>
+      <text x="20" y="184" font-size="18" fill="white">地板　setLayer(-10)</text>
       <rect x="50" y="95" width="520" height="54" rx="10" fill="#facc15"/>
-      <text x="70" y="129" font-size="18" fill="#422006">豆子　z-index = 0</text>
+      <text x="70" y="129" font-size="18" fill="#422006">豆子與迷宮　layer 0（預設）</text>
       <rect x="100" y="40" width="520" height="54" rx="10" fill="#4f46e5"/>
-      <text x="120" y="74" font-size="18" fill="white">玩家　z-index = 10</text>
+      <text x="120" y="74" font-size="18" fill="white">玩家　setLayer(10)</text>
       <rect x="150" y="-15" width="520" height="54" rx="10" fill="#111827"/>
-      <text x="170" y="19" font-size="18" fill="white">Overlay　永遠在 GridObject 之後</text>
+      <text x="170" y="19" font-size="18" fill="white">Overlay　永遠畫在網格內容之上</text>
     </g>
   </g>
 </svg>
