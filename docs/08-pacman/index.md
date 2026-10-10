@@ -1,8 +1,28 @@
 # 解析完整的 Pac-Man 範例
 
-打地鼠讓讀者從空白檔案逐步完成遊戲，Pac-Man 的任務不同：它是一份已完成的案例，用來觀察迷宮、玩家、鬼、豆子、共享狀態與 Overlay 如何共同運作。本章依照資料相依順序導讀 [`examples/pacman/main.cpp`](https://github.com/GridPlusPlus/GridPlusPlus/blob/main/examples/pacman/main.cpp)。各頁節錄不能單獨貼上執行；標示「`main.cpp` 節錄」的程式碼區塊，都要放回這份檔案的既有位置理解。
+第 2 章從零做出的 Pac-Man 刻意保持精簡。本章換個角度，閱讀一份功能更完整的版本，看看同樣的想法如何擴充成一個有開始畫面、暫停和多隻鬼的遊戲：
+
+| | 第 2 章教學版 | 本章完整版 |
+|---|---|---|
+| 地圖 | 字串陣列寫在程式裡 | 從 `map.txt` 讀取，並檢查格式 |
+| 玩家 | 按一次走一格 | 持續前進，並記住下一個想轉的方向 |
+| 鬼 | 一隻，狀態放在全域變數 | 四隻，各自用 `set()`／`get()` 保存狀態，其中一隻隨機移動 |
+| 遊戲階段 | `game_over` 一個布林值 | 開始、遊戲中、勝利、失敗四個階段，外加暫停 |
+| 介面 | 分數與結束文字 | 加上 Start、Pause、Restart 按鈕 |
+
+鬼「選最近、不回頭」的追擊方式，以及移動前後各檢查一次是否抓到玩家，都和教學第 5 步相同，讀到時可以對照。
+
+本章依照資料相依順序導讀 [`examples/pacman/main.cpp`](https://github.com/GridPlusPlus/GridPlusPlus/blob/main/examples/pacman/main.cpp)。各頁節錄不能單獨貼上執行；標示「`main.cpp` 節錄」的程式碼區塊，都要放回這份檔案的既有位置理解。
 
 整份程式只使用 `GameEngine`、`GridObject`、`Maze`、`Overlay`、普通函式與少量全域變數，沒有自訂 class、繼承、指標或 `new`。如果想先看一個更小的版本，[`examples/pacman_easy/`](https://github.com/GridPlusPlus/GridPlusPlus/tree/main/examples/pacman_easy) 只有一名玩家和一隻鬼，地圖直接寫在程式裡，勝負結果則印在終端機，適合在閱讀本章之前先玩一次。
+
+完整版放在 Grid++ 主專案的 `examples/` 資料夾裡，不在你的 Pac-Man 專案中。先把主專案下載到電腦（不需要帳號）：
+
+```bash
+cd ~
+git clone https://github.com/GridPlusPlus/GridPlusPlus.git
+cd GridPlusPlus/examples/pacman
+```
 
 先在 `examples/pacman/` 編譯並玩一次完成品，確認方向鍵、碰撞與按鈕的實際結果，再依序閱讀地圖、玩家、豆子、鬼與遊戲狀態。完整範例由下列四個檔案組成：
 

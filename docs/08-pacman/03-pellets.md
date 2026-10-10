@@ -11,7 +11,7 @@ for (int y = 0; y < level.rows; ++y) {
     for (int x = 0; x < level.cols; ++x) {
         const int tile = level.tiles[y][x];
         if (tile == 1) {
-            // 設定牆面（7.1 節）。
+            // 設定牆面（8.1 節）。
         } else if (tile == 0) {
             GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
             pellet.setPosition(x, y);

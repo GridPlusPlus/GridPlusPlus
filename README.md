@@ -75,6 +75,7 @@ g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 | `GridValue.h` | `set()`、`get()` 使用的型別安全儲存。 |
 | `GridAssetManager.h`、`GridSQLite.h` | 素材包載入與 texture 管理。 |
 | `template.cpp` | 可直接編譯的起始程式，同步為 GridPlusPlus-Template 的 `main.cpp`。 |
+| `template/README.md` | 同步為 GridPlusPlus-Template 的 `README.md`。 |
 | `examples/pacman_tutorial/` | 「從零做出 Pac-Man」的起始程式、素材與每一步的參考答案，同步為 GridPlusPlus-Pacman。 |
 | `examples/` | Pac-Man 教學、打地鼠、Pac-Man 入門版與完整版範例。 |
 | `tools/create_asset_pack.py` | 將 32×32 PNG 轉成素材包。 |

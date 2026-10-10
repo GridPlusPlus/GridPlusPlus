@@ -17,6 +17,7 @@ on:
       - "GridAssetManager.h"
       - "GridSQLite.h"
       - "template.cpp"
+      - "template/**"
       - "examples/pacman_tutorial/**"
       - "LICENSE"
   workflow_dispatch:
@@ -40,7 +41,7 @@ jobs:
           token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
           path: template
 
-      # 範本只保留學生需要的標頭檔；template.cpp 同步為範本的 main.cpp。
+      # 範本只保留學生需要的標頭檔；template.cpp 同步為範本的 main.cpp，template/README.md 同步為範本的 README.md。
       # 先移除已不存在於 Grid++ 的舊標頭，避免學生 fork 到過時檔案。
       - name: Copy template files
         run: |
@@ -49,6 +50,7 @@ jobs:
             source/GridMaze.h source/GridValue.h source/GridAssetManager.h source/GridSQLite.h \
             source/LICENSE template/
           cp source/template.cpp template/main.cpp
+          cp source/template/README.md template/README.md
 
       - name: Compile template
         run: g++ -std=c++17 -Wall -Wextra -pedantic -Isource/.github/ci -Itemplate template/main.cpp -o /tmp/gridpp-template
@@ -57,7 +59,7 @@ jobs:
         working-directory: template
         run: |
           git add -A GridPlusPlus.h GameEngine.h GridObject.h Overlay.h GridMaze.h GridValue.h \
-            GridAssetManager.h GridSQLite.h LICENSE main.cpp
+            GridAssetManager.h GridSQLite.h LICENSE main.cpp README.md
           if git diff --cached --quiet; then
             exit 0
           fi

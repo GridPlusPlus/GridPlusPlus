@@ -25,7 +25,7 @@ gridpp::Overlay score_label = game.addTextOverlay("Score: 0", 12, 12, 24, BLACK)
 score_label.setText("Score: 10");
 ```
 
-`addTextOverlay()` 的參數依序是文字、像素 x、像素 y、字體大小與顏色；字體大小預設為 20，顏色預設為黑色，所以只寫前三個參數也可以。回傳的 `score_label` 和 GridObject 一樣是 Handler：文字本身由 Engine 保存，程式只透過它修改內容。
+`addTextOverlay()` 的參數依序是文字、像素 x、像素 y、字體大小與顏色；字體大小預設為 20，顏色預設為黑色，所以只寫前三個參數也可以。回傳的 `score_label` 和 GridObject 一樣是 Handler：文字本身由 Engine 保存，程式只透過它修改內容。Pac-Man 教學中的分數 `score_label` 與 GAME OVER 的 `message` 也都是文字 Overlay；`message` 一開始先 `hide()`，遊戲結束時才 `show()`。
 
 需要特別區分的是，文字 Overlay 保存的是「目前要顯示的文字」，而不是計分規則本身。玩家點中地鼠時，遊戲程式先修改整數 `score`，再把新數值轉成文字交給 Overlay。如此一來，分數如何增加仍由遊戲規則決定，Overlay 只負責呈現結果；日後即使更換畫面配置，也不必重寫計分邏輯。
 
@@ -43,7 +43,7 @@ score_label.setText("Score: 10");
 
 ## Overlay 也能有每幀行為
 
-文字只需在內容改變時接收新值，但有些介面元件也需要每幀處理狀態。和 GridObject 一樣，建立 Overlay 時可以另外交給它 Init 與 Update 函式；按鈕則有專屬的 Click 函式，在玩家用滑鼠左鍵點擊它時執行。第三章只會使用文字；等第 8 章的完整遊戲真的需要互動介面時，再介紹按鈕如何依遊戲階段顯示或隱藏。
+文字只需在內容改變時接收新值，但有些介面元件也需要每幀處理狀態。和 GridObject 一樣，建立 Overlay 時可以另外交給它 Init 與 Update 函式；按鈕則有專屬的 Click 函式，在玩家用滑鼠左鍵點擊它時執行。第 4 章只會使用文字；等第 8 章的完整遊戲真的需要互動介面時，再介紹按鈕如何依遊戲階段顯示或隱藏。
 
 Overlay 沒有 GridObject 的 layer 或同格碰撞，因為它不屬於網格世界。如果一項內容開始需要這些能力，問題通常不是替 Overlay 增加更多設定，而是重新判斷它是否其實應該成為 GridObject。至於執行期間新增 Overlay 的時機與其他生命週期邊界，第 9 章會在出現相應需求後集中說明。
 
