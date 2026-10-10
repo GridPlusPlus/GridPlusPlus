@@ -61,7 +61,7 @@ void MoveTarget(GameEngine game, GridObject self) {
 void HitTarget(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
-    if (type == "player") self.setColor(PINK);
+    if (type == "pacman") self.setColor(PINK);
 }
 
 // 放在 main() 內：

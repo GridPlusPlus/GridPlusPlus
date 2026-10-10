@@ -27,10 +27,10 @@ void UpdateSpawner(GameEngine game, GridObject self) {
 `remove()` 會立即釋放內容。被移除的物件不再參與本幀後續的更新、碰撞或繪製，所有指向它的 Handler 也立刻失效。在自己的回呼函式中移除自己時，`remove()` 應是最後一個操作：
 
 ```cpp title="碰撞函式節錄：碰撞後移除自己"
-void CollectPellet(GameEngine, GridObject self, GridObject other) {
+void EatPellet(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
-    if (type != "player") return;
+    if (type != "pacman") return;
 
     ++score;
     self.remove();
@@ -63,7 +63,7 @@ void BuildLevel(GameEngine game) {
 }
 ```
 
-清除之後，所有指向舊關卡的 Handler 都已失效；範例在同一個函式中立即把 `maze` 與 `player` 重新指定為新內容。對應地，`clearOverlays()` 會移除所有 Overlay，但保留網格內容與素材。
+清除之後，所有指向舊關卡的 Handler 都已失效；範例在同一個函式中立即把 `maze` 與 `pacman` 重新指定為新內容。對應地，`clearOverlays()` 會移除所有 Overlay，但保留網格內容與素材。
 
 ## 本節小結
 

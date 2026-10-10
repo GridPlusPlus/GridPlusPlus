@@ -77,7 +77,7 @@ g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 | `template.cpp` | 可直接編譯的起始程式，同步為 GridPlusPlus-Template 的 `main.cpp`。 |
 | `template/README.md` | 同步為 GridPlusPlus-Template 的 `README.md`。 |
 | `examples/pacman_tutorial/` | 「從零做出 Pac-Man」的起始程式、素材與每一步的參考答案，同步為 GridPlusPlus-Pacman。 |
-| `examples/` | Pac-Man 教學、打地鼠、Pac-Man 入門版與完整版範例。 |
+| `examples/` | Pac-Man 教學、打地鼠與完整版 Pac-Man 範例。 |
 | `tools/create_asset_pack.py` | 將 32×32 PNG 轉成素材包。 |
 | `docs/` | 教學文件原始檔。 |
 | `docs_includes/` | 多個文件頁面共用的段落（以 snippet 引入，不是獨立頁面）。 |

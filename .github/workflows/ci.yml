@@ -18,7 +18,6 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/whack_a_mole/step_02_mole.cpp -o /tmp/whack-mole
           g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/whack_a_mole/main.cpp -o /tmp/whack-a-mole
           g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/pacman/main.cpp -o /tmp/pacman
-          g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/pacman_easy/main.cpp -o /tmp/pacman-easy
           g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. examples/pacman_tutorial/main.cpp -o /tmp/tutorial
           for step in examples/pacman_tutorial/steps/step*.cpp; do
             g++ -std=c++17 -Wall -Wextra -pedantic -I.github/ci -I. "$step" -o "/tmp/tutorial-$(basename "$step" .cpp)"

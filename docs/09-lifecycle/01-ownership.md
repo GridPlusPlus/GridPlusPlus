@@ -6,7 +6,7 @@ GameEngine 擁有所有由它建立的遊戲內容：GridObject、基本圖形�
 
 ```cpp title="建立內容並取得 Handler"
 GameEngine game(8, 8, 64);
-GridObject player = game.addObject("player");
+GridObject pacman = game.addObject("pacman");
 Overlay score = game.addTextOverlay("Score: 0", 8, 8);
 Maze maze = game.addMaze(8, 8);
 ```
@@ -16,11 +16,11 @@ Maze maze = game.addMaze(8, 8);
 Handler 可以像 `int` 一樣複製、當作函式參數或存成全域變數。複製 Handler 不會複製內容，所有複本仍操作同一個實體；需要獨立副本時才使用 `deepCopy()`：
 
 ```cpp title="複製 Handler 與 deepCopy"
-GridObject alias = player;
-alias.move(1, 0);  // player 與 alias 指向同一實體
+GridObject alias = pacman;
+alias.move(1, 0);  // pacman 與 alias 指向同一實體
 
-GridObject copy = player.deepCopy();
-copy.move(1, 0);   // copy 是獨立實體，player 不受影響
+GridObject copy = pacman.deepCopy();
+copy.move(1, 0);   // copy 是獨立實體，pacman 不受影響
 ```
 
 程式可以同時保存很多個指向同一內容的 Handler，也可以隨時讓 Handler 變數離開作用域；這些都不會影響內容本身是否存在。
@@ -38,7 +38,7 @@ copy.move(1, 0);   // copy 是獨立實體，player 不受影響
 
 `exists()` 可以隨時安全地檢查 Handler 是否仍有效。對失效 Handler 呼叫其他函式會丟出 `std::runtime_error`，訊息會指出是哪一種內容已不存在，例如 `Grid++ Error: GridObject no longer exists`。這比起使用已釋放記憶體時可能出現的隨機數值或當機，更容易判斷問題所在。
 
-全域宣告但尚未指定的 Handler（例如範例中的 `GridObject player;`）同樣不指向任何內容，`exists()` 為 `false`。跨關卡保存的全域 Handler，應在清除舊關卡後立即重新指定；Pac-Man 的 `BuildLevel()` 在 `clearObjects()` 之後就重新指定 `maze` 與 `player`，而鬼在讀取玩家座標前也會先檢查 `player.exists()`。
+全域宣告但尚未指定的 Handler（例如範例中的 `GridObject pacman;`）同樣不指向任何內容，`exists()` 為 `false`。跨關卡保存的全域 Handler，應在清除舊關卡後立即重新指定；Pac-Man 的 `BuildLevel()` 在 `clearObjects()` 之後就重新指定 `maze` 與 `pacman`，而鬼在讀取玩家座標前也會先檢查 `pacman.exists()`。
 
 ## GameEngine 也是 Handler
 
@@ -47,7 +47,7 @@ copy.move(1, 0);   // copy 是獨立實體，player 不受影響
 ```cpp title="main()：Engine 離開作用域時統一清理"
 int main() {
     GameEngine game(8, 8, 64);
-    game.addObject("player", nullptr, MovePlayer);
+    game.addObject("pacman", nullptr, MovePacman);
     game.run();
     return 0;
 }  // game 與它擁有的內容都會在此釋放。

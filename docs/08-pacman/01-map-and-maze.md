@@ -2,7 +2,7 @@
 
 教學第 3 步已經用 `Maze` 蓋過牆：地圖寫成字串陣列，再用 `isWall()` 擋住小精靈。本節說明 `Maze` 本身的設計，以及完整版如何改從檔案讀取地圖。
 
-迷宮是另一層網格資料，每一格記錄「這個位置能不能通過」。若將每一面牆都建立成獨立 GridObject，小型地圖仍可運作，但程式會產生大量沒有行為的物件，移動時還要等待碰撞發生才知道玩家已經走進牆內。
+迷宮是另一層網格資料，每一格記錄「這個位置能不能通過」。若將每一面牆都建立成獨立 GridObject，小型地圖仍可運作，但程式會產生大量沒有行為的物件，移動時還要等待碰撞發生才知道角色已經走進牆內。
 
 `Maze` 把整張牆面配置保存為一個固定大小的二維網格。遊戲可以在移動前查詢目標格是否為牆，先決定是否允許移動；繪製時則由同一份資料畫出所有牆面。牆面判斷與畫面因此使用一致的地圖來源。
 
@@ -36,15 +36,14 @@ for (int x = 0; x < maze.width(); ++x) {
 
 `isWall(x, y)` 查詢一格是否為牆。查詢迷宮外座標會回傳 `true`，不會丟出例外；移動程式因此可直接檢查下一格，不必另外撰寫四個邊界條件。
 
-```cpp title="玩家更新函式示意：移動前查詢牆面"
-void MovePlayer(GameEngine game, GridObject self) {
-    if (game.keyPressed(KEY_RIGHT) && !maze.isWall(self.x() + 1, self.y())) {
-        self.move(1, 0);
-    }
+```cpp title="教學版的 Walk()：移動前查詢牆面"
+void Walk(GridObject who, int dx, int dy) {
+    if (maze.isWall(who.x() + dx, who.y() + dy)) return;
+    who.move(dx, dy);
 }
 ```
 
-為了讓每個角色的函式都能查詢牆面，範例把 `maze` 宣告為全域 Handler。迷宮不是只佔一格的物件，也不會產生碰撞事件：玩家是否撞牆應透過 `isWall()` 在移動前判斷，而不是等到走進牆裡再由 Collide 處理。
+為了讓每個角色的函式都能查詢牆面，範例把 `maze` 宣告為全域 Handler。迷宮不是只佔一格的物件，也不會產生碰撞事件：角色是否撞牆應透過 `isWall()` 在移動前判斷，而不是等到走進牆裡再由 Collide 處理。
 
 迷宮也可以在建立時接收 Init 與 Update 函式，形式是 `void Function(GameEngine game, Maze self)`，例如讓某些牆每隔幾秒開關一次；Pac-Man 範例的牆面固定不變，所以沒有使用。
 
@@ -60,25 +59,24 @@ maze.setWallImages("wall_iso", "wall_end", "wall_straight", "wall_corner", "wall
 
 ## Pac-Man 地圖格式
 
-`map.txt` 的第一行是列數和欄數，後面包含 `rows × cols` 個 tile。空白和換行都只作為分隔，因此每列可以排成地圖形狀，解析結果仍由第一行的尺寸決定。
+`map.txt` 和教學版的 `kMap` 使用相同的符號，只是從程式碼搬進了文字檔：每一行是地圖的一列，每個字元是一格。
 
 ```text
-5 7
-1 1 1 1 1 1 1
-1 2 0 0 0 3 1
-1 0 1 1 1 0 1
-1 0 0 0 0 0 1
-1 1 1 1 1 1 1
+#######
+#P...G#
+#.###.#
+#.....#
+#######
 ```
 
-| Tile | 建立的內容 |
+| 字元 | 建立的內容 |
 |---|---|
-| `0` | 通道與一顆豆子 |
-| `1` | 牆面 |
-| `2` | 玩家起點 |
-| `3` | 鬼的起點 |
+| `.` | 通道與一顆豆子 |
+| `#` | 牆面 |
+| `P` | 小精靈的起點 |
+| `G` | 鬼的起點 |
 
-`LevelMap.h` 提供 `LoadLevelMap(path)`。它會先讀取完整檔案，驗證尺寸介於 1～64、tile 數量正確、每個值位於 0～3、檔尾沒有多餘資料，並確認恰好一個玩家。驗證失敗時丟出以 `Map Error:` 開頭的英文例外。
+地圖放在檔案裡，改關卡就不必重新編譯程式。`LevelMap.h` 提供 `LoadLevelMap(path)`：它逐行讀取檔案，略過空行，並檢查每一列長度相同、尺寸不超過 64×64、只出現這四種字元，而且恰好有一個 `P`。檢查失敗時丟出以 `Map Error:` 開頭的英文例外，例如 `Map Error: row 3 has 18 characters, expected 19`。
 
 ```cpp title="main.cpp 節錄：先驗證地圖再建立 Engine"
 level = LoadLevelMap("map.txt");
@@ -121,14 +119,14 @@ void BuildLevel(GameEngine game) {
     // ...
     for (int y = 0; y < level.rows; ++y) {
         for (int x = 0; x < level.cols; ++x) {
-            const int tile = level.tiles[y][x];
-            if (tile == 1) {
+            const char tile = level.tiles[y][x];
+            if (tile == '#') {
                 maze.setWall(x, y);
-            } else if (tile == 0) {
+            } else if (tile == '.') {
                 // 建立豆子（8.3 節）。
-            } else if (tile == 2) {
-                // 記住玩家起點（8.2 節）。
-            } else if (tile == 3) {
+            } else if (tile == 'P') {
+                // 記住小精靈起點（8.2 節）。
+            } else if (tile == 'G') {
                 // 建立鬼（8.4 節）。
             }
         }
@@ -137,7 +135,7 @@ void BuildLevel(GameEngine game) {
 }
 ```
 
-迷宮最先建立，讓 layer 同為 0 的豆子、鬼與玩家都畫在它之後。重新開始時，程式重用啟動時已驗證的 `level`，不重新讀取磁碟；`clearObjects()` 會移除上一局的迷宮與所有物件，舊的 `maze` Handler 隨之失效，接著被重新指定為新建立的迷宮。
+迷宮最先建立，讓 layer 同為 0 的豆子、鬼與小精靈都畫在它之後。重新開始時，程式重用啟動時已驗證的 `level`，不重新讀取磁碟；`clearObjects()` 會移除上一局的迷宮與所有物件，舊的 `maze` Handler 隨之失效，接著被重新指定為新建立的迷宮。
 
 ## 本節小結
 
@@ -146,6 +144,6 @@ void BuildLevel(GameEngine game) {
 - `setWallImages()` 根據相鄰牆面選擇素材與方向。
 - 重新開始會重用已驗證的地圖資料並重建迷宮與物件。
 
-[玩家移動](02-player.md){ .md-button .md-button--primary }
+[小精靈移動](02-player.md){ .md-button .md-button--primary }
 
 完整函式簽名見 [Maze API](../api/classgridpp_1_1Maze.md)。

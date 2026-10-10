@@ -12,41 +12,45 @@ namespace pacman_example {
 constexpr int kMaxMapWidth = 64;
 constexpr int kMaxMapHeight = 64;
 
-// Pacman map tiles: 0=pellet, 1=wall, 2=player, 3=ghost.
+// 地圖字元和教學版相同：'#' 牆、'.' 豆子、'P' 小精靈起點、'G' 鬼的起點。
 struct LevelMap {
     int rows = 0;
     int cols = 0;
-    int tiles[kMaxMapHeight][kMaxMapWidth] = {};
+    char tiles[kMaxMapHeight][kMaxMapWidth] = {};
 };
 
 inline LevelMap LoadLevelMap(std::istream& input) {
     LevelMap level;
-    if (!(input >> level.rows >> level.cols)) {
-        throw std::runtime_error("Map Error: first line must contain rows and columns");
-    }
-    if (level.rows < 1 || level.cols < 1 || level.rows > kMaxMapHeight || level.cols > kMaxMapWidth) {
-        throw std::runtime_error("Map Error: dimensions must be between 1x1 and 64x64");
-    }
+    int pacman_count = 0;
+    std::string line;
+    while (std::getline(input, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty()) continue;
 
-    int player_count = 0;
-    for (int y = 0; y < level.rows; ++y) {
-        for (int x = 0; x < level.cols; ++x) {
-            int& tile = level.tiles[y][x];
-            if (!(input >> tile)) {
-                throw std::runtime_error("Map Error: missing or invalid tile at (" + std::to_string(x) + ", " +
-                                         std::to_string(y) + ")");
-            }
-            if (tile < 0 || tile > 3) {
-                throw std::runtime_error("Map Error: tile at (" + std::to_string(x) + ", " + std::to_string(y) +
-                                         ") must be 0, 1, 2, or 3");
-            }
-            if (tile == 2) ++player_count;
+        const int width = static_cast<int>(line.size());
+        if (level.rows == 0) level.cols = width;
+        if (level.rows == kMaxMapHeight || level.cols > kMaxMapWidth) {
+            throw std::runtime_error("Map Error: map must be at most 64x64");
         }
+        if (width != level.cols) {
+            throw std::runtime_error("Map Error: row " + std::to_string(level.rows) + " has " +
+                                     std::to_string(width) + " characters, expected " + std::to_string(level.cols));
+        }
+
+        for (int x = 0; x < width; ++x) {
+            const char tile = line[x];
+            if (tile != '#' && tile != '.' && tile != 'P' && tile != 'G') {
+                throw std::runtime_error("Map Error: unknown character '" + std::string(1, tile) + "' at (" +
+                                         std::to_string(x) + ", " + std::to_string(level.rows) + ")");
+            }
+            if (tile == 'P') ++pacman_count;
+            level.tiles[level.rows][x] = tile;
+        }
+        ++level.rows;
     }
 
-    input >> std::ws;
-    if (!input.eof()) throw std::runtime_error("Map Error: extra data after the declared grid");
-    if (player_count != 1) throw std::runtime_error("Map Error: map must contain exactly one player tile (2)");
+    if (level.rows == 0) throw std::runtime_error("Map Error: map is empty");
+    if (pacman_count != 1) throw std::runtime_error("Map Error: map must contain exactly one 'P'");
     return level;
 }
 

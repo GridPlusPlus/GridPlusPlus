@@ -9,7 +9,7 @@
 | `GameState::kWon` | 勝利 | 顯示 YOU WIN! 與 Restart |
 | `GameState::kLost` | 失敗 | 顯示 GAME OVER 與 Restart |
 
-`MovePlayer` 與 `MoveGhost` 都在狀態不是 `kPlaying` 或遊戲暫停時直接返回。遊戲物件仍存在並繪製，背景保持在目前關卡，Overlay 再於其上顯示狀態訊息。
+`MovePacman` 與 `MoveGhost` 都在狀態不是 `kPlaying` 或遊戲暫停時直接返回。遊戲物件仍存在並繪製，背景保持在目前關卡，Overlay 再於其上顯示狀態訊息。
 
 ## 讓文字跟著狀態改變
 
@@ -89,13 +89,13 @@ void UpdatePauseButton(GameEngine, Overlay self) {
 
 Start 與 Restart 放在畫面上同一個位置，卻不會同時出現：開始階段只有 Start 可見，勝負揭曉後只有 Restart 可見。Pause 按鈕則在暫停時把文字改成 `Resume`，提示玩家再按一次可以繼續。`paused ? "Resume" : "Pause"` 是條件運算子，意思是「`paused` 為真時使用 `"Resume"`，否則使用 `"Pause"`」。
 
-按下 Pause 並沒有停止 Engine 的主迴圈；`MovePlayer` 與 `MoveGhost` 仍然每幀被呼叫，只是看見 `paused` 為真後立即返回。
+按下 Pause 並沒有停止 Engine 的主迴圈；`MovePacman` 與 `MoveGhost` 仍然每幀被呼叫，只是看見 `paused` 為真後立即返回。
 
 ## 重新開始一局
 
-`RestartGame` 呼叫 `BuildLevel()` 重建關卡，再把狀態切回 `kPlaying`。`BuildLevel()` 開頭的 `clearObjects()` 會移除上一局的迷宮、豆子、鬼與玩家，接著從已驗證的 `level` 建立新的一批；Overlay 與已載入素材不受 `clearObjects()` 影響，所以文字和按鈕可以繼續使用。
+`RestartGame` 呼叫 `BuildLevel()` 重建關卡，再把狀態切回 `kPlaying`。`BuildLevel()` 開頭的 `clearObjects()` 會移除上一局的迷宮、豆子、鬼與小精靈，接著從已驗證的 `level` 建立新的一批；Overlay 與已載入素材不受 `clearObjects()` 影響，所以文字和按鈕可以繼續使用。
 
-清除之後，全域的 `maze` 與 `player` 會立即被重新指定為新建立的迷宮與玩家。新內容在這一幀結束時執行 Init，並從下一幀開始更新、碰撞與繪製；這項時序規則在第 9 章有完整說明。
+清除之後，全域的 `maze` 與 `pacman` 會立即被重新指定為新建立的迷宮與小精靈。新內容在這一幀結束時執行 Init，並從下一幀開始更新、碰撞與繪製；這項時序規則在第 9 章有完整說明。
 
 ## 檢查 main() 的組裝順序
 

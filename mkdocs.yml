@@ -103,7 +103,7 @@ nav:
   - 8 解析 Pac-Man:
       - 08-pacman/index.md
       - 8.1 地圖與迷宮: 08-pacman/01-map-and-maze.md
-      - 8.2 玩家移動: 08-pacman/02-player.md
+      - 8.2 小精靈移動: 08-pacman/02-player.md
       - 8.3 豆子與勝利條件: 08-pacman/03-pellets.md
       - 8.4 多隻鬼的獨立狀態: 08-pacman/04-ghosts.md
       - 8.5 遊戲狀態與 Overlay: 08-pacman/05-game-states.md

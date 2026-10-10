@@ -1,6 +1,6 @@
 # 從素材名稱到素材包
 
-遊戲規則需要一種穩定的方式描述外觀，否則程式一旦直接依賴圖片檔名、資料夾位置與圖形函式庫的紋理，更換美術時便必須連帶修改移動與碰撞程式。Grid++ 因此讓物件只保存 `player`、`ghost` 或 `wall` 之類的素材名稱，Engine 再從已載入的素材包尋找對應圖片；規則知道角色「使用 player 外觀」，卻不必知道圖片如何保存或何時釋放。
+遊戲規則需要一種穩定的方式描述外觀，否則程式一旦直接依賴圖片檔名、資料夾位置與圖形函式庫的紋理，更換美術時便必須連帶修改移動與碰撞程式。Grid++ 因此讓物件只保存 `pacman`、`ghost` 或 `wall` 之類的素材名稱，Engine 再從已載入的素材包尋找對應圖片；規則知道角色「使用 pacman 外觀」，卻不必知道圖片如何保存或何時釋放。
 
 ## 先載入並使用既有素材包
 
@@ -11,8 +11,8 @@ int main() {
     gridpp::GameEngine game(10, 10, 48);
     game.loadAssets("assets.db");
 
-    gridpp::GridObject player = game.addObject("player", nullptr, MovePlayer);
-    player.setPosition(4, 5);
+    gridpp::GridObject pacman = game.addObject("pacman", nullptr, MovePacman);
+    pacman.setPosition(4, 5);
 
     game.run();
     return 0;
@@ -22,10 +22,10 @@ int main() {
 `addObject()` 的第一個參數就是素材名稱，而 `setImage()` 可以在執行期間切換名稱，因此同一個玩家可以在張嘴與閉嘴之間改變畫面，卻不必重新載入素材包或建立新物件。
 
 ```cpp title="物件更新函式節錄：切換素材名稱"
-if (self.image() == "player_closed") {
-    self.setImage("player_open");
+if (self.image() == "pacman_closed") {
+    self.setImage("pacman_open");
 } else {
-    self.setImage("player_closed");
+    self.setImage("pacman_closed");
 }
 ```
 
@@ -62,7 +62,7 @@ try {
 
 ```bash
 python3 tools/create_asset_pack.py assets.db \
-    player=images/player.png \
+    pacman=images/pacman.png \
     ghost=images/ghost.png \
     pellet=images/pellet.png
 ```

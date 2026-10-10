@@ -35,7 +35,7 @@ void EatPellet(gridpp::GameEngine, gridpp::GridObject self, gridpp::GridObject o
 一個 Update 函式會收到 `self`，因此同一個函式不必把物件寫死在全域變數中，也能查詢它的位置，或透過 `game` 取得所在的遊戲世界。以下程式讓玩家用方向鍵一次移動一格，並用 `cols()` 與 `rows()` 防止它走出網格；函式寫在 `main()` 前面，`addObject()` 則放在 `main()` 中建立 Engine 之後、呼叫 `run()` 之前。
 
 ```cpp title="main.cpp（省略第 1 章已出現的 include 與 using）"
-void MovePlayer(GameEngine game, GridObject self) {
+void MovePacman(GameEngine game, GridObject self) {
     if (game.keyPressed(KEY_RIGHT) && self.x() < game.cols() - 1) {
         self.move(1, 0);
     } else if (game.keyPressed(KEY_LEFT) && self.x() > 0) {
@@ -48,8 +48,8 @@ void MovePlayer(GameEngine game, GridObject self) {
 }
 
 // 放在 main() 內：
-GridObject player = game.addObject("player", nullptr, MovePlayer);
-player.setPosition(1, 1);
+GridObject pacman = game.addObject("pacman", nullptr, MovePacman);
+pacman.setPosition(1, 1);
 ```
 
 `self` 與 `game` 都是 Handler，物件與遊戲本身仍由 Engine 管理。物件需要永久離開世界時，呼叫 `self.remove()` 即可；移除後就不應再透過 `self` 操作它，詳細的安全時機集中在第 9 章說明。
@@ -81,12 +81,12 @@ game.addObject("timer", InitTimer, UpdateTimer);
 game.addObject(image, init, update, collide);
 ```
 
-下一節才會定義 `CollectPellet` 並完成玩家吃豆子的程式；目前先比較三種常見組合：牆面沒有任何行為，玩家只需要 `MovePlayer`，豆子則不更新位置，只在碰撞時執行 `CollectPellet`。
+下一節才會定義 `EatPellet` 並完成玩家吃豆子的程式；目前先比較三種常見組合：牆面沒有任何行為，玩家只需要 `MovePacman`，豆子則不更新位置，只在碰撞時執行 `EatPellet`。
 
-```cpp title="main() 內的建立方式（CollectPellet 將於下一節定義）"
+```cpp title="main() 內的建立方式（EatPellet 將於下一節定義）"
 GridObject wall = game.addObject("wall");
-GridObject player = game.addObject("player", nullptr, MovePlayer);
-GridObject pellet = game.addObject("pellet", nullptr, nullptr, CollectPellet);
+GridObject pacman = game.addObject("pacman", nullptr, MovePacman);
+GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
 ```
 
 ## 在建立之後替換行為
@@ -94,12 +94,12 @@ GridObject pellet = game.addObject("pellet", nullptr, nullptr, CollectPellet);
 函式也可以在建立物件之後才交給它，或在遊戲進行中換成另一個函式。三個 setter 分別對應三種行為：
 
 ```cpp
-player.setInitFunction(InitPlayer);
-player.setUpdateFunction(MovePlayer);
-player.setCollideFunction(HitPlayer);
+pacman.setInitFunction(InitPacman);
+pacman.setUpdateFunction(MovePacman);
+pacman.setCollideFunction(PacmanHit);
 ```
 
-例如玩家吃到加速道具後，可以呼叫 `self.setUpdateFunction(MovePlayerFast)`，下一次 Update 就會改用新函式；傳入 `nullptr` 則表示停止這項行為。需要注意的是，若物件已經執行過 Init，替換 Init 並不會讓新函式再執行一次。
+例如玩家吃到加速道具後，可以呼叫 `self.setUpdateFunction(MovePacmanFast)`，下一次 Update 就會改用新函式；傳入 `nullptr` 則表示停止這項行為。需要注意的是，若物件已經執行過 Init，替換 Init 並不會讓新函式再執行一次。
 
 ??? info "選讀：回呼函式背後的函式指標"
 

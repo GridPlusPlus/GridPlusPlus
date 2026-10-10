@@ -1,3 +1,4 @@
+// Pac-Man 完整版：和教學版用相同的寫法，再加上檔案地圖、持續移動、四隻鬼與開始／暫停／重玩按鈕。
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -15,8 +16,10 @@ using pacman_example::LoadLevelMap;
 
 namespace {
 
-constexpr int kDirectionX[4] = {1, 0, -1, 0};
-constexpr int kDirectionY[4] = {0, -1, 0, 1};
+constexpr int kDX[4] = {1, 0, -1, 0};  // 方向 0 右、1 上、2 左、3 下
+constexpr int kDY[4] = {0, -1, 0, 1};
+constexpr double kPacmanStepTime = 0.13;  // 小精靈每 0.13 秒走一格
+constexpr double kGhostStepTime = 0.2;    // 鬼每 0.2 秒走一格
 
 enum class GameState {
     kStart,
@@ -29,15 +32,8 @@ GameState game_state = GameState::kStart;
 int pellets_left = 0;
 bool paused = false;
 Maze maze;
-GridObject player;
+GridObject pacman;
 LevelMap level;
-
-int ManhattanDistance(int from_x, int from_y, int to_x, int to_y) {
-    return std::abs(from_x - to_x) + std::abs(from_y - to_y);
-}
-
-// 鬼是否和玩家在同一格。
-bool Caught(GridObject ghost) { return ghost.x() == player.x() && ghost.y() == player.y(); }
 
 std::string TypeOf(GridObject object) {
     std::string type;
@@ -45,103 +41,107 @@ std::string TypeOf(GridObject object) {
     return type;
 }
 
+// 鬼是否和小精靈在同一格。
+bool Caught(GridObject ghost) { return ghost.x() == pacman.x() && ghost.y() == pacman.y(); }
+
 void EatPellet(GameEngine, GridObject self, GridObject other) {
     if (TypeOf(other) != "pacman") return;
 
     self.remove();
-    if (--pellets_left <= 0) game_state = GameState::kWon;
+    pellets_left--;
+    if (pellets_left == 0) game_state = GameState::kWon;
 }
 
-void MoveGhost(GameEngine game, GridObject self) {
-    if (game_state != GameState::kPlaying || paused || !player.exists()) return;
-
-    int timer = 0;
-    self.get("timer", timer);
-    ++timer;
-    self.set("timer", timer);
-    if (timer < 12) return;
-    self.set("timer", 0);
-
-    // 鬼和玩家同一幀互換位置時，碰撞檢查看不到兩者同格，所以移動前後各檢查一次。
-    if (Caught(self)) {
-        game_state = GameState::kLost;
-        return;
-    }
-
-    int current_direction = 0;
-    bool random_ghost = false;
-    self.get("direction", current_direction);
-    self.get("random", random_ghost);
-
-    int options[4];
-    int option_count = 0;
-    int any[4];
-    int any_count = 0;
-    for (int direction = 0; direction < 4; ++direction) {
-        if (maze.isWall(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction])) continue;
-        any[any_count++] = direction;
-        if (direction != (current_direction ^ 2)) options[option_count++] = direction;
-    }
-
-    int* choices = option_count > 0 ? options : any;
-    const int choice_count = option_count > 0 ? option_count : any_count;
-    if (choice_count == 0) return;
-
-    int picked = choices[0];
-    if (random_ghost) {
-        picked = choices[game.random(0, choice_count - 1)];
-    } else {
-        int best_distance = 1 << 30;
-        for (int i = 0; i < choice_count; ++i) {
-            const int direction = choices[i];
-            const int distance = ManhattanDistance(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction],
-                                                   player.x(), player.y());
-            if (distance < best_distance) {
-                best_distance = distance;
-                picked = direction;
-            }
-        }
-    }
-
-    self.set("direction", picked);
-    self.move(kDirectionX[picked], kDirectionY[picked]);
-    if (Caught(self)) game_state = GameState::kLost;
+void PacmanHit(GameEngine, GridObject, GridObject other) {
+    if (TypeOf(other) == "ghost") game_state = GameState::kLost;
 }
 
-void MovePlayer(GameEngine game, GridObject self) {
+void MovePacman(GameEngine game, GridObject self) {
     if (game_state != GameState::kPlaying || paused) return;
 
+    // 每一幀都記下最後按的方向，等那個方向走得過去時再轉彎。
     int wanted_direction = -1;
-    int direction = -1;
-    int timer = 0;
     self.get("wantedDirection", wanted_direction);
-    self.get("direction", direction);
-    self.get("timer", timer);
-
     if (game.keyDown(KEY_RIGHT)) wanted_direction = 0;
     if (game.keyDown(KEY_UP)) wanted_direction = 1;
     if (game.keyDown(KEY_LEFT)) wanted_direction = 2;
     if (game.keyDown(KEY_DOWN)) wanted_direction = 3;
     self.set("wantedDirection", wanted_direction);
 
-    ++timer;
-    self.set("timer", timer);
-    if (timer < 8) return;
-    self.set("timer", 0);
+    double next_move = 0.0;
+    self.get("nextMove", next_move);
+    if (game.time() < next_move) return;  // 還沒輪到小精靈走
+    self.set("nextMove", game.time() + kPacmanStepTime);
 
-    if (wanted_direction >= 0 &&
-        !maze.isWall(self.x() + kDirectionX[wanted_direction], self.y() + kDirectionY[wanted_direction])) {
+    int direction = -1;
+    self.get("direction", direction);
+    if (wanted_direction >= 0 && !maze.isWall(self.x() + kDX[wanted_direction], self.y() + kDY[wanted_direction])) {
         direction = wanted_direction;
         self.set("direction", direction);
     }
-    if (direction >= 0 && !maze.isWall(self.x() + kDirectionX[direction], self.y() + kDirectionY[direction])) {
-        self.move(kDirectionX[direction], kDirectionY[direction]);
+    if (direction >= 0 && !maze.isWall(self.x() + kDX[direction], self.y() + kDY[direction])) {
+        self.move(kDX[direction], kDY[direction]);
         self.setDirection(direction);
     }
 }
 
-void HitPlayer(GameEngine, GridObject, GridObject other) {
-    if (TypeOf(other) == "ghost") game_state = GameState::kLost;
+void MoveGhost(GameEngine game, GridObject self) {
+    if (game_state != GameState::kPlaying || paused || !pacman.exists()) return;
+
+    double next_move = 0.0;
+    self.get("nextMove", next_move);
+    if (game.time() < next_move) return;  // 還沒輪到這隻鬼走
+    self.set("nextMove", game.time() + kGhostStepTime);
+
+    // 走之前先看一眼：小精靈是不是自己撞上來了？
+    if (Caught(self)) {
+        game_state = GameState::kLost;
+        return;
+    }
+
+    int direction = 0;
+    bool random_ghost = false;
+    self.get("direction", direction);
+    self.get("random", random_ghost);
+
+    // 列出走得通、而且不用回頭的方向；走進死路時才回頭。
+    int back = (direction + 2) % 4;
+    int choices[4];
+    int choice_count = 0;
+    for (int d = 0; d < 4; ++d) {
+        if (d == back) continue;
+        if (maze.isWall(self.x() + kDX[d], self.y() + kDY[d])) continue;
+        choices[choice_count] = d;
+        choice_count++;
+    }
+    if (choice_count == 0) {
+        if (maze.isWall(self.x() + kDX[back], self.y() + kDY[back])) return;  // 四面都是牆
+        choices[0] = back;
+        choice_count = 1;
+    }
+
+    // 隨機的鬼亂選一條路，其他鬼選離小精靈最近的那條。
+    int picked = choices[0];
+    if (random_ghost) {
+        picked = choices[game.random(0, choice_count - 1)];
+    } else {
+        int best_distance = 9999;
+        for (int i = 0; i < choice_count; ++i) {
+            int x = self.x() + kDX[choices[i]];
+            int y = self.y() + kDY[choices[i]];
+            int distance = std::abs(x - pacman.x()) + std::abs(y - pacman.y());
+            if (distance < best_distance) {
+                best_distance = distance;
+                picked = choices[i];
+            }
+        }
+    }
+
+    self.set("direction", picked);
+    self.move(kDX[picked], kDY[picked]);
+
+    // 走完再看一眼：是不是撲到小精靈身上了？
+    if (Caught(self)) game_state = GameState::kLost;
 }
 
 void BuildLevel(GameEngine game) {
@@ -154,40 +154,40 @@ void BuildLevel(GameEngine game) {
 
     const Color ghost_colors[4] = {RED, PINK, SKYBLUE, ORANGE};
     int ghost_count = 0;
-    int player_x = 0;
-    int player_y = 0;
+    int pacman_x = 0;
+    int pacman_y = 0;
     for (int y = 0; y < level.rows; ++y) {
         for (int x = 0; x < level.cols; ++x) {
-            const int tile = level.tiles[y][x];
-            if (tile == 1) {
+            const char tile = level.tiles[y][x];
+            if (tile == '#') {
                 maze.setWall(x, y);
-            } else if (tile == 0) {
+            } else if (tile == '.') {
                 GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
                 pellet.setPosition(x, y);
                 pellet.set("type", "pellet");
-                ++pellets_left;
-            } else if (tile == 2) {
-                player_x = x;
-                player_y = y;
-            } else if (tile == 3) {
+                pellets_left++;
+            } else if (tile == 'P') {
+                pacman_x = x;
+                pacman_y = y;
+            } else if (tile == 'G') {
                 GridObject ghost = game.addObject("ghost", nullptr, MoveGhost);
                 ghost.setPosition(x, y);
                 ghost.setColor(ghost_colors[ghost_count % 4]);
                 ghost.set("type", "ghost");
-                ghost.set("timer", 0);
+                ghost.set("nextMove", 0.0);
                 ghost.set("direction", 0);
                 ghost.set("random", ghost_count == 3);
-                ++ghost_count;
+                ghost_count++;
             }
         }
     }
 
-    player = game.addObject("pacman", nullptr, MovePlayer, HitPlayer);
-    player.setPosition(player_x, player_y);
-    player.set("type", "pacman");
-    player.set("timer", 0);
-    player.set("direction", -1);
-    player.set("wantedDirection", -1);
+    pacman = game.addObject("pacman", nullptr, MovePacman, PacmanHit);
+    pacman.setPosition(pacman_x, pacman_y);
+    pacman.set("type", "pacman");
+    pacman.set("nextMove", 0.0);
+    pacman.set("direction", -1);
+    pacman.set("wantedDirection", -1);
 }
 
 void UpdateScore(GameEngine, Overlay self) {

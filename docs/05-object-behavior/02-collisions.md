@@ -6,49 +6,55 @@ Collide 函式會收到 `self` 與 `other` 兩個 Handler，其中 `self` 是正
 
 ## 在物件上記錄種類
 
-每個 GridObject 都可以用 `set(key, value)` 保存額外資料，再用 `get(key, output)` 讀回來。這項能力第 6 章會完整介紹，現在先用它做一件簡單的事：為每個物件記錄一個 `"type"`，讓碰撞函式能區分玩家、豆子與敵人。以下程式先把玩家標記為 `player`，再讓豆子的 `CollectPellet` 只接受這種對象，因此其他物件即使經過豆子所在的格子，也不會誤觸得分規則。
+每個 GridObject 都可以用 `set(key, value)` 保存額外資料，再用 `get(key, output)` 讀回來。這項能力第 6 章會完整介紹，現在先用它做一件簡單的事：為每個物件記錄一個 `"type"`，讓碰撞函式能區分玩家、豆子與敵人。以下程式先把玩家標記為 `pacman`，再讓豆子的 `EatPellet` 只接受這種對象，因此其他物件即使經過豆子所在的格子，也不會誤觸得分規則。
 
 ```cpp title="main.cpp（碰撞函式放在 main() 前，建立物件放在 main() 內）"
 int score = 0;
 
-void CollectPellet(GameEngine, GridObject self, GridObject other) {
+void EatPellet(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
-    if (type != "player") return;
+    if (type != "pacman") return;
 
     ++score;
     self.remove();
 }
 
 // 放在 main() 內：
-GridObject player = game.addObject("player", nullptr, MovePlayer);
-player.setPosition(1, 1);
-player.set("type", "player");
+GridObject pacman = game.addObject("pacman", nullptr, MovePacman);
+pacman.setPosition(1, 1);
+pacman.set("type", "pacman");
 
-GridObject pellet = game.addObject("pellet", nullptr, nullptr, CollectPellet);
+GridObject pellet = game.addObject("pellet", nullptr, nullptr, EatPellet);
 pellet.setPosition(3, 1);
 pellet.set("type", "pellet");
 ```
 
-`other.get("type", type)` 把對方保存的種類讀進字串 `type`；如果對方沒有設定過 `"type"`，`type` 會是空字串，同樣不等於 `"player"`。使用 `std::string` 時記得在檔案開頭加上 `#include <string>`。
+`other.get("type", type)` 把對方保存的種類讀進字串 `type`；如果對方沒有設定過 `"type"`，`type` 會是空字串，同樣不等於 `"pacman"`。使用 `std::string` 時記得在檔案開頭加上 `#include <string>`。
 
-玩家走到 `(3, 1)` 後，Engine 會把這次相遇交給豆子的 `CollectPellet`，函式確認對方的種類之後才增加分數，最後呼叫 `self.remove()` 讓豆子離開遊戲。移除會立即生效：豆子不再參與這一幀剩下的碰撞，也不會被畫出來，所有指向它的 Handler 都會失效。因此 `remove()` 通常是函式中最後一個操作，之後不應再透過 `self` 讀寫這顆豆子。這項規則如何保護同一幀中尚未完成的工作，會在[第 9 章的執行期間新增與刪除](../09-lifecycle/03-runtime-changes.md)統一說明。
+!!! note "用圖片名稱還是 type 辨認？"
+
+    Pac-Man 教學用的是更簡單的寫法 `other.image() == "pacman"`：直接看對方用哪張圖片。每種角色各用一張不同圖片時，兩種寫法效果相同。
+
+    但圖片是「外觀」，`"type"` 才是「身分」。只要遊戲中有物件會換圖片（例如鬼在大力丸期間變成藍色），或不同角色共用同一張圖（例如兩隻顏色不同的鬼），用圖片名稱辨認就會出錯。因此規則比較多的遊戲，例如第 8 章的完整版 Pac-Man，都改用 `"type"`。另外，基本圖形（第 7.2 節）沒有圖片，呼叫 `image()` 會出錯，只能用 `"type"` 辨認。
+
+玩家走到 `(3, 1)` 後，Engine 會把這次相遇交給豆子的 `EatPellet`，函式確認對方的種類之後才增加分數，最後呼叫 `self.remove()` 讓豆子離開遊戲。移除會立即生效：豆子不再參與這一幀剩下的碰撞，也不會被畫出來，所有指向它的 Handler 都會失效。因此 `remove()` 通常是函式中最後一個操作，之後不應再透過 `self` 讀寫這顆豆子。這項規則如何保護同一幀中尚未完成的工作，會在[第 9 章的執行期間新增與刪除](../09-lifecycle/03-runtime-changes.md)統一說明。
 
 ## 同一場相遇可以有兩種反應
 
 玩家碰到敵人時，玩家可能要扣除生命，敵人也可能要切換追逐模式，因此 Grid++ 會讓同一場相遇中的兩個物件各自處理自己的行為；對玩家而言 `self` 是玩家而 `other` 是敵人，輪到敵人時兩者則會交換。現階段只要知道雙方都可能收到通知，並讓每個函式專心修改自己負責的狀態即可，不需要依賴哪一方先執行。
 
 ```cpp title="碰撞函式示意：雙方各自處理反應"
-void HitPlayer(GameEngine, GridObject self, GridObject other) {
+void PacmanHit(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
     if (type == "ghost") self.hide();
 }
 
-void TouchPlayer(GameEngine, GridObject self, GridObject other) {
+void GhostHit(GameEngine, GridObject self, GridObject other) {
     std::string type;
     other.get("type", type);
-    if (type == "player") self.setColor(RED);
+    if (type == "pacman") self.setColor(RED);
 }
 ```
 

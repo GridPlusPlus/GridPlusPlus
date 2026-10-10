@@ -28,20 +28,20 @@ Init 會在 `run()` 開始、第一幀之前執行一次，也會在遊戲進行
 `addObject()` 回傳的 `GridObject` 是一個 Handler。複製 Handler 就像多拿一支遙控器，兩支都控制同一台電視，所以透過任何一支修改，另一支都看得到結果：
 
 ```cpp title="Handler 複製示意"
-GridObject player = game.addObject("player");
-player.setPosition(2, 1);
+GridObject pacman = game.addObject("pacman");
+pacman.setPosition(2, 1);
 
-GridObject same_player = player;  // 同一個物件的另一個 Handler
-same_player.move(1, 0);           // player.x() 現在也是 3
+GridObject same_pacman = pacman;  // 同一個物件的另一個 Handler
+same_pacman.move(1, 0);           // pacman.x() 現在也是 3
 ```
 
-這也是為什麼 Grid++ 的函式可以直接把 `GridObject` 寫成參數，而不需要參考（`&`）或指標：Engine 傳給 Update 的 `self`、程式保存在全域的 `player`，以及上例的 `same_player`，操作的全都是同一個實體。
+這也是為什麼 Grid++ 的函式可以直接把 `GridObject` 寫成參數，而不需要參考（`&`）或指標：Engine 傳給 Update 的 `self`、程式保存在全域的 `pacman`，以及上例的 `same_pacman`，操作的全都是同一個實體。
 
 需要另一個真正獨立的物件時，使用 `deepCopy()`。它會建立一個新物件，複製原物件的位置、外觀、`set()` 保存的資料與三個行為函式，並回傳指向新物件的 Handler：
 
 ```cpp title="deepCopy 示意"
-GridObject snapshot = player.deepCopy();  // 新的獨立物件
-snapshot.move(0, 1);                      // 只有 snapshot 移動，player 不變
+GridObject snapshot = pacman.deepCopy();  // 新的獨立物件
+snapshot.move(0, 1);                      // 只有 snapshot 移動，pacman 不變
 ```
 
 複本和其他新建立的內容一樣，要到下一次初始化時才開始運作。若原物件已經執行過 Init，複本會一併保留「已經初始化」的狀態，不會再執行一次 Init；若是在 `run()` 之前複製，兩者都會在 `run()` 開始時各自執行 Init。
@@ -59,9 +59,9 @@ if (!alias.exists()) {
 }
 ```
 
-對失效的 Handler 呼叫 `exists()` 以外的函式，例如 `alias.x()`，會丟出 `Grid++ Error: GridObject no longer exists` 例外；程式沒有處理這個例外時，會印出訊息並結束。這個訊息明確指出了問題所在，比起使用已釋放記憶體時可能出現的隨機數值或當機，更容易追查。全域宣告、尚未指定的 Handler（例如 `GridObject player;`）同樣不指向任何物件，使用前必須先由 `addObject()` 指定。
+對失效的 Handler 呼叫 `exists()` 以外的函式，例如 `alias.x()`，會丟出 `Grid++ Error: GridObject no longer exists` 例外；程式沒有處理這個例外時，會印出訊息並結束。這個訊息明確指出了問題所在，比起使用已釋放記憶體時可能出現的隨機數值或當機，更容易追查。全域宣告、尚未指定的 Handler（例如 `GridObject pacman;`）同樣不指向任何物件，使用前必須先由 `addObject()` 指定。
 
-Pac-Man 的鬼每幀都會讀取玩家座標，而玩家可能在重新開始時被清除並重建。因此鬼的 Update 開頭先檢查 `player.exists()`，確定玩家仍在遊戲中才繼續追蹤。
+Pac-Man 的鬼每幀都會讀取玩家座標，而玩家可能在重新開始時被清除並重建。因此鬼的 Update 開頭先檢查 `pacman.exists()`，確定玩家仍在遊戲中才繼續追蹤。
 
 ## 本節小結
 

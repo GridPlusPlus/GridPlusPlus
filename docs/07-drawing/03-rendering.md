@@ -7,10 +7,10 @@
 先處理同一個角色在格子內如何改變外觀。`setDirection()` 使用 90 度為單位旋轉圖片，0 保持原始方向，1、2、3 分別逆時針旋轉 90、180、270 度，而其他整數會正規化到 0～3。下一章的 Pac-Man 會讓右、上、左、下使用相同編號，因此只需一張朝右的圖片便能顯示四個方向。
 
 ```cpp title="方向值示意"
-player.setDirection(0);  // 右
-player.setDirection(1);  // 上
-player.setDirection(2);  // 左
-player.setDirection(3);  // 下
+pacman.setDirection(0);  // 右
+pacman.setDirection(1);  // 上
+pacman.setDirection(2);  // 左
+pacman.setDirection(3);  // 下
 ```
 
 方向解決旋轉，`setColor()` 則處理同一張圖片的顏色變化。它接受 raylib 的 `Color`：`WHITE` 保留原色，其他顏色會與圖片混合，這種效果稱為色調（tint）。因此 Pac-Man 的四隻鬼可以共用白色 ghost 素材，再分別以 `RED`、`PINK`、`SKYBLUE` 和 `ORANGE` 顯示；素材名稱決定基礎圖片，方向與顏色則在繪製時補上物件自己的呈現狀態。對基本圖形而言，`setColor()` 直接決定填滿的顏色。
@@ -36,7 +36,7 @@ mole.show();
 ```cpp title="繪製層級示意"
 floor.setLayer(-10);
 pellet.setLayer(0);
-player.setLayer(10);
+pacman.setLayer(10);
 ```
 
 <figure markdown="span">
