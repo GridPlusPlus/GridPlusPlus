@@ -6,10 +6,10 @@
 
 | 類別 | 用途 | 教學章節 |
 | --- | --- | --- |
-| [GameEngine](classgridpp_1_1GameEngine.md) | 建立遊戲、加入內容、讀取輸入並啟動主迴圈 | [2.2](../02-core-model/02-game-engine.md) |
-| [GridObject](classgridpp_1_1GridObject.md) | 操作網格物件與基本圖形 | [2.1](../02-core-model/01-grid-object.md)、[第 5 章](../05-object-state/index.md) |
-| [Overlay](classgridpp_1_1Overlay.md) | 操作圖片、文字與按鈕 | [2.3](../02-core-model/03-overlay.md)、[7.5](../07-pacman/05-game-states.md) |
-| [Maze](classgridpp_1_1Maze.md) | 設定及查詢迷宮牆面 | [7.1](../07-pacman/01-map-and-maze.md) |
+| [GameEngine](classgridpp_1_1GameEngine.md) | 建立遊戲、加入內容、讀取輸入並啟動主迴圈 | [3.2](../03-core-model/02-game-engine.md) |
+| [GridObject](classgridpp_1_1GridObject.md) | 操作網格物件與基本圖形 | [3.1](../03-core-model/01-grid-object.md)、[第 6 章](../06-object-state/index.md) |
+| [Overlay](classgridpp_1_1Overlay.md) | 操作圖片、文字與按鈕 | [3.3](../03-core-model/03-overlay.md)、[8.5](../08-pacman/05-game-states.md) |
+| [Maze](classgridpp_1_1Maze.md) | 設定及查詢迷宮牆面 | [8.1](../08-pacman/01-map-and-maze.md) |
 
 其他索引：
 

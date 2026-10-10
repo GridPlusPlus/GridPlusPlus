@@ -1,5 +1,9 @@
 name: Sync template
 
+# 把學生需要的檔案同步到兩個 repo：
+# - GridPlusPlus-Template：做自己遊戲用的最小範本。
+# - GridPlusPlus-Pacman：「從零做出 Pac-Man」教學用的第一個專案。
+
 on:
   push:
     branches: [main]
@@ -13,6 +17,7 @@ on:
       - "GridAssetManager.h"
       - "GridSQLite.h"
       - "template.cpp"
+      - "examples/pacman_tutorial/**"
       - "LICENSE"
   workflow_dispatch:
 
@@ -59,4 +64,51 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Sync Grid++ files"
+          git push
+
+  sync-pacman:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Grid++
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Check out Pac-Man tutorial repository
+        uses: actions/checkout@v4
+        with:
+          repository: GridPlusPlus/GridPlusPlus-Pacman
+          token: ${{ secrets.TEMPLATE_REPO_TOKEN }}
+          path: pacman
+
+      # 教學 repo 的根目錄就是 examples/pacman_tutorial/，再加上 Grid++ 標頭檔。
+      - name: Copy tutorial files
+        run: |
+          cp source/GridPlusPlus.h source/GameEngine.h source/GridObject.h source/Overlay.h \
+            source/GridMaze.h source/GridValue.h source/GridAssetManager.h source/GridSQLite.h \
+            source/LICENSE pacman/
+          cp source/examples/pacman_tutorial/main.cpp source/examples/pacman_tutorial/README.md \
+            source/examples/pacman_tutorial/pacman.db pacman/
+          rm -rf pacman/steps
+          cp -r source/examples/pacman_tutorial/steps pacman/steps
+
+      - name: Compile tutorial
+        run: |
+          set -eux
+          g++ -std=c++17 -Wall -Wextra -pedantic -Isource/.github/ci -Ipacman pacman/main.cpp -o /tmp/pacman-main
+          for step in pacman/steps/step*.cpp; do
+            g++ -std=c++17 -Wall -Wextra -pedantic -Isource/.github/ci -Ipacman "$step" -o /tmp/pacman-step
+          done
+
+      - name: Push changes
+        working-directory: pacman
+        run: |
+          git add -A GridPlusPlus.h GameEngine.h GridObject.h Overlay.h GridMaze.h GridValue.h \
+            GridAssetManager.h GridSQLite.h LICENSE main.cpp README.md pacman.db steps
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync Grid++ Pac-Man tutorial"
           git push

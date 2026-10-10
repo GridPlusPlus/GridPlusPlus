@@ -39,13 +39,19 @@ void MovePlayer(GameEngine game, GridObject self) {
     if (game.keyPressed(KEY_UP) && !IsWall(x, y - 1)) self.move(0, -1);
 }
 
+void Lose() {
+    if (game_state != 0) return;
+    game_state = 2;
+    std::printf("被鬼抓到了，失敗！\n");
+}
+
+// 鬼是否和玩家在同一格。
+bool Caught(GridObject ghost) { return ghost.x() == player.x() && ghost.y() == player.y(); }
+
 void HitPlayer(GameEngine, GridObject, GridObject other) {
     std::string type;
     other.get("type", type);
-    if (type != "ghost") return;
-
-    game_state = 2;
-    std::printf("被鬼抓到了，失敗！\n");
+    if (type == "ghost") Lose();
 }
 
 void EatPellet(GameEngine, GridObject self, GridObject other) {
@@ -66,6 +72,12 @@ void MoveGhost(GameEngine, GridObject self) {
     if (++ghost_timer < 15) return;
     ghost_timer = 0;
 
+    // 鬼和玩家同一幀互換位置時，碰撞檢查看不到兩者同格，所以移動前後各檢查一次。
+    if (Caught(self)) {
+        Lose();
+        return;
+    }
+
     const int ghost_x = self.x();
     const int ghost_y = self.y();
     if (player.x() > ghost_x && !IsWall(ghost_x + 1, ghost_y))
@@ -76,6 +88,8 @@ void MoveGhost(GameEngine, GridObject self) {
         self.move(0, 1);
     else if (player.y() < ghost_y && !IsWall(ghost_x, ghost_y - 1))
         self.move(0, -1);
+
+    if (Caught(self)) Lose();
 }
 
 }  // namespace

@@ -35,7 +35,14 @@ Grid++ 是只需引入標頭檔的函式庫，唯一的外部相依是 [raylib](
 
 ## 快速執行
 
-Windows 請使用 WSL，並依照下方 WSL / Linux 的指令操作。請先依照[安裝 raylib](docs/01-getting-started/01-installation.md)準備函式庫，再 Fork [GridPlusPlus-Template](https://github.com/GridPlusPlus/GridPlusPlus-Template) 並 clone 自己的 fork。以下指令都在專案根目錄執行。
+學生從 Gitea（<https://git.gridplusplus.ntuee.org>）取得專案，完整步驟見[開始使用](docs/01-getting-started/index.md)。Windows 請使用 WSL，並依照下方 WSL / Linux 的指令操作。
+
+| 專案 | 用途 |
+|---|---|
+| `GridPlusPlus/GridPlusPlus-Pacman` | 第一個專案，跟著「從零做出 Pac-Man」教學使用。 |
+| `GridPlusPlus/GridPlusPlus-Template` | 空白範本，學完教學後做自己的遊戲。 |
+
+安裝 raylib 並 fork、clone 其中一個專案後，在專案根目錄執行：
 
 ### WSL / Linux
 
@@ -54,9 +61,9 @@ g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 
 ## 文件
 
-[`docs/`](docs/index.md) 先建立核心模型，再以普通函式完成打地鼠，接著說明 Init、Update、Collide、碰撞、每個物件自己的狀態與繪製。Pac-Man 範例組合迷宮、共享狀態、素材與 Overlay；最後整理生命週期、Handler 的有效期限、每幀順序與可重現的發布流程。
+[`docs/`](docs/index.md) 以完全沒有經驗的初學者為對象：第 1 章從安裝工具、取得專案到上傳作品；第 2 章分六步從零做出 Pac-Man。第 3 章以後是進階內容，有系統地說明核心模型、打地鼠、Init／Update／Collide、物件狀態、繪製、完整版 Pac-Man 解析、生命週期與發布流程。
 
-章節使用編號資料夾，節使用資料夾內的編號檔名。API 參考由公開標頭檔中的 Doxygen 註解自動產生，與操作教學分開維護。完整範例位於 [`examples/`](examples/)。
+章節使用編號資料夾，節使用資料夾內的編號檔名。教學程式碼以 snippet 從 `examples/` 引入，所以文件與 CI 編譯的是同一份程式；多頁共用的段落放在 `docs_includes/`。API 參考由公開標頭檔中的 Doxygen 註解自動產生，與操作教學分開維護。完整範例位於 [`examples/`](examples/)。
 
 ## 專案結構
 
@@ -68,6 +75,8 @@ g++ -std=c++17 main.cpp -o game $(pkg-config --cflags --libs raylib)
 | `GridValue.h` | `set()`、`get()` 使用的型別安全儲存。 |
 | `GridAssetManager.h`、`GridSQLite.h` | 素材包載入與 texture 管理。 |
 | `template.cpp` | 可直接編譯的起始程式，同步為 GridPlusPlus-Template 的 `main.cpp`。 |
-| `examples/` | 打地鼠、Pac-Man 入門版與完整版範例。 |
+| `examples/pacman_tutorial/` | 「從零做出 Pac-Man」的起始程式、素材與每一步的參考答案，同步為 GridPlusPlus-Pacman。 |
+| `examples/` | Pac-Man 教學、打地鼠、Pac-Man 入門版與完整版範例。 |
 | `tools/create_asset_pack.py` | 將 32×32 PNG 轉成素材包。 |
 | `docs/` | 教學文件原始檔。 |
+| `docs_includes/` | 多個文件頁面共用的段落（以 snippet 引入，不是獨立頁面）。 |

@@ -36,6 +36,9 @@ int ManhattanDistance(int from_x, int from_y, int to_x, int to_y) {
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
 }
 
+// 鬼是否和玩家在同一格。
+bool Caught(GridObject ghost) { return ghost.x() == player.x() && ghost.y() == player.y(); }
+
 std::string TypeOf(GridObject object) {
     std::string type;
     object.get("type", type);
@@ -58,6 +61,12 @@ void MoveGhost(GameEngine game, GridObject self) {
     self.set("timer", timer);
     if (timer < 12) return;
     self.set("timer", 0);
+
+    // 鬼和玩家同一幀互換位置時，碰撞檢查看不到兩者同格，所以移動前後各檢查一次。
+    if (Caught(self)) {
+        game_state = GameState::kLost;
+        return;
+    }
 
     int current_direction = 0;
     bool random_ghost = false;
@@ -96,6 +105,7 @@ void MoveGhost(GameEngine game, GridObject self) {
 
     self.set("direction", picked);
     self.move(kDirectionX[picked], kDirectionY[picked]);
+    if (Caught(self)) game_state = GameState::kLost;
 }
 
 void MovePlayer(GameEngine game, GridObject self) {
