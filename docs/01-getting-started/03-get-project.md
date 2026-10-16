@@ -29,13 +29,15 @@
 
 ```bash
 git config --global user.name "你的學號"
-git config --global user.email "你的學號@example.com"
+git config --global user.email "你的學號@ntu.edu.tw"
 git config --global credential.helper store
 ```
 
+這三行執行後不會有任何輸出，這是正常的。
+
 ??? info "這三行在做什麼？"
 
-    前兩行告訴 Git「存檔的人是誰」，之後每次存檔都會記下這個名字。email 只用來標示作者，不會寄信，所以照上面的格式填就可以。
+    前兩行告訴 Git「存檔的人是誰」，之後每次存檔都會記下你的學號和學校信箱。email 只用來標示作者，Git 不會寄信給你。
 
     第三行讓 Git 記住你的 Gitea 密碼，之後就不用每次輸入。密碼會存在電腦的 `~/.git-credentials` 檔案裡，所以請不要在公用電腦上執行這一行。
 
@@ -52,10 +54,23 @@ git clone https://git.gridplusplus.ntuee.org/你的學號/GridPlusPlus-Pacman.gi
 
     在你 fork 出來的專案頁面上，有一個顯示 HTTPS 網址的框框，旁邊有複製按鈕。在終端機打 `git clone ` （後面有一個空格），再貼上複製的網址就可以了。
 
-它會問你兩件事：
+按下 ++enter++ 後，終端機會先問你的帳號，畫面會停在這一行等你輸入：
 
-- `Username`：輸入學號
-- `Password`：輸入 Gitea 密碼（畫面不會顯示，打完按 ++enter++）
+```text
+Username for 'https://git.gridplusplus.ntuee.org':
+```
+
+輸入**學號**，按 ++enter++。接著它會問密碼：
+
+```text
+Password for 'https://你的學號@git.gridplusplus.ntuee.org':
+```
+
+輸入 **Gitea 密碼**，按 ++enter++。打密碼時畫面上**什麼都不會出現**（連 `*` 都沒有），這是正常的，照常打完按 ++enter++ 就好。
+
+!!! note "只有第一次會問"
+
+    因為第 3 步設定了 `credential.helper store`，輸入一次之後 Git 就會記住，之後 `git push`、`git pull` 都不會再問。
 
 最後確認一下，執行：
 
